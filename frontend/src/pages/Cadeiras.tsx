@@ -1,15 +1,36 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowUpRight } from 'lucide-react'
 import { NavLink } from 'react-router'
-import { cadeiras } from '@/data/cadeiras'
+import { fetchCadeiras } from '@/services/api'
+import type { Cadeira } from '@/data/cadeiras'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 
 const filtros = ['Todos', 'Titular em exercício', 'In memoriam', 'Vaga']
 
 export default function Cadeiras() {
   const [filtro, setFiltro] = useState('Todos')
+  const [lista, setLista] = useState<Cadeira[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [loading, setLoading] = useState(true)
 
-  const lista = filtro === 'Todos' ? cadeiras : cadeiras.filter(c => c.status === filtro)
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+
+    fetchCadeiras(filtro)
+      .then(data => {
+        if (!active) return
+        setLista(data)
+        if (filtro === 'Todos') setTotalCount(data.length)
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [filtro])
 
   return (
     <main>
@@ -68,7 +89,7 @@ export default function Cadeiras() {
           </div>
           <div style={{ borderTop: '1px solid var(--line)', paddingTop: '32px', paddingBottom: '80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <p style={{ margin: 0, color: 'var(--muted)', font: '9px "Space Mono", monospace', letterSpacing: '.1em', textTransform: 'uppercase' }}>
-              Exibindo {lista.length} de {cadeiras.length} cadeiras
+              Exibindo {lista.length} de {totalCount || lista.length} cadeiras {loading ? '(atualizando...)' : ''}
             </p>
             <NavLink className="text-link" to="/contato">Indicar membro <ArrowUpRight size={15} /></NavLink>
           </div>

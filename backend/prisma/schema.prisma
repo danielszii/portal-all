@@ -1,0 +1,125 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Cadeira {
+  number         String              @id
+  patron         String
+  founder        String
+  holder         String
+  image          String
+  status         String
+  bio            String?
+  bioExtra       String?
+  posse          String?
+  patronoBio     String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  obras          Obra[]
+  sucessoes      Sucessao[]
+  producoes      ProducaoLiteraria[]
+
+  @@map("cadeiras")
+}
+
+model Obra {
+  id            Int      @id @default(autoincrement())
+  cadeiraNumber String
+  titulo        String
+  ano           String?
+  tipo          String?
+  cadeira       Cadeira  @relation(fields: [cadeiraNumber], references: [number], onDelete: Cascade)
+
+  @@map("obras")
+}
+
+model Sucessao {
+  id            Int      @id @default(autoincrement())
+  cadeiraNumber String
+  nome          String
+  periodo       String
+  status        String
+  cadeira       Cadeira  @relation(fields: [cadeiraNumber], references: [number], onDelete: Cascade)
+
+  @@map("sucessoes")
+}
+
+model ProducaoLiteraria {
+  id            Int      @id @default(autoincrement())
+  cadeiraNumber String
+  titulo        String
+  tipo          String
+  texto         String
+  cadeira       Cadeira  @relation(fields: [cadeiraNumber], references: [number], onDelete: Cascade)
+
+  @@map("producoes_literarias")
+}
+
+model Evento {
+  id        String   @id
+  titulo    String
+  tipo      String
+  data      String
+  hora      String
+  local     String
+  descricao String
+  foto      String?
+  passado   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("eventos")
+}
+
+model GaleriaFoto {
+  id        Int      @id @default(autoincrement())
+  src       String
+  legenda   String
+  createdAt DateTime @default(now())
+
+  @@map("galeria_fotos")
+}
+
+model Noticia {
+  id        Int      @id @default(autoincrement())
+  data      String
+  categoria String
+  titulo    String
+  lede      String
+  img       String
+  conteudo  String?
+  createdAt DateTime @default(now())
+
+  @@map("noticias")
+}
+
+model AcervoItem {
+  id        Int      @id @default(autoincrement())
+  title     String
+  tomo      String
+  year      String
+  color     String
+  author    String
+  type      String
+  pages     String
+  desc      String
+  pdf       String
+  createdAt DateTime @default(now())
+
+  @@map("acervo_itens")
+}
+
+model ContatoMensagem {
+  id        String   @id
+  nome      String
+  email     String
+  assunto   String
+  mensagem  String
+  dataEnvio DateTime @default(now())
+
+  @@map("contato_mensagens")
+}

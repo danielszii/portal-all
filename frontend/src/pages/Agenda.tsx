@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink } from 'react-router'
 import { ArrowUpRight, X } from 'lucide-react'
-import { eventos, galeriaFotos } from '@/data/agenda'
+import { eventos as fallbackEventos, galeriaFotos as fallbackGaleria, type Evento, type GaleriaFoto } from '@/data/agenda'
+import { fetchEventos, fetchGaleria } from '@/services/api'
 
 const tipos = ['Todos', 'Sessão Solene', 'Posse', 'Palestra', 'Lançamento', 'Sarau']
 
@@ -30,12 +31,34 @@ function formatDia(iso: string) {
 
 export default function Agenda() {
   const [filtro, setFiltro] = useState('Todos')
-  const [galeria, setGaleria] = useState<number | null>(null)
+  const [galeriaModal, setGaleriaModal] = useState<number | null>(null)
+  const [eventosList, setEventosList] = useState<Evento[]>(fallbackEventos)
+  const [fotos, setFotos] = useState<GaleriaFoto[]>(fallbackGaleria)
 
-  const proximos = eventos.filter(e => !e.passado)
-  const passados = eventos.filter(e => e.passado)
+  useEffect(() => {
+    let active = true
+    fetchEventos(filtro).then(data => {
+      if (active && data) setEventosList(data)
+    })
+    return () => {
+      active = false
+    }
+  }, [filtro])
 
-  const filtrados = (lista: typeof eventos) =>
+  useEffect(() => {
+    let active = true
+    fetchGaleria().then(data => {
+      if (active && data) setFotos(data)
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const proximos = eventosList.filter(e => !e.passado)
+  const passados = eventosList.filter(e => e.passado)
+
+  const filtrados = (lista: typeof eventosList) =>
     filtro === 'Todos' ? lista : lista.filter(e => e.tipo === filtro)
 
   return (
@@ -131,11 +154,11 @@ export default function Agenda() {
             <p className="heading-note">Solenidades, encontros culturais<br />e momentos da vida acadêmica.</p>
           </div>
           <div className="galeria-grid">
-            {galeriaFotos.map((foto, i) => (
+            {fotos.map((foto, i) => (
               <button
                 key={i}
                 className="galeria-item"
-                onClick={() => setGaleria(i)}
+                onClick={() => setGaleriaModal(i)}
                 aria-label={`Ampliar: ${foto.legenda}`}
               >
                 <img src={foto.src} alt={foto.legenda} />
@@ -147,22 +170,22 @@ export default function Agenda() {
       </section>
 
       {/* Lightbox */}
-      {galeria !== null && (
-        <div className="lightbox" role="dialog" aria-modal="true" onClick={() => setGaleria(null)}>
-          <button className="lightbox-close" onClick={() => setGaleria(null)} aria-label="Fechar">
+      {galeriaModal !== null && fotos[galeriaModal] && (
+        <div className="lightbox" role="dialog" aria-modal="true" onClick={() => setGaleriaModal(null)}>
+          <button className="lightbox-close" onClick={() => setGaleriaModal(null)} aria-label="Fechar">
             <X size={20} />
           </button>
           <div className="lightbox-inner" onClick={e => e.stopPropagation()}>
-            <img src={galeriaFotos[galeria].src.replace('w=800', 'w=1400')} alt={galeriaFotos[galeria].legenda} />
-            <p className="lightbox-legenda">{galeriaFotos[galeria].legenda}</p>
+            <img src={fotos[galeriaModal].src.replace('w=800', 'w=1400')} alt={fotos[galeriaModal].legenda} />
+            <p className="lightbox-legenda">{fotos[galeriaModal].legenda}</p>
             <div className="lightbox-nav">
               <button
-                onClick={() => setGaleria(g => g !== null && g > 0 ? g - 1 : galeriaFotos.length - 1)}
+                onClick={() => setGaleriaModal(g => g !== null && g > 0 ? g - 1 : fotos.length - 1)}
                 aria-label="Anterior"
               >← Anterior</button>
-              <span>{galeria + 1} / {galeriaFotos.length}</span>
+              <span>{galeriaModal + 1} / {fotos.length}</span>
               <button
-                onClick={() => setGaleria(g => g !== null && g < galeriaFotos.length - 1 ? g + 1 : 0)}
+                onClick={() => setGaleriaModal(g => g !== null && g < fotos.length - 1 ? g + 1 : 0)}
                 aria-label="Próxima"
               >Próxima →</button>
             </div>

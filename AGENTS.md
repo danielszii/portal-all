@@ -1,30 +1,60 @@
 # Portal Academia Limoeirense de Letras (A.L.L.)
 
-React + Vite + Tailwind CSS (v4) project for the Academia Limoeirense de Letras official portal.
+Monorepo com separação completa entre **Backend** (API REST em Node.js + Express + TypeScript) e **Frontend** (React 19 + Vite + Tailwind CSS v4).
 
 ## Development Server
 
-Vite development server can be started using:
+Para iniciar os dois serviços simultaneamente (API na porta 3001 e Frontend na porta 5173 com proxy reverso):
 ```bash
-pnpm dev
-# or npm run dev
+npm run dev
+```
+
+Ou individualmente:
+```bash
+npm run dev:frontend   # Frontend (Vite)
+npm run dev:backend    # Backend (tsx watch)
 ```
 
 ## Project Structure
 
-- `src/main.tsx` - React entrypoint; imports `src/index.css` and mounts `src/App.tsx` into `#root`
-- `src/App.tsx` - Primary application component with React Router provider
-- `src/routes.tsx` - App routing definitions
-- `src/pages/` - Page components (Home, Academia, Cadeiras, Membro, Acervo, Agenda, Noticias, Contato)
-- `src/components/` - Shared UI components (Layout, Header, Footer, etc.)
-- `src/data/` - Static datasets for acadêmicos, cadeiras and agenda
-- `src/index.css` - Global CSS styles and Tailwind CSS v4 setup
-- `index.html` - HTML shell
-- `package.json` - Project scripts and dependencies
-- `vite.config.ts` - Vite configuration with React, Tailwind CSS v4, and `@` alias for `src`
+```
+portal-all/
+├── backend/                  # Servidor API REST (Express + TypeScript)
+│   ├── src/
+│   │   ├── controllers/      # Handlers HTTP
+│   │   ├── services/         # Regras de negócio e filtros
+│   │   ├── routes/           # Rotas /api/...
+│   │   ├── data/             # Datasets tipados (cadeiras, eventos, notícias, acervo)
+│   │   ├── types/            # Definições TypeScript
+│   │   ├── app.ts            # Configuração Express e middlewares
+│   │   └── server.ts         # Ponto de entrada do servidor
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── frontend/                 # Aplicação Cliente (React 19 + Vite + Tailwind v4)
+│   ├── src/
+│   │   ├── components/       # Componentes de interface compartilhados
+│   │   ├── pages/            # Páginas da aplicação
+│   │   ├── services/api.ts   # Conexão tipada com a API backend
+│   │   ├── data/             # Fallback local de dados
+│   │   ├── routes.tsx        # Rotas do React Router v8
+│   │   ├── App.tsx
+│   │   ├── main.tsx
+│   │   └── index.css
+│   ├── index.html
+│   ├── vite.config.ts        # Vite com proxy para http://localhost:3001
+│   └── package.json
+│
+└── package.json              # Orquestrador com concurrently
+```
 
-## Dependencies
+## Endpoints da API (`http://localhost:3001/api`)
 
-- Runtime: React 19, React DOM 19, React Router v8, Lucide React
-- Styling: Tailwind CSS v4 with `@tailwindcss/vite`
-- Build tooling: Vite 8, TypeScript 5.7
+- `GET /api/health` - Status e uptime do servidor
+- `GET /api/cadeiras` - Quadro de cadeiras (filtros `?status=` e busca `?q=`)
+- `GET /api/cadeiras/:numero` - Detalhes completos da cadeira e acadêmico
+- `GET /api/eventos` - Agenda cultural (filtro `?tipo=`)
+- `GET /api/eventos/galeria` - Registros fotográficos
+- `GET /api/noticias` - Artigos e comunicados
+- `GET /api/acervo` - Publicações, revistas, anais e atas
+- `POST /api/contato` - Envio de mensagens de contato/ouvidoria

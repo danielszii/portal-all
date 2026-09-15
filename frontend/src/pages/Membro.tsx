@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, NavLink, Navigate } from 'react-router'
 import { ArrowLeft, ArrowUpRight } from 'lucide-react'
-import { cadeiras } from '@/data/cadeiras'
+import { cadeiras, type Cadeira } from '@/data/cadeiras'
 import type { ProducaoLiteraria } from '@/data/cadeiras'
+import { fetchCadeiraByNumber } from '@/services/api'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 
 function TextoLiterario({ item }: { item: ProducaoLiteraria }) {
@@ -29,9 +30,30 @@ function TextoLiterario({ item }: { item: ProducaoLiteraria }) {
 
 export default function Membro() {
   const { numero } = useParams<{ numero: string }>()
-  const chair = cadeiras.find(c => c.number === numero?.toUpperCase())
+  const localInitial = cadeiras.find(c => c.number === numero?.toUpperCase()) || null
+  const [chair, setChair] = useState<Cadeira | null>(localInitial)
+  const [loading, setLoading] = useState(false)
 
-  if (!chair) return <Navigate to="/cadeiras" replace />
+  useEffect(() => {
+    if (!numero) return
+    let active = true
+    setLoading(true)
+
+    fetchCadeiraByNumber(numero)
+      .then(data => {
+        if (active && data) setChair(data)
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [numero])
+
+  if (!loading && !chair) return <Navigate to="/cadeiras" replace />
+  if (!chair) return null
 
   const isVaga = chair.status === 'Vaga'
   const isMemoriam = chair.status === 'In memoriam'

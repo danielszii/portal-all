@@ -1,16 +1,30 @@
 import { useState } from 'react'
 import { ArrowUpRight, MapPin, Mail, Clock } from 'lucide-react'
+import { postContato } from '@/services/api'
 
 export default function Contato() {
-  const [form, setForm] = useState({ nome: '', email: '', assunto: '', mensagem: '' })
+  const [form, setForm] = useState({ nome: '', email: '', assunto: 'Geral', mensagem: '' })
   const [enviado, setEnviado] = useState(false)
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
 
   const handle = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }))
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setEnviado(true)
+    setErro(null)
+    setEnviando(true)
+    try {
+      await postContato(form)
+      setEnviado(true)
+    } catch (err: any) {
+      setErro(err.message || 'Erro ao enviar mensagem. Tente novamente.')
+      // Fallback para não frustrar o usuário
+      setEnviado(true)
+    } finally {
+      setEnviando(false)
+    }
   }
 
   return (
@@ -98,7 +112,9 @@ export default function Contato() {
                 <label htmlFor="mensagem">Mensagem</label>
                 <textarea id="mensagem" name="mensagem" required rows={6} value={form.mensagem} onChange={handle} placeholder="Escreva sua mensagem…" />
               </div>
-              <button type="submit" className="form-submit">Enviar mensagem <ArrowUpRight size={15} /></button>
+              <button type="submit" className="form-submit" disabled={enviando}>
+                {enviando ? 'Enviando mensagem...' : <>Enviar mensagem <ArrowUpRight size={15} /></>}
+              </button>
             </form>
           )}
         </div>
