@@ -1,6 +1,5 @@
 import { IEventosRepository, eventosRepository } from '../repositories/eventos.repository.js'
 import { Evento, GaleriaFoto } from '../types/index.js'
-import { FiltroEventosDTO } from '../dtos/evento.dto.js'
 import { NotFoundError } from '../errors/app.error.js'
 
 export class EventosService {

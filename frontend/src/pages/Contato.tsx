@@ -1,9 +1,13 @@
+import { useResource } from '@/hooks/useResource'
+import { fetchInstituicao } from '@/services/api'
 import { useState } from 'react'
 import { ArrowUpRight, MapPin, Mail, Clock } from 'lucide-react'
 import { postContato } from '@/services/api'
 
 export default function Contato() {
-  const [form, setForm] = useState({ nome: '', email: '', assunto: 'Geral', mensagem: '' })
+  const institution = useResource(fetchInstituicao, { info: null, gestao: null })
+  const info = institution.data.info
+  const [form, setForm] = useState({ nome: '', email: '', assunto: '', mensagem: '' })
   const [enviado, setEnviado] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
@@ -16,12 +20,13 @@ export default function Contato() {
     setErro(null)
     setEnviando(true)
     try {
-      await postContato(form)
+      const resposta = await postContato(form)
+      if (!resposta.sucesso) throw new Error('Não foi possível confirmar o envio.')
       setEnviado(true)
-    } catch (err: any) {
-      setErro(err.message || 'Erro ao enviar mensagem. Tente novamente.')
-      // Fallback para não frustrar o usuário
-      setEnviado(true)
+      setForm({ nome: '', email: '', assunto: '', mensagem: '' })
+    } catch (err: unknown) {
+      setErro(err instanceof Error ? err.message : 'Erro ao enviar mensagem. Tente novamente.')
+      setEnviado(false)
     } finally {
       setEnviando(false)
     }
@@ -39,14 +44,15 @@ export default function Contato() {
       </section>
 
       <section className="contato-section wrap">
+        {institution.error && <p role="status">Não foi possível carregar os dados institucionais. <button type="button" className="text-link" onClick={institution.retry}>Tentar novamente</button></p>}
         <div className="contact-grid">
           {/* Endereço */}
           <article>
             <MapPin size={24} strokeWidth={1.5} />
             <h2>Visite-nos</h2>
             <p className="eyebrow">Endereço</p>
-            <p>Rua Coronel Serafim Chaves, 284<br />Centro · Limoeiro do Norte — CE<br />CEP 62930-000</p>
-            <a className="text-link" href="https://maps.google.com" target="_blank" rel="noopener noreferrer" style={{ marginTop: '20px' }}>
+            <p>{info?.endereco ?? 'Endereço ainda não disponibilizado.'}</p>
+            <a className="text-link" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(info?.endereco ?? 'Academia Limoeirense de Letras')}`} target="_blank" rel="noopener noreferrer" style={{ marginTop: '20px' }}>
               Ver no mapa <ArrowUpRight size={14} />
             </a>
           </article>
@@ -56,9 +62,9 @@ export default function Contato() {
             <Mail size={24} strokeWidth={1.5} />
             <h2>Escreva</h2>
             <p className="eyebrow">E-mail institucional</p>
-            <p>secretaria@academiallimoeirense.org.br</p>
+            <p>{info?.email ?? 'E-mail ainda não disponibilizado.'}</p>
             <p className="eyebrow" style={{ marginTop: '24px' }}>Imprensa</p>
-            <p>imprensa@academiallimoeirense.org.br</p>
+            <p>{info?.email ?? 'Use o formulário abaixo.'}</p>
           </article>
 
           {/* Horário */}
@@ -66,9 +72,9 @@ export default function Contato() {
             <Clock size={24} strokeWidth={1.5} />
             <h2>Horários</h2>
             <p className="eyebrow">Atendimento</p>
-            <p>Segunda a sexta<br />08h às 12h · 14h às 17h</p>
+            <p>{info?.horarioAtendimento ?? 'Consulte a secretaria.'}</p>
             <p className="eyebrow" style={{ marginTop: '24px' }}>Sessões abertas</p>
-            <p>Última sexta de cada mês<br />19h — entrada franca</p>
+            <p>Consulte a agenda de eventos</p>
           </article>
         </div>
 
@@ -87,14 +93,15 @@ export default function Contato() {
             </div>
           ) : (
             <form className="contato-form" onSubmit={submit}>
+              {erro && <p role="alert">{erro}</p>}
               <div className="form-row">
                 <div className="form-field">
                   <label htmlFor="nome">Nome completo</label>
-                  <input id="nome" name="nome" type="text" required value={form.nome} onChange={handle} placeholder="Seu nome" />
+                  <input id="nome" name="nome" type="text" maxLength={120} required value={form.nome} onChange={handle} placeholder="Seu nome" />
                 </div>
                 <div className="form-field">
                   <label htmlFor="email">E-mail</label>
-                  <input id="email" name="email" type="email" required value={form.email} onChange={handle} placeholder="seu@email.com" />
+                  <input id="email" name="email" type="email" maxLength={254} required value={form.email} onChange={handle} placeholder="seu@email.com" />
                 </div>
               </div>
               <div className="form-field">
@@ -110,7 +117,7 @@ export default function Contato() {
               </div>
               <div className="form-field">
                 <label htmlFor="mensagem">Mensagem</label>
-                <textarea id="mensagem" name="mensagem" required rows={6} value={form.mensagem} onChange={handle} placeholder="Escreva sua mensagem…" />
+                <textarea id="mensagem" name="mensagem" maxLength={5000} required rows={6} value={form.mensagem} onChange={handle} placeholder="Escreva sua mensagem…" />
               </div>
               <button type="submit" className="form-submit" disabled={enviando}>
                 {enviando ? 'Enviando mensagem...' : <>Enviar mensagem <ArrowUpRight size={15} /></>}

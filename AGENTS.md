@@ -1,60 +1,24 @@
-# Portal Academia Limoeirense de Letras (A.L.L.)
+# Portal Academia Limoeirense de Letras
 
-Monorepo com separação completa entre **Backend** (API REST em Node.js + Express + TypeScript) e **Frontend** (React 19 + Vite + Tailwind CSS v4).
+Monorepo com frontend React/TypeScript/Vite e backend Express/TypeScript/Prisma/PostgreSQL.
 
-## Development Server
+## Estrutura
 
-Para iniciar os dois serviços simultaneamente (API na porta 3001 e Frontend na porta 5173 com proxy reverso):
-```bash
-npm run dev
-```
+- `frontend/src/pages`: páginas públicas; dados vêm de `services/api.ts`.
+- `frontend/src/hooks/useResource.ts`: carregamento, cancelamento e nova tentativa.
+- `backend/src/routes`, `controllers`, `services`, `repositories`: camadas HTTP, regras e persistência.
+- `backend/src/repositories/mappers.ts`: adapta entidades do banco ao contrato público existente.
+- `backend/prisma/schema.prisma` e `migrations`: schema PostgreSQL e restrições.
+- `backend/prisma/seed.ts`: dados demonstrativos opt-in, sem apagar dados.
+- `backend/prisma/import-sqlite.ts`: migração aditiva do SQLite antigo, aberto somente para leitura.
 
-Ou individualmente:
-```bash
-npm run dev:frontend   # Frontend (Vite)
-npm run dev:backend    # Backend (tsx watch)
-```
+## Validação
 
-## Project Structure
+Leia README.md para instalação e limitações de validação desta cópia.
+Execute `npm run check`, `npm test` e `npm run build` após instalar as dependências e gerar o Prisma Client.
 
-```
-portal-all/
-├── backend/                  # Servidor API REST (Express + TypeScript)
-│   ├── src/
-│   │   ├── controllers/      # Handlers HTTP
-│   │   ├── services/         # Regras de negócio e filtros
-│   │   ├── routes/           # Rotas /api/...
-│   │   ├── data/             # Datasets tipados (cadeiras, eventos, notícias, acervo)
-│   │   ├── types/            # Definições TypeScript
-│   │   ├── app.ts            # Configuração Express e middlewares
-│   │   └── server.ts         # Ponto de entrada do servidor
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── frontend/                 # Aplicação Cliente (React 19 + Vite + Tailwind v4)
-│   ├── src/
-│   │   ├── components/       # Componentes de interface compartilhados
-│   │   ├── pages/            # Páginas da aplicação
-│   │   ├── services/api.ts   # Conexão tipada com a API backend
-│   │   ├── data/             # Fallback local de dados
-│   │   ├── routes.tsx        # Rotas do React Router v8
-│   │   ├── App.tsx
-│   │   ├── main.tsx
-│   │   └── index.css
-│   ├── index.html
-│   ├── vite.config.ts        # Vite com proxy para http://localhost:3001
-│   └── package.json
-│
-└── package.json              # Orquestrador com concurrently
-```
+## Dados e acesso
 
-## Endpoints da API (`http://localhost:3001/api`)
-
-- `GET /api/health` - Status e uptime do servidor
-- `GET /api/cadeiras` - Quadro de cadeiras (filtros `?status=` e busca `?q=`)
-- `GET /api/cadeiras/:numero` - Detalhes completos da cadeira e acadêmico
-- `GET /api/eventos` - Agenda cultural (filtro `?tipo=`)
-- `GET /api/eventos/galeria` - Registros fotográficos
-- `GET /api/noticias` - Artigos e comunicados
-- `GET /api/acervo` - Publicações, revistas, anais e atas
-- `POST /api/contato` - Envio de mensagens de contato/ouvidoria
+Preserve o contrato das respostas usado pelas telas e não retorne dados demonstrativos quando a API falhar.
+Não execute reset ou seed destrutivo em banco existente.
+`GET /api/contato` está desativado até existir autenticação administrativa; não publique mensagens pessoais.

@@ -1,30 +1,11 @@
-import { useState, useEffect } from 'react'
-import { fetchEventos, fetchGaleria } from '../services/api.js'
-import { Evento, GaleriaFoto } from '../types/index.js'
-
+import { useCallback } from 'react'
+import { fetchEventos, fetchGaleria } from '@/services/api'
+import { useResource } from './useResource'
 export function useEventos(filtro = 'Todos') {
-  const [eventos, setEventos] = useState<Evento[]>([])
-  const [galeria, setGaleria] = useState<GaleriaFoto[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let active = true
-    setLoading(true)
-
-    Promise.all([fetchEventos(filtro), fetchGaleria()])
-      .then(([evts, gal]) => {
-        if (!active) return
-        setEventos(evts)
-        setGaleria(gal)
-      })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
-
-    return () => {
-      active = false
-    }
+  const load = useCallback(async (signal: AbortSignal) => {
+    const [eventos, galeria] = await Promise.all([fetchEventos(filtro, signal), fetchGaleria(signal)])
+    return { eventos, galeria }
   }, [filtro])
-
-  return { eventos, galeria, loading }
+  const state = useResource(load, { eventos: [], galeria: [] })
+  return { ...state.data, loading: state.loading, error: state.error, retry: state.retry }
 }

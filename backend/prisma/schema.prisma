@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -7,119 +7,199 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Cadeira {
-  number         String              @id
-  patron         String
-  founder        String
-  holder         String
-  image          String
-  status         String
-  bio            String?
-  bioExtra       String?
-  posse          String?
-  patronoBio     String?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  obras          Obra[]
-  sucessoes      Sucessao[]
-  producoes      ProducaoLiteraria[]
+enum StatusEditorial {
+  RASCUNHO
+  PUBLICADO
+  ARQUIVADO
+}
 
-  @@map("cadeiras")
+model Patrono {
+  id        String    @id @default(uuid())
+  nome      String
+  biografia String?
+  fotoUrl   String?
+  cadeiras  Cadeira[]
+}
+
+model Academico {
+  id          String              @id @default(uuid())
+  nome        String
+  biografia   String?
+  bioExtra    String?
+  fotoUrl     String?
+  inMemoriam  Boolean             @default(false)
+  ocupacoes   OcupacaoCadeira[]
+  obras       Obra[]
+  producoes   ProducaoLiteraria[]
+  autorias    AutoriaAcervo[]
+  mandatos    MandatoDiretoria[]
+  criadoEm    DateTime            @default(now())
+  atualizadoEm DateTime           @updatedAt
+
+  @@index([nome])
+}
+
+model Cadeira {
+  id           String            @id @default(uuid())
+  numero       Int               @unique
+  patronoId    String
+  patrono      Patrono           @relation(fields: [patronoId], references: [id], onDelete: Restrict)
+  ocupacoes    OcupacaoCadeira[]
+  criadoEm     DateTime          @default(now())
+  atualizadoEm DateTime          @updatedAt
+}
+
+model OcupacaoCadeira {
+  id           String    @id @default(uuid())
+  cadeiraId    String
+  academicoId  String
+  fundador     Boolean   @default(false)
+  vigente      Boolean   @default(false)
+  inicioEm     DateTime? @db.Date
+  fimEm        DateTime? @db.Date
+  inicioAno    Int?
+  fimAno       Int?
+  periodoTexto String?
+  cadeira      Cadeira   @relation(fields: [cadeiraId], references: [id], onDelete: Restrict)
+  academico    Academico @relation(fields: [academicoId], references: [id], onDelete: Restrict)
+
+  @@index([cadeiraId, inicioAno])
+  @@index([academicoId])
+  // A migration adiciona índices únicos parciais para ocupação vigente e fundador.
 }
 
 model Obra {
-  id            Int      @id @default(autoincrement())
-  cadeiraNumber String
-  titulo        String
-  ano           String?
-  tipo          String?
-  cadeira       Cadeira  @relation(fields: [cadeiraNumber], references: [number], onDelete: Cascade)
-
-  @@map("obras")
-}
-
-model Sucessao {
-  id            Int      @id @default(autoincrement())
-  cadeiraNumber String
-  nome          String
-  periodo       String
-  status        String
-  cadeira       Cadeira  @relation(fields: [cadeiraNumber], references: [number], onDelete: Cascade)
-
-  @@map("sucessoes")
+  id          String    @id @default(uuid())
+  academicoId String
+  titulo      String
+  ano         String?
+  tipo        String?
+  academico   Academico @relation(fields: [academicoId], references: [id], onDelete: Restrict)
+  @@index([academicoId])
 }
 
 model ProducaoLiteraria {
-  id            Int      @id @default(autoincrement())
-  cadeiraNumber String
-  titulo        String
-  tipo          String
-  texto         String
-  cadeira       Cadeira  @relation(fields: [cadeiraNumber], references: [number], onDelete: Cascade)
-
-  @@map("producoes_literarias")
+  id          String          @id @default(uuid())
+  academicoId String
+  titulo      String
+  tipo        String
+  texto       String
+  status      StatusEditorial @default(RASCUNHO)
+  publicadoEm DateTime?
+  academico   Academico       @relation(fields: [academicoId], references: [id], onDelete: Restrict)
+  @@index([academicoId, status])
 }
 
 model Evento {
-  id        String   @id
-  titulo    String
-  tipo      String
-  data      String
-  hora      String
-  local     String
-  descricao String
-  foto      String?
-  passado   Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  @@map("eventos")
+  id          String          @id @default(uuid())
+  titulo      String
+  tipo        String
+  inicioEm    DateTime         @db.Timestamptz(3)
+  fimEm       DateTime?        @db.Timestamptz(3)
+  local       String
+  descricao   String
+  foto        String?
+  status      StatusEditorial @default(RASCUNHO)
+  fotos       GaleriaFoto[]
+  criadoEm    DateTime         @default(now())
+  atualizadoEm DateTime        @updatedAt
+  @@index([status, inicioEm])
 }
 
 model GaleriaFoto {
-  id        Int      @id @default(autoincrement())
-  src       String
-  legenda   String
-  createdAt DateTime @default(now())
-
-  @@map("galeria_fotos")
+  id          String  @id @default(uuid())
+  eventoId    String?
+  src         String
+  legenda     String
+  textoAlternativo String?
+  credito     String?
+  ordem       Int     @default(0)
+  evento      Evento? @relation(fields: [eventoId], references: [id], onDelete: Restrict)
+  @@index([eventoId, ordem])
 }
 
 model Noticia {
-  id        Int      @id @default(autoincrement())
-  data      String
-  categoria String
-  titulo    String
-  lede      String
-  img       String
-  conteudo  String?
-  createdAt DateTime @default(now())
-
-  @@map("noticias")
+  id          Int             @id @default(autoincrement())
+  categoria   String
+  titulo      String
+  lede        String
+  img         String
+  conteudo    String
+  status      StatusEditorial @default(RASCUNHO)
+  publicadoEm DateTime?        @db.Timestamptz(3)
+  criadoEm    DateTime         @default(now())
+  atualizadoEm DateTime        @updatedAt
+  @@index([status, publicadoEm])
 }
 
 model AcervoItem {
-  id        Int      @id @default(autoincrement())
-  title     String
-  tomo      String
-  year      String
-  color     String
-  author    String
-  type      String
-  pages     String
-  desc      String
-  pdf       String
-  createdAt DateTime @default(now())
+  id          String          @id @default(uuid())
+  titulo      String
+  edicao      String?
+  ano         Int?
+  cor         String          @default("navy")
+  autoriaTexto String?
+  categoria   String
+  paginas     Int?
+  descricao   String
+  pdfUrl      String
+  status      StatusEditorial @default(RASCUNHO)
+  autorias    AutoriaAcervo[]
+  criadoEm    DateTime         @default(now())
+  atualizadoEm DateTime        @updatedAt
+  @@index([status, categoria, ano])
+}
 
-  @@map("acervo_itens")
+model AutoriaAcervo {
+  acervoId    String
+  academicoId String
+  papel       String      @default("Autor")
+  ordem       Int         @default(0)
+  acervo      AcervoItem   @relation(fields: [acervoId], references: [id], onDelete: Restrict)
+  academico   Academico    @relation(fields: [academicoId], references: [id], onDelete: Restrict)
+  @@id([acervoId, academicoId])
+}
+
+model Instituicao {
+  id          String @id @default("all")
+  nome        String
+  historia    String
+  missao      String
+  endereco    String?
+  email       String?
+  telefone    String?
+  fundacaoAno Int?
+  sedeTexto   String?
+  trajetoriaTexto String?
+  horarioAtendimento String?
+}
+
+model Gestao {
+  id          String @id @default(uuid())
+  inicioAno   Int
+  fimAno      Int?
+  mandatos    MandatoDiretoria[]
+}
+
+model MandatoDiretoria {
+  id          String @id @default(uuid())
+  gestaoId    String
+  academicoId String
+  cargo       String
+  inicioEm    DateTime? @db.Date
+  fimEm       DateTime? @db.Date
+  gestao      Gestao @relation(fields: [gestaoId], references: [id], onDelete: Restrict)
+  academico   Academico @relation(fields: [academicoId], references: [id], onDelete: Restrict)
+  @@index([gestaoId])
 }
 
 model ContatoMensagem {
-  id        String   @id
-  nome      String
-  email     String
-  assunto   String
-  mensagem  String
-  dataEnvio DateTime @default(now())
-
-  @@map("contato_mensagens")
+  id          String   @id @default(uuid())
+  nome        String
+  email       String
+  assunto     String
+  mensagem    String
+  status      String   @default("NOVA")
+  dataEnvio   DateTime @default(now())
+  @@index([dataEnvio])
 }

@@ -21,9 +21,9 @@ export const getNoticiaPorId = async (req: Request, res: Response, next: NextFun
   try {
     const idParam = req.params.id
     const idStr = Array.isArray(idParam) ? idParam[0] : idParam
-    const id = parseInt(idStr || '', 10)
+    const id = /^\d+$/.test(idStr || '') ? Number(idStr) : NaN
 
-    if (isNaN(id)) {
+    if (!Number.isSafeInteger(id) || id < 1) {
       res.status(400).json({ error: 'ID inválido fornecido.' })
       return
     }

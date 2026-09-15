@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import GalleryModal from '@/components/GalleryModal'
+import { useResource } from '@/hooks/useResource'
+import LoadState from '@/components/LoadState'
+import { useState, useCallback } from 'react'
 import { NavLink } from 'react-router'
-import { ArrowUpRight, X } from 'lucide-react'
-import { eventos as fallbackEventos, galeriaFotos as fallbackGaleria, type Evento, type GaleriaFoto } from '@/data/agenda'
+import { ArrowUpRight } from 'lucide-react'
 import { fetchEventos, fetchGaleria } from '@/services/api'
 
 const tipos = ['Todos', 'Sessão Solene', 'Posse', 'Palestra', 'Lançamento', 'Sarau']
@@ -32,31 +34,17 @@ function formatDia(iso: string) {
 export default function Agenda() {
   const [filtro, setFiltro] = useState('Todos')
   const [galeriaModal, setGaleriaModal] = useState<number | null>(null)
-  const [eventosList, setEventosList] = useState<Evento[]>(fallbackEventos)
-  const [fotos, setFotos] = useState<GaleriaFoto[]>(fallbackGaleria)
-
-  useEffect(() => {
-    let active = true
-    fetchEventos(filtro).then(data => {
-      if (active && data) setEventosList(data)
-    })
-    return () => {
-      active = false
-    }
+  const load = useCallback(async (signal: AbortSignal) => {
+    const [eventos, fotos] = await Promise.all([fetchEventos(filtro, signal), fetchGaleria(signal)])
+    return { eventos, fotos }
   }, [filtro])
-
-  useEffect(() => {
-    let active = true
-    fetchGaleria().then(data => {
-      if (active && data) setFotos(data)
-    })
-    return () => {
-      active = false
-    }
-  }, [])
+  const state = useResource(load, { eventos: [], fotos: [] })
+  if (state.loading || state.error) return <main><LoadState {...state} /></main>
+  const eventosList = state.data.eventos
+  const fotos = state.data.fotos
 
   const proximos = eventosList.filter(e => !e.passado)
-  const passados = eventosList.filter(e => e.passado)
+  const passados = eventosList.filter(e => e.passado).sort((a, b) => b.data.localeCompare(a.data))
 
   const filtrados = (lista: typeof eventosList) =>
     filtro === 'Todos' ? lista : lista.filter(e => e.tipo === filtro)
@@ -85,6 +73,7 @@ export default function Agenda() {
         ))}
       </div>
 
+      {eventosList.length === 0 && <p className="wrap" role="status">Nenhum evento encontrado para este filtro.</p>}
       {/* Próximos eventos */}
       {filtrados(proximos).length > 0 && (
         <section className="agenda-section wrap">
@@ -169,29 +158,7 @@ export default function Agenda() {
         </div>
       </section>
 
-      {/* Lightbox */}
-      {galeriaModal !== null && fotos[galeriaModal] && (
-        <div className="lightbox" role="dialog" aria-modal="true" onClick={() => setGaleriaModal(null)}>
-          <button className="lightbox-close" onClick={() => setGaleriaModal(null)} aria-label="Fechar">
-            <X size={20} />
-          </button>
-          <div className="lightbox-inner" onClick={e => e.stopPropagation()}>
-            <img src={fotos[galeriaModal].src.replace('w=800', 'w=1400')} alt={fotos[galeriaModal].legenda} />
-            <p className="lightbox-legenda">{fotos[galeriaModal].legenda}</p>
-            <div className="lightbox-nav">
-              <button
-                onClick={() => setGaleriaModal(g => g !== null && g > 0 ? g - 1 : fotos.length - 1)}
-                aria-label="Anterior"
-              >← Anterior</button>
-              <span>{galeriaModal + 1} / {fotos.length}</span>
-              <button
-                onClick={() => setGaleriaModal(g => g !== null && g < fotos.length - 1 ? g + 1 : 0)}
-                aria-label="Próxima"
-              >Próxima →</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {galeriaModal !== null && <GalleryModal fotos={fotos} index={galeriaModal} onIndex={setGaleriaModal} onClose={() => setGaleriaModal(null)} />}
 
       {/* CTA Contato */}
       <section className="agenda-cta wrap">

@@ -1,36 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useResource } from '@/hooks/useResource'
+import LoadState from '@/components/LoadState'
+import { useState, useCallback } from 'react'
 import { ArrowUpRight } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { fetchCadeiras } from '@/services/api'
-import type { Cadeira } from '@/data/cadeiras'
+import type { Cadeira } from '@/types'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 
 const filtros = ['Todos', 'Titular em exercício', 'In memoriam', 'Vaga']
 
 export default function Cadeiras() {
   const [filtro, setFiltro] = useState('Todos')
-  const [lista, setLista] = useState<Cadeira[]>([])
-  const [totalCount, setTotalCount] = useState(0)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let active = true
-    setLoading(true)
-
-    fetchCadeiras(filtro)
-      .then(data => {
-        if (!active) return
-        setLista(data)
-        if (filtro === 'Todos') setTotalCount(data.length)
-      })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
-
-    return () => {
-      active = false
-    }
-  }, [filtro])
+  const load = useCallback((signal: AbortSignal) => fetchCadeiras(undefined, undefined, signal), [])
+  const state = useResource<Cadeira[]>(load, [])
+  const lista = filtro === 'Todos' ? state.data : state.data.filter(c => c.status === filtro)
+  const totalCount = state.data.length
+  const loading = state.loading
+  if (state.loading || state.error) return <main><LoadState {...state} /></main>
 
   return (
     <main>
@@ -61,6 +47,7 @@ export default function Cadeiras() {
       <section className="chairs-section" style={{ background: 'var(--linen)', borderTop: '1px solid var(--line)' }}>
         <div className="wrap">
           <div className="chair-grid" style={{ paddingBlock: '60px' }}>
+            {lista.length === 0 && <p role="status">Nenhuma cadeira encontrada para este filtro.</p>}
             {lista.map((chair) => (
               <NavLink
                 to={`/cadeiras/${chair.number.toLowerCase()}`}

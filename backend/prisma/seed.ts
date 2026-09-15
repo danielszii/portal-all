@@ -1,113 +1,23 @@
+import 'dotenv/config'
+import { instituicaoData } from '../src/data/instituicao.data.js'
 import { PrismaClient } from '@prisma/client'
 import { cadeirasData } from '../src/data/cadeiras.data.js'
 import { eventosData, galeriaData } from '../src/data/eventos.data.js'
 import { noticiasData } from '../src/data/noticias.data.js'
 import { acervoData } from '../src/data/acervo.data.js'
+import { importData, key } from './import-data.js'
 
+if (process.env.SEED_DEMO !== 'true') throw new Error('Dados demonstrativos: defina SEED_DEMO=true explicitamente. Para dados existentes, use db:import-sqlite.')
 const prisma = new PrismaClient()
-
-async function main() {
-  console.log('🌱 Iniciando o povoamento do banco de dados (seed)...')
-
-  // Limpar dados existentes
-  await prisma.producaoLiteraria.deleteMany()
-  await prisma.obra.deleteMany()
-  await prisma.sucessao.deleteMany()
-  await prisma.cadeira.deleteMany()
-  await prisma.evento.deleteMany()
-  await prisma.galeriaFoto.deleteMany()
-  await prisma.noticia.deleteMany()
-  await prisma.acervoItem.deleteMany()
-  await prisma.contatoMensagem.deleteMany()
-
-  // Povoar Cadeiras com relacionamentos
-  for (const c of cadeirasData) {
-    await prisma.cadeira.create({
-      data: {
-        number: c.number,
-        patron: c.patron,
-        founder: c.founder,
-        holder: c.holder,
-        image: c.image,
-        status: c.status,
-        bio: c.bio,
-        bioExtra: c.bioExtra,
-        posse: c.posse,
-        patronoBio: c.patronoBio,
-        obras: c.obras ? { create: c.obras.map(o => ({ titulo: o.titulo, ano: o.ano, tipo: o.tipo })) } : undefined,
-        sucessoes: c.sucessao ? { create: c.sucessao.map(s => ({ nome: s.nome, periodo: s.periodo, status: s.status })) } : undefined,
-        producoes: c.producao ? { create: c.producao.map(p => ({ titulo: p.tipo as any, tipo: p.tipo, texto: p.texto })) } : undefined,
-      }
-    })
+try {
+  await importData(prisma, { cadeiras: cadeirasData, eventos: eventosData, galeria: galeriaData, noticias: noticiasData, acervo: acervoData }, 'demo')
+  await prisma.instituicao.upsert({ where: { id: 'all' }, update: {}, create: instituicaoData })
+  await prisma.gestao.upsert({ where: { id: 'demo-2022-2026' }, update: {}, create: { id: 'demo-2022-2026', inicioAno: 2022, fimAno: 2026 } })
+  for (const [cargo, nome] of [['Presidente', 'Francisco de Assis Moura'], ['Vice-presidente', 'Ana Maria de Lima'], ['Secretário-geral', 'Raimundo Nonato de Oliveira'], ['Tesoureiro', 'José Airton de Freitas']]) {
+    const academicoId = key('academico', nome)
+    await prisma.academico.upsert({ where: { id: academicoId }, update: {}, create: { id: academicoId, nome } })
+    const id = key('mandato', `demo-2022-2026:${cargo}`)
+    await prisma.mandatoDiretoria.upsert({ where: { id }, update: {}, create: { id, gestaoId: 'demo-2022-2026', academicoId, cargo } })
   }
-
-  // Povoar Eventos
-  for (const e of eventosData) {
-    await prisma.evento.create({
-      data: {
-        id: e.id,
-        titulo: e.titulo,
-        tipo: e.tipo,
-        data: e.data,
-        hora: e.hora,
-        local: e.local,
-        descricao: e.descricao,
-        foto: e.foto,
-        passado: e.passado || false,
-      }
-    })
-  }
-
-  // Povoar Galeria
-  for (const g of galeriaData) {
-    await prisma.galeriaFoto.create({
-      data: {
-        src: g.src,
-        legenda: g.legenda,
-      }
-    })
-  }
-
-  // Povoar Notícias
-  for (const n of noticiasData) {
-    await prisma.noticia.create({
-      data: {
-        id: n.id,
-        data: n.data,
-        categoria: n.categoria,
-        titulo: n.titulo,
-        lede: n.lede,
-        img: n.img,
-        conteudo: n.conteudo,
-      }
-    })
-  }
-
-  // Povoar Acervo
-  for (const a of acervoData) {
-    await prisma.acervoItem.create({
-      data: {
-        title: a.title,
-        tomo: a.tomo,
-        year: a.year,
-        color: a.color,
-        author: a.author,
-        type: a.type,
-        pages: a.pages,
-        desc: a.desc,
-        pdf: a.pdf,
-      }
-    })
-  }
-
-  console.log('✅ Banco de dados povoado com sucesso!')
-}
-
-main()
-  .catch((e) => {
-    console.error('❌ Erro durante o seed do banco de dados:', e)
-    process.exit(1)
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })
+  console.log('Dados demonstrativos adicionados. Nenhum registro existente foi apagado ou sobrescrito.')
+} finally { await prisma.$disconnect() }

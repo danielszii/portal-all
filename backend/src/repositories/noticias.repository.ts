@@ -1,37 +1,21 @@
-import { noticiasData } from '../data/noticias.data.js'
-import { Noticia } from '../types/index.js'
-
+import { prisma } from '../db/prisma.js'
+import type { Noticia } from '../types/index.js'
+import { mapNoticia } from './mappers.js'
 export interface INoticiasRepository {
   findAll(categoria?: string, search?: string): Promise<Noticia[]>
   findById(id: number): Promise<Noticia | null>
 }
-
-export class MemoryNoticiasRepository implements INoticiasRepository {
-  private noticias: Noticia[] = [...noticiasData]
-
+export class PrismaNoticiasRepository implements INoticiasRepository {
   async findAll(categoria?: string, search?: string): Promise<Noticia[]> {
-    let result = [...this.noticias]
-
-    if (categoria && categoria !== 'Todas') {
-      result = result.filter(n => n.categoria.toLowerCase() === categoria.toLowerCase())
-    }
-
-    if (search) {
-      const q = search.toLowerCase()
-      result = result.filter(n =>
-        n.titulo.toLowerCase().includes(q) ||
-        n.lede.toLowerCase().includes(q) ||
-        n.categoria.toLowerCase().includes(q)
-      )
-    }
-
-    return result
+    return (await prisma.noticia.findMany({ where: {
+      status: 'PUBLICADO', publicadoEm: { lte: new Date() },
+      ...(categoria && categoria !== 'Todas' ? { categoria: { equals: categoria, mode: 'insensitive' as const } } : {}),
+      ...(search?.trim() ? { OR: ['titulo', 'lede', 'conteudo', 'categoria'].map(key => ({ [key]: { contains: search.trim(), mode: 'insensitive' } })) } : {}),
+    }, orderBy: [{ publicadoEm: 'desc' }, { id: 'desc' }] })).map(mapNoticia)
   }
-
   async findById(id: number): Promise<Noticia | null> {
-    const found = this.noticias.find(n => n.id === id)
-    return found || null
+    const row = await prisma.noticia.findFirst({ where: { id, status: 'PUBLICADO', publicadoEm: { lte: new Date() } } })
+    return row ? mapNoticia(row) : null
   }
 }
-
-export const noticiasRepository = new MemoryNoticiasRepository()
+export const noticiasRepository = new PrismaNoticiasRepository()

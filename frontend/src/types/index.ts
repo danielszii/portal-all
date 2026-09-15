@@ -60,6 +60,7 @@ export type Noticia = {
 }
 
 export type AcervoItem = {
+  id: string
   title: string
   tomo: string
   year: string

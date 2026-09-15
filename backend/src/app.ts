@@ -3,12 +3,14 @@ import cors from 'cors'
 import { corsConfig } from './config/cors.config.js'
 import { requestLogger, errorHandler } from './middlewares/index.js'
 import apiRouter from './routes/index.js'
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 
 const app = express()
 
 // Middlewares globais
 app.use(cors(corsConfig))
-app.use(express.json())
+app.use(express.json({ limit: '32kb' }))
 app.use(requestLogger)
 
 // Rota raiz informativa
@@ -31,6 +33,12 @@ app.get('/', (_req: Request, res: Response) => {
 
 // Roteador principal
 app.use('/api', apiRouter)
+
+const frontendDir = fileURLToPath(new URL('../../frontend/dist/', import.meta.url))
+if (existsSync(`${frontendDir}/index.html`)) {
+  app.use(express.static(frontendDir))
+  app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => res.sendFile(`${frontendDir}/index.html`))
+}
 
 // 404 Handler
 app.use((_req: Request, res: Response) => {

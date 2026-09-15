@@ -9,9 +9,15 @@
     "build:frontend": "npm --prefix frontend run build",
     "build:backend": "npm --prefix backend run build",
     "build": "npm run build:backend && npm run build:frontend",
-    "start": "npm --prefix backend run start"
+    "start": "npm --prefix backend run start",
+    "install:all": "npm ci && npm --prefix backend ci && npm --prefix frontend ci",
+    "check": "npm --prefix backend run check && npm --prefix frontend run check",
+    "test": "npm --prefix backend test"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^10.0.5"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

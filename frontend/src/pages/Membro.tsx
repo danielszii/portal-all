@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
-import { useParams, NavLink, Navigate } from 'react-router'
+import { useResource } from '@/hooks/useResource'
+import LoadState from '@/components/LoadState'
+import { useState, useCallback } from 'react'
+import { useParams, NavLink } from 'react-router'
 import { ArrowLeft, ArrowUpRight } from 'lucide-react'
-import { cadeiras, type Cadeira } from '@/data/cadeiras'
-import type { ProducaoLiteraria } from '@/data/cadeiras'
+import type { Cadeira } from '@/types'
+import type { ProducaoLiteraria } from '@/types'
 import { fetchCadeiraByNumber } from '@/services/api'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 
@@ -10,7 +12,7 @@ function TextoLiterario({ item }: { item: ProducaoLiteraria }) {
   const [aberto, setAberto] = useState(false)
   return (
     <div className="producao-item">
-      <div className="producao-header" onClick={() => setAberto(o => !o)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && setAberto(o => !o)}>
+      <div className="producao-header" onClick={() => setAberto(o => !o)} role="button" aria-expanded={aberto} tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAberto(o => !o) } }}>
         <div>
           <span className="producao-tipo">{item.tipo}</span>
           <h4 className="producao-titulo">{item.titulo}</h4>
@@ -30,30 +32,11 @@ function TextoLiterario({ item }: { item: ProducaoLiteraria }) {
 
 export default function Membro() {
   const { numero } = useParams<{ numero: string }>()
-  const localInitial = cadeiras.find(c => c.number === numero?.toUpperCase()) || null
-  const [chair, setChair] = useState<Cadeira | null>(localInitial)
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (!numero) return
-    let active = true
-    setLoading(true)
-
-    fetchCadeiraByNumber(numero)
-      .then(data => {
-        if (active && data) setChair(data)
-      })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
-
-    return () => {
-      active = false
-    }
-  }, [numero])
-
-  if (!loading && !chair) return <Navigate to="/cadeiras" replace />
-  if (!chair) return null
+  const load = useCallback((signal: AbortSignal) => fetchCadeiraByNumber(numero ?? '', signal), [numero])
+  const state = useResource<Cadeira | null>(load, null)
+  if (state.loading || state.error) return <main><LoadState {...state} /></main>
+  const chair = state.data
+  if (!chair) return <main className="wrap"><h1 className="page-title">Cadeira não encontrada</h1><NavLink className="text-link" to="/cadeiras">Voltar às cadeiras</NavLink></main>
 
   const isVaga = chair.status === 'Vaga'
   const isMemoriam = chair.status === 'In memoriam'

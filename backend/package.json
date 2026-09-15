@@ -5,11 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/server.js",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate",
+    "db:deploy": "prisma migrate deploy",
+    "db:import-sqlite": "tsx prisma/import-sqlite.ts",
+    "check": "tsc -p tsconfig.check.json",
+    "test": "node --import tsx --test tests/*.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

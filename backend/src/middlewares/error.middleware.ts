@@ -2,11 +2,17 @@ import { Request, Response, NextFunction } from 'express'
 import { AppError } from '../errors/app.error.js'
 
 export const errorHandler = (
-  err: any,
+  err: unknown,
   _req: Request,
   res: Response,
   _next: NextFunction
 ): void => {
+  if (err && typeof err === 'object' && 'type' in err) {
+    if (err.type === 'entity.parse.failed' || err.type === 'entity.too.large') {
+      res.status(err.type === 'entity.too.large' ? 413 : 400).json({ error: err.type === 'entity.too.large' ? 'Mensagem maior que o limite permitido.' : 'Corpo JSON inválido.' })
+      return
+    }
+  }
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       status: 'error',

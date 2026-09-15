@@ -1,8 +1,8 @@
 export interface CriarContatoDTO {
-  nome: string
-  email: string
-  assunto?: string
-  mensagem: string
+  nome: unknown
+  email: unknown
+  assunto?: unknown
+  mensagem: unknown
 }
 
 export interface ContatoRespostaDTO {

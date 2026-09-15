@@ -1,18 +1,22 @@
+import { useResource } from '@/hooks/useResource'
+import LoadState from '@/components/LoadState'
+import { useCallback } from 'react'
+import { fetchCadeiras, fetchAcervo, fetchNoticias, fetchInstituicao } from '@/services/api'
 import { ArrowUpRight } from 'lucide-react'
 import { NavLink } from 'react-router'
 import heroImg from '@/imports/Academia_Limoeirense_de_Letras_-_Full_HD.png'
-import { cadeiras } from '@/data/cadeiras'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 
-const chairs = cadeiras.filter(c => ['I', 'IV', 'VII', 'XII'].includes(c.number))
-
-const publications = [
-  { title: 'Cadernos do Vale', tomo: 'Tomo VII', year: '2024', color: 'navy', author: 'Vários autores' },
-  { title: 'A palavra e o tempo', tomo: 'Antologia I', year: '2023', color: 'ochre', author: 'Comissão Editorial' },
-  { title: 'Revista da A.L.L.', tomo: 'N.º 12', year: '2022', color: 'ink', author: 'Academia Limoeirense' },
-]
-
 export default function Home() {
+  const load = useCallback(async (signal: AbortSignal) => {
+    const [cadeiras, acervo, noticias, instituicao] = await Promise.all([fetchCadeiras(undefined, undefined, signal), fetchAcervo(undefined, undefined, signal), fetchNoticias(undefined, undefined, signal), fetchInstituicao(signal)])
+    return { cadeiras, acervo, noticias, instituicao }
+  }, [])
+  const state = useResource(load, { cadeiras: [], acervo: [], noticias: [], instituicao: { info: null, gestao: null } })
+  if (state.loading || state.error) return <main><LoadState {...state} /></main>
+  const chairs = state.data.cadeiras.filter(c => c.status !== 'Vaga').slice(0, 4)
+  const publications = state.data.acervo.slice(0, 3)
+
   return (
     <main>
       {/* Hero */}
@@ -43,13 +47,13 @@ export default function Home() {
           <div>
             <p className="lead">Desde sua fundação, a A.L.L. trabalha para que a literatura continue sendo encontro, documento e possibilidade.</p>
             <p>Em torno de seus patronos e acadêmicos, a instituição guarda histórias, promove o pensamento e abre espaço para as novas vozes do Ceará.</p>
-            <NavLink className="text-link" to="/academia">Leia nosso estatuto <ArrowUpRight size={15} /></NavLink>
+            <NavLink className="text-link" to="/acervo?q=estatuto">Leia nosso estatuto <ArrowUpRight size={15} /></NavLink>
           </div>
         </div>
         <div className="facts">
-          <div><strong>28</strong><span>anos de<br />trajetória</span></div>
-          <div><strong>40</strong><span>cadeiras<br />acadêmicas</span></div>
-          <div><strong>12</strong><span>publicações<br />no acervo</span></div>
+          <div><strong>{state.data.instituicao.info?.fundacaoAno ? new Date().getFullYear() - state.data.instituicao.info.fundacaoAno : '—'}</strong><span>anos de<br />trajetória</span></div>
+          <div><strong>{state.data.cadeiras.length}</strong><span>cadeiras<br />acadêmicas</span></div>
+          <div><strong>{state.data.acervo.length}</strong><span>publicações<br />no acervo</span></div>
           <div className="fact-note">"A palavra permanece<br />quando tudo passa."</div>
         </div>
       </section>
@@ -98,7 +102,7 @@ export default function Home() {
         </div>
         <div className="bookshelf">
           {publications.map((book) => (
-            <article className="book-entry" key={book.title}>
+            <article className="book-entry" key={book.id}>
               <div className={`book-cover ${book.color}`}>
                 <span>A.L.L.</span>
                 <strong>{book.title}</strong>
@@ -110,8 +114,8 @@ export default function Home() {
                 <h3>{book.title}</h3>
                 <p>{book.author}<br />Edição da Academia Limoeirense de Letras</p>
                 <div className="book-links">
-                  <NavLink to="/acervo">[ Ler edição em PDF ]</NavLink>
-                  <NavLink to="/acervo">[ Ficha técnica ]</NavLink>
+                  <NavLink to={`/acervo?q=${encodeURIComponent(book.title)}`}>[ Ler edição em PDF ]</NavLink>
+                  <NavLink to={`/acervo?q=${encodeURIComponent(book.title)}`}>[ Ficha técnica ]</NavLink>
                 </div>
               </div>
             </article>
@@ -123,21 +127,11 @@ export default function Home() {
       <section className="news-section wrap">
         <div className="section-rule"><span>—</span><span>Últimas notícias</span><span>—</span></div>
         <div className="news-list">
-          <article>
-            <time>28 AGO 2026</time>
-            <h3>A.L.L. recebe novos membros em sessão solene</h3>
-            <NavLink to="/noticias">Ler notícia <ArrowUpRight size={14} /></NavLink>
-          </article>
-          <article>
-            <time>14 JUL 2026</time>
-            <h3>Aberta a chamada para a Antologia do Vale</h3>
-            <NavLink to="/noticias">Ler notícia <ArrowUpRight size={14} /></NavLink>
-          </article>
-          <article>
-            <time>02 JUN 2026</time>
-            <h3>Acervo digital ganha nova coleção de manuscritos</h3>
-            <NavLink to="/noticias">Ler notícia <ArrowUpRight size={14} /></NavLink>
-          </article>
+          {state.data.noticias.slice(0, 3).map(n => <article key={n.id}>
+            <time>{n.data}</time><h3>{n.titulo}</h3>
+            <NavLink to={`/noticias?id=${n.id}`}>Ler notícia <ArrowUpRight size={14} /></NavLink>
+          </article>)}
+          {state.data.noticias.length === 0 && <p>Nenhuma notícia publicada.</p>}
         </div>
       </section>
     </main>

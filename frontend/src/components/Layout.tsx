@@ -1,9 +1,12 @@
+import { useResource } from '@/hooks/useResource'
+import { fetchInstituicao } from '@/services/api'
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router'
 import { Menu, X, Search } from 'lucide-react'
 import logoSrc from '@/imports/Logo_Vetorizada_A.L.L_sem_fundo.svg'
 
 export default function Layout() {
+  const institution = useResource(fetchInstituicao, { info: null, gestao: null })
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
@@ -11,7 +14,8 @@ export default function Layout() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    if (query.trim()) navigate(`/noticias?q=${encodeURIComponent(query.trim())}`)
+    navigate(`/busca?q=${encodeURIComponent(query.trim())}`)
+    close()
   }
 
   const navLinks = [
@@ -79,6 +83,10 @@ export default function Layout() {
 
         {/* ── Barra de navegação ── */}
         <nav className={`main-nav-bar ${menuOpen ? 'is-open' : ''}`} aria-label="Navegação principal">
+          <form className="mobile-search wrap" role="search" onSubmit={handleSearch}>
+            <input type="search" aria-label="Buscar no portal" placeholder="Buscar no portal…" value={query} onChange={e => setQuery(e.target.value)} />
+            <button type="submit" aria-label="Pesquisar"><Search size={18} /></button>
+          </form>
           <div className="main-nav-inner wrap">
             {navLinks.map(([label, path]) => (
               <NavLink
@@ -105,11 +113,11 @@ export default function Layout() {
           </div>
           <div>
             <p className="footer-label">Visite-nos</p>
-            <p>Rua Coronel Serafim Chaves, 284<br />Centro · Limoeiro do Norte — CE<br />CEP 62930-000</p>
+            <p>{institution.data.info?.endereco ?? 'Consulte a página de contato.'}</p>
           </div>
           <div>
             <p className="footer-label">Institucional</p>
-            <NavLink to="/academia">Estatuto social</NavLink>
+            <NavLink to="/acervo?q=estatuto">Estatuto social</NavLink>
             <NavLink to="/contato">Fale com a Academia</NavLink>
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a>
           </div>

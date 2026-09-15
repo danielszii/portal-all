@@ -1,6 +1,6 @@
 import { AcervoItem } from '../types/index.js'
 
-export const acervoData: AcervoItem[] = [
+export const acervoData: Omit<AcervoItem, 'id'>[] = [
   {
     title: 'Cadernos do Vale',
     tomo: 'Tomo VII',

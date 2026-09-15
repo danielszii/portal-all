@@ -1,32 +1,16 @@
-import { acervoData } from '../data/acervo.data.js'
-import { AcervoItem } from '../types/index.js'
-
+import { prisma } from '../db/prisma.js'
+import type { AcervoItem } from '../types/index.js'
+import { mapAcervo } from './mappers.js'
 export interface IAcervoRepository {
   findAll(tipo?: string, search?: string): Promise<AcervoItem[]>
 }
-
-export class MemoryAcervoRepository implements IAcervoRepository {
-  private items: AcervoItem[] = [...acervoData]
-
+export class PrismaAcervoRepository implements IAcervoRepository {
   async findAll(tipo?: string, search?: string): Promise<AcervoItem[]> {
-    let result = [...this.items]
-
-    if (tipo && tipo !== 'Todos') {
-      result = result.filter(item => item.type.toLowerCase() === tipo.toLowerCase())
-    }
-
-    if (search) {
-      const q = search.toLowerCase()
-      result = result.filter(item =>
-        item.title.toLowerCase().includes(q) ||
-        item.author.toLowerCase().includes(q) ||
-        item.desc.toLowerCase().includes(q) ||
-        item.tomo.toLowerCase().includes(q)
-      )
-    }
-
-    return result
+    return (await prisma.acervoItem.findMany({ where: {
+      status: 'PUBLICADO',
+      ...(tipo && tipo !== 'Todos' ? { categoria: { equals: tipo, mode: 'insensitive' as const } } : {}),
+      ...(search?.trim() ? { OR: ['titulo', 'autoriaTexto', 'descricao', 'edicao'].map(key => ({ [key]: { contains: search.trim(), mode: 'insensitive' } })) } : {}),
+    }, orderBy: [{ ano: { sort: 'desc', nulls: 'last' } }, { titulo: 'asc' }] })).map(mapAcervo)
   }
 }
-
-export const acervoRepository = new MemoryAcervoRepository()
+export const acervoRepository = new PrismaAcervoRepository()

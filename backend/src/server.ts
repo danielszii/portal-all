@@ -1,5 +1,8 @@
 import app from './app.js'
 import { envConfig } from './config/env.config.js'
+import { prisma } from './db/prisma.js'
+
+await prisma.$connect()
 
 const server = app.listen(envConfig.port, () => {
   console.log(`🏛️  Servidor da Academia Limoeirense de Letras (A.L.L.) ativo!`)
@@ -10,7 +13,8 @@ const server = app.listen(envConfig.port, () => {
 
 process.on('SIGTERM', () => {
   console.log('Encerrando servidor gracefully...')
-  server.close(() => {
+  server.close(async () => {
+    await prisma.$disconnect()
     process.exit(0)
   })
 })

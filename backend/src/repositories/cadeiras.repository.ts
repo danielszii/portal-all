@@ -1,40 +1,24 @@
-import { cadeirasData } from '../data/cadeiras.data.js'
-import { Cadeira } from '../types/index.js'
-import { FiltroCadeirasDTO } from '../dtos/cadeira.dto.js'
-
+import { prisma } from '../db/prisma.js'
+import type { Cadeira } from '../types/index.js'
+import type { FiltroCadeirasDTO } from '../dtos/cadeira.dto.js'
+import { cadeiraInclude, mapCadeira, numeroCadeira } from './mappers.js'
 export interface ICadeirasRepository {
   findAll(filters?: FiltroCadeirasDTO): Promise<Cadeira[]>
   findByNumber(number: string): Promise<Cadeira | null>
 }
-
-export class MemoryCadeirasRepository implements ICadeirasRepository {
-  private cadeiras: Cadeira[] = [...cadeirasData]
-
+export class PrismaCadeirasRepository implements ICadeirasRepository {
   async findAll(filters?: FiltroCadeirasDTO): Promise<Cadeira[]> {
-    let result = [...this.cadeiras]
-
-    if (filters?.status && filters.status !== 'Todos') {
-      result = result.filter(c => c.status.toLowerCase() === filters.status!.toLowerCase())
-    }
-
-    if (filters?.search) {
-      const q = filters.search.toLowerCase()
-      result = result.filter(c =>
-        c.number.toLowerCase() === q ||
-        c.holder.toLowerCase().includes(q) ||
-        c.patron.toLowerCase().includes(q) ||
-        c.founder.toLowerCase().includes(q)
-      )
-    }
-
-    return result
+    const rows = await prisma.cadeira.findMany({ include: cadeiraInclude, orderBy: { numero: 'asc' } })
+    const q = filters?.search?.trim().toLowerCase()
+    return rows.map(mapCadeira).filter(c =>
+      (!filters?.status || filters.status === 'Todos' || c.status.toLowerCase() === filters.status.toLowerCase()) &&
+      (!q || [c.number, c.holder, c.patron, c.founder].some(v => v.toLowerCase().includes(q))))
   }
-
-  async findByNumber(numero: string): Promise<Cadeira | null> {
-    const clean = numero.trim().toUpperCase()
-    const found = this.cadeiras.find(c => c.number.toUpperCase() === clean)
-    return found || null
+  async findByNumber(number: string): Promise<Cadeira | null> {
+    const numero = numeroCadeira(number)
+    if (!numero) return null
+    const row = await prisma.cadeira.findUnique({ where: { numero }, include: cadeiraInclude })
+    return row ? mapCadeira(row) : null
   }
 }
-
-export const cadeirasRepository = new MemoryCadeirasRepository()
+export const cadeirasRepository = new PrismaCadeirasRepository()

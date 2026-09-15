@@ -1,108 +1,34 @@
-import { cadeiras as fallbackCadeiras, type Cadeira } from '@/data/cadeiras'
-import { eventos as fallbackEventos, galeriaFotos as fallbackGaleria, type Evento, type GaleriaFoto } from '@/data/agenda'
+import type { Cadeira, Evento, GaleriaFoto, Noticia, AcervoItem, ContatoForm } from '@/types'
 
-const API_BASE = '/api'
-
-export async function fetchCadeiras(status?: string, q?: string): Promise<Cadeira[]> {
-  try {
-    const params = new URLSearchParams()
-    if (status && status !== 'Todos') params.append('status', status)
-    if (q) params.append('q', q)
-
-    const res = await fetch(`${API_BASE}/cadeiras?${params.toString()}`)
-    if (!res.ok) throw new Error('Falha ao obter cadeiras da API')
-    return await res.json()
-  } catch (err) {
-    console.warn('API indisponível, utilizando dados locais de cadeiras:', err)
-    let list = fallbackCadeiras
-    if (status && status !== 'Todos') list = list.filter(c => c.status === status)
-    if (q) {
-      const query = q.toLowerCase()
-      list = list.filter(c => c.holder.toLowerCase().includes(query) || c.patron.toLowerCase().includes(query))
-    }
-    return list
-  }
+export class ApiError extends Error {
+  constructor(message: string, public status: number) { super(message) }
 }
-
-export async function fetchCadeiraByNumber(numero: string): Promise<Cadeira | null> {
-  try {
-    const res = await fetch(`${API_BASE}/cadeiras/${encodeURIComponent(numero)}`)
-    if (!res.ok) throw new Error(`Cadeira ${numero} não encontrada`)
-    return await res.json()
-  } catch (err) {
-    console.warn(`API indisponível para cadeira ${numero}, utilizando dados locais:`, err)
-    const chair = fallbackCadeiras.find(c => c.number.toUpperCase() === numero.toUpperCase())
-    return chair || null
-  }
-}
-
-export async function fetchEventos(tipo?: string): Promise<Evento[]> {
-  try {
-    const params = new URLSearchParams()
-    if (tipo && tipo !== 'Todos') params.append('tipo', tipo)
-
-    const res = await fetch(`${API_BASE}/eventos?${params.toString()}`)
-    if (!res.ok) throw new Error('Falha ao obter eventos da API')
-    return await res.json()
-  } catch (err) {
-    console.warn('API indisponível, utilizando dados locais de eventos:', err)
-    if (tipo && tipo !== 'Todos') {
-      return fallbackEventos.filter(e => e.tipo === tipo)
-    }
-    return fallbackEventos
-  }
-}
-
-export async function fetchGaleria(): Promise<GaleriaFoto[]> {
-  try {
-    const res = await fetch(`${API_BASE}/eventos/galeria`)
-    if (!res.ok) throw new Error('Falha ao obter galeria da API')
-    return await res.json()
-  } catch (err) {
-    console.warn('API indisponível, utilizando dados locais da galeria:', err)
-    return fallbackGaleria
-  }
-}
-
-export async function fetchNoticias(categoria?: string, q?: string) {
-  try {
-    const params = new URLSearchParams()
-    if (categoria && categoria !== 'Todas') params.append('categoria', categoria)
-    if (q) params.append('q', q)
-
-    const res = await fetch(`${API_BASE}/noticias?${params.toString()}`)
-    if (!res.ok) throw new Error('Falha ao obter notícias da API')
-    return await res.json()
-  } catch (err) {
-    console.warn('API indisponível para notícias:', err)
-    return []
-  }
-}
-
-export async function fetchAcervo(tipo?: string, q?: string) {
-  try {
-    const params = new URLSearchParams()
-    if (tipo && tipo !== 'Todos') params.append('tipo', tipo)
-    if (q) params.append('q', q)
-
-    const res = await fetch(`${API_BASE}/acervo?${params.toString()}`)
-    if (!res.ok) throw new Error('Falha ao obter acervo da API')
-    return await res.json()
-  } catch (err) {
-    console.warn('API indisponível para acervo:', err)
-    return []
-  }
-}
-
-export async function postContato(dados: { nome: string; email: string; assunto: string; mensagem: string }) {
-  const res = await fetch(`${API_BASE}/contato`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(dados),
-  })
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(`/api${path}`, { ...init, signal: init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000) })
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.error || 'Erro ao enviar mensagem de contato.')
+    const body = await res.json().catch(() => null)
+    throw new ApiError(typeof body?.error === 'string' ? body.error : 'Não foi possível acessar o servidor. Tente novamente.', res.status)
   }
-  return await res.json()
+  return res.json() as Promise<T>
 }
+const query = (params: Record<string, string | undefined>) => {
+  const result = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) if (value?.trim()) result.set(key, value.trim())
+  return result.toString()
+}
+export const fetchCadeiras = (status?: string, q?: string, signal?: AbortSignal) => request<Cadeira[]>(`/cadeiras?${query({ status, q })}`, { signal })
+export async function fetchCadeiraByNumber(numero: string, signal?: AbortSignal): Promise<Cadeira | null> {
+  try { return await request<Cadeira>(`/cadeiras/${encodeURIComponent(numero)}`, { signal }) }
+  catch (error) { if (error instanceof ApiError && error.status === 404) return null; throw error }
+}
+export const fetchEventos = (tipo?: string, signal?: AbortSignal) => request<Evento[]>(`/eventos?${query({ tipo })}`, { signal })
+export const fetchGaleria = (signal?: AbortSignal) => request<GaleriaFoto[]>('/eventos/galeria', { signal })
+export const fetchNoticias = (categoria?: string, q?: string, signal?: AbortSignal) => request<Noticia[]>(`/noticias?${query({ categoria, q })}`, { signal })
+export const fetchAcervo = (tipo?: string, q?: string, signal?: AbortSignal) => request<AcervoItem[]>(`/acervo?${query({ tipo, q })}`, { signal })
+export const postContato = (dados: ContatoForm) => request<{ sucesso: boolean; mensagem: string; id: string }>('/contato', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) })
+
+export type InstituicaoResponse = {
+  info: { nome: string; historia: string; missao: string; endereco: string | null; email: string | null; telefone: string | null; fundacaoAno: number | null; sedeTexto: string | null; trajetoriaTexto: string | null; horarioAtendimento: string | null } | null
+  gestao: { inicioAno: number; fimAno: number | null; diretoria: { cargo: string; nome: string; posse: string }[] } | null
+}
+export const fetchInstituicao = (signal?: AbortSignal) => request<InstituicaoResponse>('/instituicao', { signal })

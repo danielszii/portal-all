@@ -8,6 +8,7 @@ import Acervo from './pages/Acervo'
 import Agenda from './pages/Agenda'
 import Noticias from './pages/Noticias'
 import Contato from './pages/Contato'
+import Busca from './pages/Busca'
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
       { path: 'agenda', Component: Agenda },
       { path: 'noticias', Component: Noticias },
       { path: 'contato', Component: Contato },
+      { path: 'busca', Component: Busca },
     ],
   },
 ])

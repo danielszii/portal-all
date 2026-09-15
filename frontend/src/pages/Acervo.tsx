@@ -1,24 +1,21 @@
-import { useState } from 'react'
+import { fetchAcervo } from '@/services/api'
+import type { AcervoItem } from '@/types'
+import { useSearchParams } from 'react-router'
+import { useDialog } from '@/hooks/useDialog'
+import { useResource } from '@/hooks/useResource'
+import LoadState from '@/components/LoadState'
+import { useState, useCallback } from 'react'
 import { ArrowUpRight, Search, X, Download } from 'lucide-react'
 
-const publications = [
-  { title: 'Cadernos do Vale', tomo: 'Tomo VII', year: '2024', color: 'navy', author: 'Vários autores', type: 'Caderno', pages: '184', desc: 'Reunião de poemas, crônicas e contos de acadêmicos e convidados, com destaque para a nova geração de escritores do Vale do Jaguaribe.', pdf: 'https://www.africau.edu/images/general/sample.pdf' },
-  { title: 'A palavra e o tempo', tomo: 'Antologia I', year: '2023', color: 'ochre', author: 'Comissão Editorial', type: 'Antologia', pages: '312', desc: 'Seleção histórica da produção literária dos membros da Academia desde sua fundação, organizada cronologicamente.', pdf: 'https://www.africau.edu/images/general/sample.pdf' },
-  { title: 'Revista da A.L.L.', tomo: 'N.º 12', year: '2022', color: 'ink', author: 'Academia Limoeirense', type: 'Revista', pages: '96', desc: 'Publicação anual com artigos, ensaios e notícias institucionais. Esta edição comemora os 24 anos da Academia.', pdf: 'https://www.africau.edu/images/general/sample.pdf' },
-  { title: 'Cadernos do Vale', tomo: 'Tomo VI', year: '2021', color: 'navy', author: 'Vários autores', type: 'Caderno', pages: '168', desc: 'Edição especial dedicada à poesia de resistência e à memória dos patronos literários da instituição.', pdf: 'https://www.africau.edu/images/general/sample.pdf' },
-  { title: 'Memórias do Jaguaribe', tomo: 'Vol. II', year: '2020', color: 'green', author: 'Antônio Freitas (org.)', type: 'Livro', pages: '248', desc: 'Compilação de relatos, memórias e documentos históricos sobre a cultura e a literatura do Vale do Jaguaribe.', pdf: 'https://www.africau.edu/images/general/sample.pdf' },
-  { title: 'Estatuto Social da A.L.L.', tomo: 'Edição 2019', year: '2019', color: 'ink', author: 'Academia Limoeirense', type: 'Estatuto', pages: '32', desc: 'Documento oficial com o regimento interno, normas de admissão, estrutura diretiva e obrigações dos acadêmicos da A.L.L.', pdf: 'https://www.africau.edu/images/general/sample.pdf' },
-  { title: 'Discurso de Posse — Presidência 2022', tomo: 'Gestão 2022–2026', year: '2022', color: 'ochre', author: 'Francisco de Assis Moura', type: 'Discurso', pages: '12', desc: 'Discurso proferido na cerimônia de posse da presidência 2022–2026. Texto integral com notas da sessão solene.', pdf: 'https://www.africau.edu/images/general/sample.pdf' },
-  { title: 'Revista da A.L.L.', tomo: 'N.º 10', year: '2019', color: 'red', author: 'Academia Limoeirense', type: 'Revista', pages: '88', desc: 'Edição de aniversário de 21 anos, com balanço das publicações e homenagens aos fundadores da casa.', pdf: 'https://www.africau.edu/images/general/sample.pdf' },
-]
 
 const tipos = ['Todos', 'Caderno', 'Antologia', 'Revista', 'Livro', 'Discurso', 'Estatuto']
 
-type Pub = typeof publications[0]
+type Pub = AcervoItem
 
 function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
+  const dialog = useDialog(onClose)
   return (
-    <div className="pdf-overlay" role="dialog" aria-modal="true" aria-label={`Visualizar: ${pub.title}`} onClick={onClose}>
+    <div ref={dialog} tabIndex={-1} className="pdf-overlay" role="dialog" aria-modal="true" aria-label={`Visualizar: ${pub.title}`} onClick={onClose}>
       <div className="pdf-modal" onClick={e => e.stopPropagation()}>
         <div className="pdf-modal-header">
           <div>
@@ -55,10 +52,16 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
 }
 
 export default function Acervo() {
-  const [busca, setBusca] = useState('')
+  const [params, setParams] = useSearchParams()
+  const busca = params.get('q') ?? ''
+  const setBusca = (q: string) => setParams(q ? { q } : {}, { replace: true })
   const [tipo, setTipo] = useState('Todos')
   const [pdfAberto, setPdfAberto] = useState<Pub | null>(null)
 
+  const load = useCallback((signal: AbortSignal) => fetchAcervo(undefined, undefined, signal), [])
+  const state = useResource<Pub[]>(load, [])
+  if (state.loading || state.error) return <main><LoadState {...state} /></main>
+  const publications = state.data
   const lista = publications.filter(p => {
     const matchTipo = tipo === 'Todos' || p.type === tipo
     const matchBusca = !busca || [p.title, p.author, p.year, p.tomo, p.type].some(v => v.toLowerCase().includes(busca.toLowerCase()))
@@ -104,7 +107,7 @@ export default function Acervo() {
 
         <div className="catalog-meta">
           <span>{lista.length} publicaç{lista.length !== 1 ? 'ões' : 'ão'} encontrada{lista.length !== 1 ? 's' : ''}</span>
-          <span>Acervo atualizado em set. 2026</span>
+          <span>Acesso público e gratuito</span>
         </div>
 
         {lista.length === 0 ? (
@@ -116,7 +119,7 @@ export default function Acervo() {
         ) : (
           <div className="archive-grid">
             {lista.map(book => (
-              <article className="archive-book" key={book.title + book.tomo}>
+              <article className="archive-book" key={book.id}>
                 <div className={`archive-cover ${book.color}`}>
                   <span>A.L.L.</span>
                   <strong>{book.title}</strong>
