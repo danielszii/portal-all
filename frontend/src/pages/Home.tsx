@@ -2,9 +2,9 @@ import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import { useCallback } from 'react'
 import { fetchCadeiras, fetchAcervo, fetchNoticias, fetchInstituicao } from '@/services/api'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowRight, ArrowUpRight } from 'lucide-react'
 import { NavLink } from 'react-router'
-import heroImg from '@/imports/Academia_Limoeirense_de_Letras_-_Full_HD.png'
+import heroImg from '@/imports/academialetras.png'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 
 export default function Home() {
@@ -26,14 +26,17 @@ export default function Home() {
           <div className="hero-overlay" />
         </div>
         <div className="hero-copy">
-          <h1>A cidade que<br /><em>se escreve</em></h1>
-          <p className="hero-intro">A Academia Limoeirense de Letras reúne, preserva e celebra a memória literária do Vale do Jaguaribe.</p>
+          <p className="hero-location"><span /> Limoeiro do Norte · CE</p>
+          <h1>Literatura<br />que <em>permanece.</em></h1>
+          <p className="hero-intro">A Academia Limoeirense de Letras cultivando a memória, a cultura e as palavras de Limoeiro do Norte.</p>
+          <NavLink className="hero-cta" to="/academia">Conheça a Academia <ArrowRight size={15} /></NavLink>
           <div className="quote">
             <span className="ornament">❧</span>
             <p>"A literatura é a memória de um povo quando o tempo já não consegue falar."</p>
             <small>— Caderno de notas da Academia</small>
           </div>
         </div>
+        <div className="hero-index" aria-hidden="true"><strong>01</strong><span /><small>02</small><small>03</small></div>
         <figcaption className="hero-caption">
           <span>Fig. 01</span> — Sede da Academia Limoeirense de Letras, Limoeiro do Norte — CE.
         </figcaption>

@@ -1,7 +1,7 @@
 import { useResource } from '@/hooks/useResource'
 import { fetchInstituicao } from '@/services/api'
-import { useState } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router'
 import { Menu, X, Search } from 'lucide-react'
 import logoSrc from '@/imports/Logo_Vetorizada_A.L.L_sem_fundo.svg'
 
@@ -9,8 +9,14 @@ export default function Layout() {
   const institution = useResource(fetchInstituicao, { info: null, gestao: null })
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const location = useLocation()
   const navigate = useNavigate()
   const close = () => setMenuOpen(false)
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [location.pathname, location.search])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,23 +43,22 @@ export default function Layout() {
             <NavLink to="/" className="brand-mark" onClick={close} aria-label="A.L.L. — página inicial">
               <img src={logoSrc} alt="" className="brand-logo" aria-hidden="true" />
             </NavLink>
-            <NavLink to="/" className="brand-name" onClick={close}>
-              <span className="brand-sigla">A.L.L.</span>
-              <span className="brand-full">Academia Limoeirense<br />de Letras</span>
-            </NavLink>
           </div>
 
           <div className="header-actions">
-            <form className="header-search" role="search" onSubmit={handleSearch}>
+            <form className="header-search" role="search" onSubmit={handleSearch} onClick={() => searchInputRef.current?.focus()}>
               <Search size={14} strokeWidth={1.5} />
               <input
                 type="search"
+                ref={searchInputRef}
                 placeholder="Buscar no portal…"
                 aria-label="Buscar"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
               />
-              <button type="submit" style={{ display: 'none' }} />
+              <button type="submit" aria-label="Pesquisar no portal">
+                <span>Buscar</span>
+              </button>
             </form>
             <div className="header-social">
               <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
@@ -103,7 +108,9 @@ export default function Layout() {
         </nav>
       </header>
 
-      <Outlet />
+      <div className="page-shell">
+        <Outlet />
+      </div>
 
       <footer id="contato-rodape" className="site-footer">
         <div className="wrap footer-grid">
