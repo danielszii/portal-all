@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router'
 import { useDialog } from '@/hooks/useDialog'
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { ArrowUpRight, Search, X, Download } from 'lucide-react'
 
 
@@ -54,12 +54,28 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
 export default function Acervo() {
   const [params, setParams] = useSearchParams()
   const busca = params.get('q') ?? ''
+  const leituraId = params.get('ler')
   const setBusca = (q: string) => setParams(q ? { q } : {}, { replace: true })
   const [tipo, setTipo] = useState('Todos')
   const [pdfAberto, setPdfAberto] = useState<Pub | null>(null)
 
   const load = useCallback((signal: AbortSignal) => fetchAcervo(undefined, undefined, signal), [])
   const state = useResource<Pub[]>(load, [])
+
+  useEffect(() => {
+    if (!leituraId || state.loading || state.error) return
+    const publication = state.data.find(item => String(item.id) === leituraId)
+    if (publication) setPdfAberto(publication)
+  }, [leituraId, state.data, state.error, state.loading])
+
+  const closePdf = () => {
+    setPdfAberto(null)
+    if (!leituraId) return
+    const nextParams = new URLSearchParams(params)
+    nextParams.delete('ler')
+    setParams(nextParams, { replace: true })
+  }
+
   if (state.loading || state.error) return <main><LoadState {...state} /></main>
   const publications = state.data
   const lista = publications.filter(p => {
@@ -70,7 +86,7 @@ export default function Acervo() {
 
   return (
     <main>
-      {pdfAberto && <PdfModal pub={pdfAberto} onClose={() => setPdfAberto(null)} />}
+      {pdfAberto && <PdfModal pub={pdfAberto} onClose={closePdf} />}
 
       <section className="archive-hero wrap">
         <p className="eyebrow">Biblioteca digital</p>

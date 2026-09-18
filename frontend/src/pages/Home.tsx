@@ -1,13 +1,37 @@
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { fetchCadeiras, fetchAcervo, fetchNoticias, fetchInstituicao } from '@/services/api'
 import { ArrowRight, ArrowUpRight } from 'lucide-react'
 import { NavLink } from 'react-router'
 import heroImg from '@/imports/academialetras.png'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 
+const heroSlides = [
+  {
+    title: 'As letras permanecem',
+    emphasis: 'para sempre.',
+    description: 'A Academia Limoeirense de Letras cultivando a memória, a cultura e as palavras de Limoeiro do Norte.',
+  },
+  {
+    title: 'A memória encontra',
+    emphasis: 'novas vozes.',
+    description: 'Um espaço de encontro entre gerações, onde autores, leitores e pesquisadores mantêm viva a literatura regional.',
+  },
+  {
+    title: 'Limoeiro escreve',
+    emphasis: 'sua história.',
+    description: 'Obras, registros e trajetórias que preservam a identidade cultural do Vale do Jaguaribe para o futuro.',
+  },
+]
+
 export default function Home() {
+  const [currentHero, setCurrentHero] = useState(0)
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentHero(current => (current + 1) % heroSlides.length), 6500)
+    return () => window.clearInterval(timer)
+  }, [])
+
   const load = useCallback(async (signal: AbortSignal) => {
     const [cadeiras, acervo, noticias, instituicao] = await Promise.all([fetchCadeiras(undefined, undefined, signal), fetchAcervo(undefined, undefined, signal), fetchNoticias(undefined, undefined, signal), fetchInstituicao(signal)])
     return { cadeiras, acervo, noticias, instituicao }
@@ -26,38 +50,54 @@ export default function Home() {
           <div className="hero-overlay" />
         </div>
         <div className="hero-copy">
-          <p className="hero-location"><span /> Limoeiro do Norte · CE</p>
-          <h1>Literatura<br />que <em>permanece.</em></h1>
-          <p className="hero-intro">A Academia Limoeirense de Letras cultivando a memória, a cultura e as palavras de Limoeiro do Norte.</p>
-          <NavLink className="hero-cta" to="/academia">Conheça a Academia <ArrowRight size={15} /></NavLink>
+          <div className="hero-message" key={currentHero}>
+            <h1>{heroSlides[currentHero].title}<br /><em>{heroSlides[currentHero].emphasis}</em></h1>
+            <p className="hero-intro">{heroSlides[currentHero].description}</p>
+            <NavLink className="hero-cta" to="/academia">Conheça a Academia <ArrowRight size={15} /></NavLink>
+          </div>
           <div className="quote">
-            <span className="ornament">❧</span>
             <p>"A literatura é a memória de um povo quando o tempo já não consegue falar."</p>
             <small>— Caderno de notas da Academia</small>
           </div>
         </div>
-        <div className="hero-index" aria-hidden="true"><strong>01</strong><span /><small>02</small><small>03</small></div>
-        <figcaption className="hero-caption">
-          <span>Fig. 01</span> — Sede da Academia Limoeirense de Letras, Limoeiro do Norte — CE.
-        </figcaption>
+        <div className="hero-index" aria-label="Selecionar mensagem em destaque">
+          {heroSlides.map((slide, index) => (
+            <button
+              type="button"
+              key={slide.title}
+              className={currentHero === index ? 'is-active' : ''}
+              aria-label={`Exibir destaque ${index + 1}: ${slide.title}`}
+              aria-current={currentHero === index ? 'true' : undefined}
+              onClick={() => setCurrentHero(index)}
+            >
+              {String(index + 1).padStart(2, '0')}
+              {currentHero === index && <span />}
+            </button>
+          ))}
+        </div>
       </section>
 
       {/* A Instituição */}
-      <section className="intro-section wrap">
-        <div className="section-rule"><span>—</span><span>A instituição</span><span>—</span></div>
-        <div className="intro-grid">
-          <h2>Uma casa para<br /><em>a palavra</em></h2>
-          <div>
-            <p className="lead">Desde sua fundação, a A.L.L. trabalha para que a literatura continue sendo encontro, documento e possibilidade.</p>
-            <p>Em torno de seus patronos e acadêmicos, a instituição guarda histórias, promove o pensamento e abre espaço para as novas vozes do Ceará.</p>
-            <NavLink className="text-link" to="/acervo?q=estatuto">Leia nosso estatuto <ArrowUpRight size={15} /></NavLink>
+      <section className="intro-section">
+        <div className="wrap">
+          <div className="intro-heading">
+            <p><span>02</span>A instituição</p>
+            <small>Memória · Cultura · Literatura</small>
           </div>
-        </div>
-        <div className="facts">
-          <div><strong>{state.data.instituicao.info?.fundacaoAno ? new Date().getFullYear() - state.data.instituicao.info.fundacaoAno : '—'}</strong><span>anos de<br />trajetória</span></div>
-          <div><strong>{state.data.cadeiras.length}</strong><span>cadeiras<br />acadêmicas</span></div>
-          <div><strong>{state.data.acervo.length}</strong><span>publicações<br />no acervo</span></div>
-          <div className="fact-note">"A palavra permanece<br />quando tudo passa."</div>
+          <div className="intro-grid">
+            <h2>Uma casa onde<br /><em>a palavra permanece.</em></h2>
+            <div className="intro-copy">
+              <p className="lead">Desde sua fundação, a A.L.L. trabalha para que a literatura continue sendo encontro, documento e possibilidade.</p>
+              <p>Em torno de seus patronos e acadêmicos, a instituição guarda histórias, promove o pensamento e abre espaço para as novas vozes do Ceará.</p>
+              <NavLink className="text-link" to="/acervo?q=estatuto">Conheça nossa história <ArrowUpRight size={15} /></NavLink>
+            </div>
+          </div>
+          <div className="facts">
+            <div><strong>{state.data.instituicao.info?.fundacaoAno ? new Date().getFullYear() - state.data.instituicao.info.fundacaoAno : '—'}</strong><span>anos de<br />trajetória</span></div>
+            <div><strong>{state.data.cadeiras.length}</strong><span>cadeiras<br />acadêmicas</span></div>
+            <div><strong>{state.data.acervo.length}</strong><span>publicações<br />no acervo</span></div>
+            <div className="fact-note">"A palavra permanece<br />quando tudo passa."</div>
+          </div>
         </div>
       </section>
 
@@ -95,34 +135,32 @@ export default function Home() {
       </section>
 
       {/* Acervo */}
-      <section className="archive-section wrap">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Biblioteca digital</p>
-            <h2>O <em>acervo</em></h2>
+      <section className="archive-section">
+        <div className="wrap">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Biblioteca digital</p>
+              <h2>O <em>acervo</em></h2>
+            </div>
+            <p className="heading-note">Edições, cadernos e antologias<br />para ler e guardar.</p>
           </div>
-          <p className="heading-note">Edições, cadernos e antologias<br />para ler e guardar.</p>
-        </div>
-        <div className="bookshelf">
-          {publications.map((book) => (
-            <article className="book-entry" key={book.id}>
-              <div className={`book-cover ${book.color}`}>
-                <span>A.L.L.</span>
-                <strong>{book.title}</strong>
-                <small>{book.tomo}</small>
-                <i>❧</i>
-              </div>
-              <div className="book-details">
-                <p className="meta">Publicação · {book.year}</p>
-                <h3>{book.title}</h3>
-                <p>{book.author}<br />Edição da Academia Limoeirense de Letras</p>
-                <div className="book-links">
-                  <NavLink to={`/acervo?q=${encodeURIComponent(book.title)}`}>[ Ler edição em PDF ]</NavLink>
-                  <NavLink to={`/acervo?q=${encodeURIComponent(book.title)}`}>[ Ficha técnica ]</NavLink>
+          <div className="bookshelf">
+            {publications.map((book) => (
+              <article className="book-entry" key={book.id}>
+                <div className={`book-cover ${book.color}`}>
+                  <span>A.L.L.</span>
+                  <strong>{book.title}</strong>
+                  <small>{book.tomo}</small>
+                  <i>❧</i>
                 </div>
-              </div>
-            </article>
-          ))}
+                <div className="book-details">
+                  <p className="meta">Publicação · {book.year}</p>
+                  <h3><NavLink className="book-title-link" to={`/acervo?ler=${encodeURIComponent(String(book.id))}`}>{book.title}</NavLink></h3>
+                  <p>{book.author}<br />Edição da Academia Limoeirense de Letras</p>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

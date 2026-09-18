@@ -20,7 +20,7 @@ export default function Academia() {
 
       {/* ── Hero da página ── */}
       <section className="page-hero wrap">
-        <p className="eyebrow">Sobre a instituição</p>
+        {/* <p className="eyebrow">Sobre a instituição</p> */}
         <h1 className="page-title">A <em>Academia</em></h1>
         <p className="page-lede">
           A Academia Limoeirense de Letras existe para valorizar a língua portuguesa, celebrar
@@ -35,9 +35,9 @@ export default function Academia() {
             <span className="eyebrow">Missão</span>
           </div>
           <div className="academia-grid-body">
-            
+
             {paragraphs(info?.missao)}
-            
+
           </div>
         </div>
       </section>
@@ -55,7 +55,7 @@ export default function Academia() {
           <div className="academia-grid-body">
             <h2 className="academia-h2">Uma casa nascida<br /><em>da palavra</em></h2>
             {paragraphs(info?.historia)}
-            
+
           </div>
         </div>
       </section>
@@ -88,7 +88,7 @@ export default function Academia() {
           <div className="academia-grid-body">
             <h2 className="academia-h2">Um templo vivo<br /><em>da palavra</em></h2>
             {paragraphs(info?.trajetoriaTexto)}
-            
+
           </div>
         </div>
       </section>
