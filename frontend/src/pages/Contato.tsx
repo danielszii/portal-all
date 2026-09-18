@@ -35,7 +35,6 @@ export default function Contato() {
   return (
     <main>
       <section className="page-hero wrap">
-        <p className="eyebrow">Fale conosco</p>
         <h1 className="page-title"><em>Contato</em></h1>
         <p className="page-lede">
           A Academia Limoeirense de Letras está aberta a pesquisadores, escritores,
@@ -52,7 +51,7 @@ export default function Contato() {
             <h2>Visite-nos</h2>
             <p className="eyebrow">Endereço</p>
             <p>{info?.endereco ?? 'Endereço ainda não disponibilizado.'}</p>
-            <a className="text-link" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(info?.endereco ?? 'Academia Limoeirense de Letras')}`} target="_blank" rel="noopener noreferrer" style={{ marginTop: '20px' }}>
+            <a className="text-link contact-map-link" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(info?.endereco ?? 'Academia Limoeirense de Letras')}`} target="_blank" rel="noopener noreferrer">
               Ver no mapa <ArrowUpRight size={14} />
             </a>
           </article>
@@ -63,7 +62,7 @@ export default function Contato() {
             <h2>Escreva</h2>
             <p className="eyebrow">E-mail institucional</p>
             <p>{info?.email ?? 'E-mail ainda não disponibilizado.'}</p>
-            <p className="eyebrow" style={{ marginTop: '24px' }}>Imprensa</p>
+            <p className="eyebrow contact-subheading">Imprensa</p>
             <p>{info?.email ?? 'Use o formulário abaixo.'}</p>
           </article>
 
@@ -73,21 +72,21 @@ export default function Contato() {
             <h2>Horários</h2>
             <p className="eyebrow">Atendimento</p>
             <p>{info?.horarioAtendimento ?? 'Consulte a secretaria.'}</p>
-            <p className="eyebrow" style={{ marginTop: '24px' }}>Sessões abertas</p>
+            <p className="eyebrow contact-subheading">Sessões abertas</p>
             <p>Consulte a agenda de eventos</p>
           </article>
         </div>
 
         {/* Formulário */}
         <div className="contato-form-wrap">
-          <div className="section-rule" style={{ marginBottom: '48px' }}><span>—</span><span>Formulário de contato</span><span>—</span></div>
+          <div className="section-rule form-section-rule"><span>—</span><span>Formulário de contato</span><span>—</span></div>
 
           {enviado ? (
             <div className="form-sucesso">
               <p className="eyebrow">Mensagem enviada</p>
               <h2>Recebemos sua <em>mensagem</em></h2>
               <p>Nossa secretaria retornará em até 3 dias úteis. Obrigado pelo contato.</p>
-              <button className="text-link" style={{ border: 0, background: 'none', cursor: 'pointer', padding: '5px 0', marginTop: '27px' }} onClick={() => setEnviado(false)}>
+              <button className="text-link text-link-button" onClick={() => setEnviado(false)}>
                 Enviar outra mensagem <ArrowUpRight size={15} />
               </button>
             </div>

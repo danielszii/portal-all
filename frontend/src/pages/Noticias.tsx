@@ -42,7 +42,7 @@ export default function Noticias() {
             <span className="noticia-cat">{noticia.categoria}</span>
             <time>{noticia.data}</time>
           </div>
-          <h1 className="page-title" style={{ marginBottom: '32px' }}>{noticia.titulo}</h1>
+          <h1 className="page-title noticia-full-title">{noticia.titulo}</h1>
           <div className="noticia-img-frame">
             <img src={noticia.img} alt={noticia.titulo} />
           </div>
@@ -58,9 +58,8 @@ export default function Noticias() {
   return (
     <main>
       <section className="page-hero wrap">
-        <p className="eyebrow">Comunicados e eventos</p>
         <h1 className="page-title"><em>Notícias</em></h1>
-        {q && <p className="page-lede">Resultados para: <strong>"{q}"</strong></p>}
+        <p className="page-lede">{q ? <>Resultados para: <strong>"{q}"</strong></> : 'Acompanhe os acontecimentos, publicações e atividades da Academia Limoeirense de Letras.'}</p>
       </section>
 
       <section className="noticias-section wrap">
@@ -82,7 +81,7 @@ export default function Noticias() {
               <time>{lista[0].data}</time>
               <h2>{lista[0].titulo}</h2>
               <p>{lista[0].lede}</p>
-              <span className="text-link" style={{ cursor: 'pointer' }}>Ler notícia <ArrowUpRight size={14} /></span>
+              <span className="text-link noticia-read-link">Ler notícia <ArrowUpRight size={14} /></span>
             </div>
           </div>
         )}
@@ -96,7 +95,7 @@ export default function Noticias() {
                   <img src={n.img} alt={n.titulo} />
                 </div>
                 <div className="noticia-card-body">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div className="noticia-card-meta">
                     <span className="noticia-cat">{n.categoria}</span>
                     <time>{n.data}</time>
                   </div>
@@ -110,7 +109,7 @@ export default function Noticias() {
         )}
 
         {lista.length === 0 && (
-          <div className="empty-search" style={{ marginTop: '32px' }}>
+          <div className="empty-search noticias-empty">
             <h3>Nenhuma notícia encontrada</h3>
             <p>Tente outro filtro ou termo de busca.</p>
           </div>

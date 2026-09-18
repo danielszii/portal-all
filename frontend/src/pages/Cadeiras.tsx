@@ -21,7 +21,6 @@ export default function Cadeiras() {
   return (
     <main>
       <section className="page-hero wrap">
-        <p className="eyebrow">Catálogo histórico</p>
         <h1 className="page-title">Quadro de <em>cadeiras</em></h1>
         <p className="page-lede">
           A Academia Limoeirense de Letras possui 40 cadeiras acadêmicas, cada uma com um patrono
@@ -44,9 +43,9 @@ export default function Cadeiras() {
       </div>
 
       {/* Grade */}
-      <section className="chairs-section" style={{ background: 'var(--linen)', borderTop: '1px solid var(--line)' }}>
+      <section className="chairs-section chairs-catalog-section">
         <div className="wrap">
-          <div className="chair-grid" style={{ paddingBlock: '60px' }}>
+          <div className="chair-grid chair-grid-catalog">
             {lista.length === 0 && <p role="status">Nenhuma cadeira encontrada para este filtro.</p>}
             {lista.map((chair) => (
               <NavLink
@@ -74,8 +73,8 @@ export default function Cadeiras() {
               </NavLink>
             ))}
           </div>
-          <div style={{ borderTop: '1px solid var(--line)', paddingTop: '32px', paddingBottom: '80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ margin: 0, color: 'var(--muted)', font: '9px "Space Mono", monospace', letterSpacing: '.1em', textTransform: 'uppercase' }}>
+          <div className="catalog-footer">
+            <p className="catalog-footer-copy">
               Exibindo {lista.length} de {totalCount || lista.length} cadeiras {loading ? '(atualizando...)' : ''}
             </p>
             <NavLink className="text-link" to="/contato">Indicar membro <ArrowUpRight size={15} /></NavLink>

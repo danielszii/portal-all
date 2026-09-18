@@ -19,7 +19,7 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
       <div className="pdf-modal" onClick={e => e.stopPropagation()}>
         <div className="pdf-modal-header">
           <div>
-            <p className="eyebrow" style={{ marginBottom: '4px' }}>{pub.type} · {pub.year}</p>
+            <p className="eyebrow modal-eyebrow">{pub.type} · {pub.year}</p>
             <h2 className="pdf-modal-title">{pub.title} <em>{pub.tomo}</em></h2>
           </div>
           <div className="pdf-modal-actions">
@@ -37,12 +37,12 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
             title={`${pub.title} — ${pub.tomo}`}
             width="100%"
             height="100%"
-            style={{ border: 0 }}
+            className="pdf-frame"
           />
         </div>
         <div className="pdf-modal-footer">
           <span>{pub.pages} páginas · {pub.author}</span>
-          <a href={pub.pdf} download target="_blank" rel="noopener noreferrer" className="text-link" style={{ marginTop: 0 }}>
+          <a href={pub.pdf} download target="_blank" rel="noopener noreferrer" className="text-link text-link-flush">
             Download direto <ArrowUpRight size={13} />
           </a>
         </div>
@@ -89,9 +89,8 @@ export default function Acervo() {
       {pdfAberto && <PdfModal pub={pdfAberto} onClose={closePdf} />}
 
       <section className="archive-hero wrap">
-        <p className="eyebrow">Biblioteca digital</p>
         <h1 className="page-title">O <em>acervo</em></h1>
-        <p className="archive-lede">
+        <p className="page-lede">
           Edições, cadernos, antologias, revistas, discursos e estatutos publicados pela
           Academia Limoeirense de Letras desde 1998. Acesso gratuito e irrestrito — sem cadastro.
         </p>
@@ -115,7 +114,7 @@ export default function Acervo() {
           </form>
         </div>
 
-        <div className="cadeiras-filtros" style={{ marginBottom: '0', borderBottom: '1px solid var(--line)', paddingBottom: '16px' }}>
+        <div className="cadeiras-filtros catalog-filters">
           {tipos.map(t => (
             <button key={t} className={`filtro-btn ${tipo === t ? 'active' : ''}`} onClick={() => setTipo(t)}>{t}</button>
           ))}

@@ -52,7 +52,6 @@ export default function Agenda() {
   return (
     <main>
       <section className="page-hero wrap">
-        <p className="eyebrow">Programação cultural</p>
         <h1 className="page-title">Agenda <em>& Eventos</em></h1>
         <p className="page-lede">
           Sessões solenes, posses, palestras e lançamentos de livros da Academia

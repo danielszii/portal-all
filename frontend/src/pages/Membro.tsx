@@ -161,7 +161,7 @@ export default function Membro() {
                   <div className="sucessao-row" key={i}>
                     <span className="sucessao-nome">{s.nome}</span>
                     <span className="sucessao-periodo">{s.periodo}</span>
-                    <span className={`status ${s.status !== 'Titular' ? 'memorial' : ''}`} style={{ fontSize: '7px' }}>{s.status}</span>
+                    <span className={`status status-compact ${s.status !== 'Titular' ? 'memorial' : ''}`}>{s.status}</span>
                   </div>
                 ))}
               </div>

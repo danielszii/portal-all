@@ -20,7 +20,6 @@ export default function Academia() {
 
       {/* ── Hero da página ── */}
       <section className="page-hero wrap">
-        {/* <p className="eyebrow">Sobre a instituição</p> */}
         <h1 className="page-title">A <em>Academia</em></h1>
         <p className="page-lede">
           A Academia Limoeirense de Letras existe para valorizar a língua portuguesa, celebrar
@@ -112,7 +111,7 @@ export default function Academia() {
               </div>
             ))}
           </div>
-          <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid var(--line)', display: 'flex', gap: '32px' }}>
+          <div className="section-actions">
             <NavLink className="text-link" to="/contato">
               Fale com a Academia <ArrowUpRight size={15} />
             </NavLink>

@@ -2,7 +2,7 @@ import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import { useCallback, useEffect, useState } from 'react'
 import { fetchCadeiras, fetchAcervo, fetchNoticias, fetchInstituicao } from '@/services/api'
-import { ArrowRight, ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import { NavLink } from 'react-router'
 import heroImg from '@/imports/academialetras.png'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
@@ -53,7 +53,6 @@ export default function Home() {
           <div className="hero-message" key={currentHero}>
             <h1>{heroSlides[currentHero].title}<br /><em>{heroSlides[currentHero].emphasis}</em></h1>
             <p className="hero-intro">{heroSlides[currentHero].description}</p>
-            <NavLink className="hero-cta" to="/academia">Conheça a Academia <ArrowRight size={15} /></NavLink>
           </div>
           <div className="quote">
             <p>"A literatura é a memória de um povo quando o tempo já não consegue falar."</p>
@@ -78,26 +77,28 @@ export default function Home() {
       </section>
 
       {/* A Instituição */}
-      <section className="intro-section">
-        <div className="wrap">
-          <div className="intro-heading">
-            <p><span>02</span>A instituição</p>
-            <small>Memória · Cultura · Literatura</small>
-          </div>
-          <div className="intro-grid">
-            <h2>Uma casa onde<br /><em>a palavra permanece.</em></h2>
-            <div className="intro-copy">
-              <p className="lead">Desde sua fundação, a A.L.L. trabalha para que a literatura continue sendo encontro, documento e possibilidade.</p>
-              <p>Em torno de seus patronos e acadêmicos, a instituição guarda histórias, promove o pensamento e abre espaço para as novas vozes do Ceará.</p>
-              <NavLink className="text-link" to="/acervo?q=estatuto">Conheça nossa história <ArrowUpRight size={15} /></NavLink>
+      <section className="intro-section intro-z">
+        <div className="wrap intro-z-wrap">
+          <div className="intro-z-main">
+            <div className="intro-z-title">
+              <h2>Literatura que<br /><em>atravessa o tempo.</em></h2>
+            </div>
+            <div className="intro-z-story">
+              <p className="lead">Preservamos a memória literária de Limoeiro do Norte e criamos espaço para as próximas vozes.</p>
             </div>
           </div>
-          <div className="facts">
-            <div><strong>{state.data.instituicao.info?.fundacaoAno ? new Date().getFullYear() - state.data.instituicao.info.fundacaoAno : '—'}</strong><span>anos de<br />trajetória</span></div>
-            <div><strong>{state.data.cadeiras.length}</strong><span>cadeiras<br />acadêmicas</span></div>
-            <div><strong>{state.data.acervo.length}</strong><span>publicações<br />no acervo</span></div>
-            <div className="fact-note">"A palavra permanece<br />quando tudo passa."</div>
-          </div>
+
+          <footer className="intro-z-bottom">
+            <div className="intro-z-facts" aria-label="Números da Academia">
+              <div><strong>{state.data.instituicao.info?.fundacaoAno ? new Date().getFullYear() - state.data.instituicao.info.fundacaoAno : '—'}</strong><span>anos</span></div>
+              <div><strong>{state.data.cadeiras.length}</strong><span>cadeiras</span></div>
+              <div><strong>{state.data.acervo.length}</strong><span>obras</span></div>
+            </div>
+            <NavLink className="intro-z-cta" to="/academia">
+              <span>Conheça nossa história</span>
+              <ArrowUpRight size={18} />
+            </NavLink>
+          </footer>
         </div>
       </section>
 
