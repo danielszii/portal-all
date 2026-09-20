@@ -14,7 +14,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:import-sqlite": "tsx prisma/import-sqlite.ts",
     "check": "tsc -p tsconfig.check.json",
-    "test": "node --import tsx --test tests/*.test.ts"
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:integration": "node tests/run-integration.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

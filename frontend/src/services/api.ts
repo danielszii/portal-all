@@ -32,3 +32,9 @@ export type InstituicaoResponse = {
   gestao: { inicioAno: number; fimAno: number | null; diretoria: { cargo: string; nome: string; posse: string }[] } | null
 }
 export const fetchInstituicao = (signal?: AbortSignal) => request<InstituicaoResponse>('/instituicao', { signal })
+
+type InicioCadeira = Pick<Cadeira, 'number' | 'patron' | 'holder' | 'image' | 'status'>
+type InicioAcervo = Pick<AcervoItem, 'id' | 'title' | 'tomo' | 'year' | 'color' | 'author'>
+export const fetchInicioCadeiras = (signal: AbortSignal) => request<{ total: number; items: InicioCadeira[] }>('/inicio/cadeiras', { signal })
+export const fetchInicioAcervo = (signal: AbortSignal) => request<{ total: number; items: InicioAcervo[] }>('/inicio/acervo', { signal })
+export const fetchInicioNoticias = (signal: AbortSignal) => request<Pick<Noticia, 'id' | 'titulo' | 'data'>[]>('/inicio/noticias', { signal })

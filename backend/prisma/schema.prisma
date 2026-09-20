@@ -7,6 +7,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// A migration busca_portugues aplica COLLATE portal_pt_br aos campos usados
+// em filtros ILIKE de Noticia, AcervoItem e Evento. Prisma não expressa collations;
+// preserve essa configuração SQL nas próximas migrations.
+
 enum StatusEditorial {
   RASCUNHO
   PUBLICADO

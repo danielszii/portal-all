@@ -8,12 +8,14 @@ import { useState, useCallback, useEffect } from 'react'
 import { ArrowUpRight, Search, X, Download } from 'lucide-react'
 
 
-const tipos = ['Todos', 'Caderno', 'Antologia', 'Revista', 'Livro', 'Discurso', 'Estatuto']
+import { TIPOS_ACERVO as tipos } from '@/constants'
+import { pdfViewerUrl } from '@/utils/pdf'
 
 type Pub = AcervoItem
 
 function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
   const dialog = useDialog(onClose)
+  const viewerUrl = pdfViewerUrl(pub.pdf, window.location.origin)
   return (
     <div ref={dialog} tabIndex={-1} className="pdf-overlay" role="dialog" aria-modal="true" aria-label={`Visualizar: ${pub.title}`} onClick={onClose}>
       <div className="pdf-modal" onClick={e => e.stopPropagation()}>
@@ -33,7 +35,7 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
         </div>
         <div className="pdf-viewer">
           <iframe
-            src={`https://docs.google.com/viewer?url=${encodeURIComponent(pub.pdf)}&embedded=true`}
+            src={viewerUrl}
             title={`${pub.title} — ${pub.tomo}`}
             width="100%"
             height="100%"

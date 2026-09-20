@@ -6,30 +6,8 @@ import { NavLink } from 'react-router'
 import { ArrowUpRight } from 'lucide-react'
 import { fetchEventos, fetchGaleria } from '@/services/api'
 
-const tipos = ['Todos', 'Sessão Solene', 'Posse', 'Palestra', 'Lançamento', 'Sarau']
-
-const tipoColor: Record<string, string> = {
-  'Sessão Solene': 'navy',
-  'Posse': 'bronze',
-  'Palestra': 'ink',
-  'Lançamento': 'ochre',
-  'Sarau': 'green',
-  'Reunião': 'ink',
-}
-
-function formatData(iso: string) {
-  const d = new Date(iso + 'T00:00:00')
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
-}
-
-function formatMes(iso: string) {
-  const d = new Date(iso + 'T00:00:00')
-  return d.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase().replace('.', '')
-}
-
-function formatDia(iso: string) {
-  return new Date(iso + 'T00:00:00').getDate().toString().padStart(2, '0')
-}
+import { TIPOS_EVENTOS as tipos, EVENTO_TIPO_COR as tipoColor } from '@/constants'
+import { formatData, formatMes, formatDia } from '@/utils/formatters'
 
 export default function Agenda() {
   const [filtro, setFiltro] = useState('Todos')

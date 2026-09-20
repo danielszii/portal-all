@@ -4,16 +4,14 @@ import eventosRouter from './eventos.routes.js'
 import noticiasRouter from './noticias.routes.js'
 import acervoRouter from './acervo.routes.js'
 import contatoRouter from './contato.routes.js'
-import { prisma } from '../db/prisma.js'
+import { findInstituicao } from '../repositories/instituicao.repository.js'
+import inicioRouter from './inicio.routes.js'
 
 const apiRouter = Router()
 
 apiRouter.get('/instituicao', async (_req, res, next) => {
   try {
-    const info = await prisma.instituicao.findUnique({ where: { id: 'all' } })
-    const ano = new Date().getFullYear()
-    const gestao = await prisma.gestao.findFirst({ where: { inicioAno: { lte: ano }, OR: [{ fimAno: null }, { fimAno: { gte: ano } }] }, orderBy: { inicioAno: 'desc' }, include: { mandatos: { where: { OR: [{ fimEm: null }, { fimEm: { gte: new Date() } }] }, include: { academico: true } } } })
-    res.json({ info, gestao: gestao ? { inicioAno: gestao.inicioAno, fimAno: gestao.fimAno, diretoria: gestao.mandatos.map(m => ({ cargo: m.cargo, nome: m.academico.nome, posse: m.inicioEm?.getFullYear().toString() ?? gestao.inicioAno.toString() })) } : null })
+    res.json(await findInstituicao())
   } catch (error) { next(error) }
 })
 
@@ -28,6 +26,7 @@ apiRouter.get('/health', (_req, res) => {
 })
 
 // Sub-rotas
+apiRouter.use('/inicio', inicioRouter)
 apiRouter.use('/cadeiras', cadeirasRouter)
 apiRouter.use('/eventos', eventosRouter)
 apiRouter.use('/noticias', noticiasRouter)

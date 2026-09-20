@@ -85,7 +85,7 @@ export default function Contato() {
             <div className="form-sucesso">
               <p className="eyebrow">Mensagem enviada</p>
               <h2>Recebemos sua <em>mensagem</em></h2>
-              <p>Nossa secretaria retornará em até 3 dias úteis. Obrigado pelo contato.</p>
+              <p>Sua mensagem foi registrada para a secretaria. Obrigado pelo contato.</p>
               <button className="text-link text-link-button" onClick={() => setEnviado(false)}>
                 Enviar outra mensagem <ArrowUpRight size={15} />
               </button>

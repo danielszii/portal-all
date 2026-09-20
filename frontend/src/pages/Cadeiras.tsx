@@ -7,7 +7,7 @@ import { fetchCadeiras } from '@/services/api'
 import type { Cadeira } from '@/types'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 
-const filtros = ['Todos', 'Titular em exercício', 'In memoriam', 'Vaga']
+import { FILTROS_CADEIRAS as filtros } from '@/constants'
 
 export default function Cadeiras() {
   const [filtro, setFiltro] = useState('Todos')

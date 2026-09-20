@@ -1,7 +1,7 @@
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
-import { useCallback, useEffect, useState } from 'react'
-import { fetchCadeiras, fetchAcervo, fetchNoticias, fetchInstituicao } from '@/services/api'
+import { useEffect, useState } from 'react'
+import { fetchInicioCadeiras, fetchInicioAcervo, fetchInicioNoticias, fetchInstituicao } from '@/services/api'
 import { ArrowUpRight } from 'lucide-react'
 import { NavLink } from 'react-router'
 import heroImg from '@/imports/academialetras.png'
@@ -32,14 +32,12 @@ export default function Home() {
     return () => window.clearInterval(timer)
   }, [])
 
-  const load = useCallback(async (signal: AbortSignal) => {
-    const [cadeiras, acervo, noticias, instituicao] = await Promise.all([fetchCadeiras(undefined, undefined, signal), fetchAcervo(undefined, undefined, signal), fetchNoticias(undefined, undefined, signal), fetchInstituicao(signal)])
-    return { cadeiras, acervo, noticias, instituicao }
-  }, [])
-  const state = useResource(load, { cadeiras: [], acervo: [], noticias: [], instituicao: { info: null, gestao: null } })
-  if (state.loading || state.error) return <main><LoadState {...state} /></main>
-  const chairs = state.data.cadeiras.filter(c => c.status !== 'Vaga').slice(0, 4)
-  const publications = state.data.acervo.slice(0, 3)
+  const cadeiras = useResource(fetchInicioCadeiras, { total: 0, items: [] })
+  const acervo = useResource(fetchInicioAcervo, { total: 0, items: [] })
+  const noticias = useResource(fetchInicioNoticias, [])
+  const instituicao = useResource(fetchInstituicao, { info: null, gestao: null })
+  const chairs = cadeiras.error ? [] : cadeiras.data.items
+  const publications = acervo.error ? [] : acervo.data.items
 
   return (
     <main>
@@ -90,15 +88,16 @@ export default function Home() {
 
           <footer className="intro-z-bottom">
             <div className="intro-z-facts" aria-label="Números da Academia">
-              <div><strong>{state.data.instituicao.info?.fundacaoAno ? new Date().getFullYear() - state.data.instituicao.info.fundacaoAno : '—'}</strong><span>anos</span></div>
-              <div><strong>{state.data.cadeiras.length}</strong><span>cadeiras</span></div>
-              <div><strong>{state.data.acervo.length}</strong><span>obras</span></div>
+              <div><strong>{!instituicao.error && instituicao.data.info?.fundacaoAno ? new Date().getFullYear() - instituicao.data.info.fundacaoAno : '—'}</strong><span>anos</span></div>
+              <div><strong>{cadeiras.loading || cadeiras.error ? '—' : cadeiras.data.total}</strong><span>cadeiras</span></div>
+              <div><strong>{acervo.loading || acervo.error ? '—' : acervo.data.total}</strong><span>obras</span></div>
             </div>
             <NavLink className="intro-z-cta" to="/academia">
               <span>Conheça nossa história</span>
               <ArrowUpRight size={18} />
             </NavLink>
           </footer>
+          <LoadState {...instituicao} />
         </div>
       </section>
 
@@ -113,6 +112,7 @@ export default function Home() {
             <p className="heading-note">Conheça os patronos, fundadores<br />e titulares que formam esta casa.</p>
           </div>
           <div className="chair-grid">
+            <LoadState {...cadeiras} />
             {chairs.map((chair) => (
               <NavLink to={`/cadeiras/${chair.number.toLowerCase()}`} key={chair.number} className="chair" aria-label={`Cadeira ${chair.number} — ${chair.patron}`}>
                 <MemberPhotoFrame
@@ -146,6 +146,7 @@ export default function Home() {
             <p className="heading-note">Edições, cadernos e antologias<br />para ler e guardar.</p>
           </div>
           <div className="bookshelf">
+            <LoadState {...acervo} />
             {publications.map((book) => (
               <article className="book-entry" key={book.id}>
                 <div className={`book-cover ${book.color}`}>
@@ -169,11 +170,12 @@ export default function Home() {
       <section className="news-section wrap">
         <div className="section-rule"><span>—</span><span>Últimas notícias</span><span>—</span></div>
         <div className="news-list">
-          {state.data.noticias.slice(0, 3).map(n => <article key={n.id}>
+          <LoadState {...noticias} />
+          {!noticias.error && noticias.data.map(n => <article key={n.id}>
             <time>{n.data}</time><h3>{n.titulo}</h3>
             <NavLink to={`/noticias?id=${n.id}`}>Ler notícia <ArrowUpRight size={14} /></NavLink>
           </article>)}
-          {state.data.noticias.length === 0 && <p>Nenhuma notícia publicada.</p>}
+          {!noticias.loading && !noticias.error && noticias.data.length === 0 && <p>Nenhuma notícia publicada.</p>}
         </div>
       </section>
     </main>

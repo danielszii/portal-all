@@ -7,7 +7,7 @@ import { ArrowUpRight } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 
 
-const categorias = ['Todas', 'Institucional', 'Publicações', 'Acervo', 'Eventos']
+import { CATEGORIAS_NOTICIAS as categorias } from '@/constants'
 
 export default function Noticias() {
   const [searchParams, setSearchParams] = useSearchParams()

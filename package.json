@@ -12,7 +12,8 @@
     "start": "npm --prefix backend run start",
     "install:all": "npm ci && npm --prefix backend ci && npm --prefix frontend ci",
     "check": "npm --prefix backend run check && npm --prefix frontend run check",
-    "test": "npm --prefix backend test"
+    "test": "npm --prefix backend test",
+    "test:integration": "npm --prefix backend run test:integration"
   },
   "devDependencies": {
     "concurrently": "^10.0.5"

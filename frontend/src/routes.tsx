@@ -9,6 +9,7 @@ import Agenda from './pages/Agenda'
 import Noticias from './pages/Noticias'
 import Contato from './pages/Contato'
 import Busca from './pages/Busca'
+import NaoEncontrada from './pages/NaoEncontrada'
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: 'noticias', Component: Noticias },
       { path: 'contato', Component: Contato },
       { path: 'busca', Component: Busca },
+      { path: '*', Component: NaoEncontrada },
     ],
   },
 ])
