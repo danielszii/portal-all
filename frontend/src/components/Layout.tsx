@@ -2,7 +2,7 @@ import { useResource } from '@/hooks/useResource'
 import { fetchInstituicao } from '@/services/api'
 import { useEffect, useRef, useState } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router'
-import { Mail, MapPin, Menu, Phone, Search, X } from 'lucide-react'
+import { LockKeyhole, Mail, MapPin, Menu, Phone, Search, X } from 'lucide-react'
 import logoSrc from '@/imports/Logo_Vetorizada_A.L.L_sem_fundo.svg'
 import footerLogoSrc from '@/imports/Logo Versão Negativa Branca (Alta Qualidade).png'
 
@@ -63,6 +63,14 @@ export default function Layout() {
                 <span>Buscar</span>
               </button>
             </form>
+            <NavLink
+              className={({ isActive }) => `header-login ${isActive ? 'nav-active' : ''}`}
+              to="/login"
+              aria-label="Entrar na área restrita"
+            >
+              <LockKeyhole size={14} strokeWidth={1.7} />
+              <span>Login</span>
+            </NavLink>
           </div>
 
           <button
@@ -93,6 +101,10 @@ export default function Layout() {
                 {label}
               </NavLink>
             ))}
+            <NavLink className="mobile-login" to="/login" onClick={close}>
+              <LockKeyhole size={14} strokeWidth={1.7} />
+              Login
+            </NavLink>
           </div>
         </nav>
       </header>

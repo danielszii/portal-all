@@ -10,8 +10,10 @@ import Noticias from './pages/Noticias'
 import Contato from './pages/Contato'
 import Busca from './pages/Busca'
 import NaoEncontrada from './pages/NaoEncontrada'
+import Login from './pages/Login'
 
 export const router = createBrowserRouter([
+  { path: '/login', Component: Login },
   {
     path: '/',
     Component: Layout,
