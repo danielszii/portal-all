@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface MemberPhotoFrameProps {
   src?: string
   alt: string

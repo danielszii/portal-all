@@ -2,8 +2,9 @@ import { useResource } from '@/hooks/useResource'
 import { fetchInstituicao } from '@/services/api'
 import { useEffect, useRef, useState } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router'
-import { Menu, X, Search } from 'lucide-react'
+import { Mail, MapPin, Menu, Phone, Search, X } from 'lucide-react'
 import logoSrc from '@/imports/Logo_Vetorizada_A.L.L_sem_fundo.svg'
+import footerLogoSrc from '@/imports/Logo Versão Negativa Branca (Alta Qualidade).png'
 
 export default function Layout() {
   const institution = useResource(fetchInstituicao, { info: null, gestao: null })
@@ -13,6 +14,8 @@ export default function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
   const close = () => setMenuOpen(false)
+  const institutionInfo = institution.data.info
+  const phoneHref = institutionInfo?.telefone?.replace(/[^\d+]/g, '')
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
@@ -60,20 +63,6 @@ export default function Layout() {
                 <span>Buscar</span>
               </button>
             </form>
-            {/* <div className="header-social">
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" /></svg>
-              </a>
-              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.97C18.88 4 12 4 12 4s-6.88 0-8.59.45A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.97C5.12 20 12 20 12 20s6.88 0 8.59-.45a2.78 2.78 0 0 0 1.95-1.97A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" /><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="currentColor" stroke="none" /></svg>
-              </a>
-              <a href="https://wa.me" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>
-              </a>
-              <a href="https://x.com" target="_blank" rel="noopener noreferrer" aria-label="X / Twitter">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Z" /></svg>
-              </a>
-            </div> */}
           </div>
 
           <button
@@ -113,29 +102,69 @@ export default function Layout() {
       </div>
 
       <footer id="contato-rodape" className="site-footer">
-        <div className="wrap footer-grid">
+        <div className="wrap footer-main">
           <div className="footer-brand">
-            <span className="monogram">A.L.L.</span>
-            <p>Academia Limoeirense<br />de Letras</p>
+            <img src={footerLogoSrc} alt="Academia Limoeirense de Letras" className="footer-logo" />
+            <p className="footer-about">
+              Preservando a memória, promovendo a literatura e fortalecendo a cultura
+              de Limoeiro do Norte e do Vale do Jaguaribe.
+            </p>
+            <div className="footer-social" aria-label="Atalhos de contato">
+              {institutionInfo?.email && (
+                <a href={`mailto:${institutionInfo.email}`} aria-label="Enviar e-mail">
+                  <Mail size={17} strokeWidth={1.8} />
+                </a>
+              )}
+            </div>
           </div>
-          <div>
-            <p className="footer-label">Visite-nos</p>
-            <p>{institution.data.info?.endereco ?? 'Consulte a página de contato.'}</p>
-          </div>
-          <div>
-            <p className="footer-label">Institucional</p>
+
+          <nav className="footer-column" aria-label="Navegação no rodapé">
+            <p className="footer-label">Explore</p>
+            <NavLink to="/">Início</NavLink>
+            <NavLink to="/cadeiras">Cadeiras</NavLink>
+            <NavLink to="/acervo">Acervo</NavLink>
+            <NavLink to="/agenda">Agenda</NavLink>
+            <NavLink to="/noticias">Notícias</NavLink>
+          </nav>
+
+          <nav className="footer-column" aria-label="Links institucionais">
+            <p className="footer-label">Academia</p>
+            <NavLink to="/academia">Nossa história</NavLink>
+            <NavLink to="/academia">Diretoria</NavLink>
             <NavLink to="/acervo?q=estatuto">Estatuto social</NavLink>
-            <NavLink to="/contato">Fale com a Academia</NavLink>
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a>
-          </div>
-          <div className="footer-end">
-            <p>"A literatura nos faz<br />contemporâneos de todos."</p>
-            <small>Portal institucional · 2026</small>
+            <NavLink to="/contato">Fale conosco</NavLink>
+          </nav>
+
+          <div className="footer-column footer-contact">
+            <p className="footer-label">Contato</p>
+            {institutionInfo?.telefone && (
+              <a href={`tel:${phoneHref}`}>
+                <Phone size={16} aria-hidden="true" />
+                <span>{institutionInfo.telefone}</span>
+              </a>
+            )}
+            {institutionInfo?.email && (
+              <a href={`mailto:${institutionInfo.email}`}>
+                <Mail size={16} aria-hidden="true" />
+                <span>{institutionInfo.email}</span>
+              </a>
+            )}
+            <NavLink to="/contato">
+              <MapPin size={16} aria-hidden="true" />
+              <span>{institutionInfo?.endereco ?? 'Consulte nosso endereço'}</span>
+            </NavLink>
           </div>
         </div>
-        <div className="wrap footer-bottom">
-          <span>© Academia Limoeirense de Letras</span>
-          <span>Projeto editorial e desenvolvimento · A.L.L.</span>
+
+        <div className="footer-lower">
+          <div className="wrap footer-bottom">
+            <span>© {new Date().getFullYear()} Academia Limoeirense de Letras</span>
+            <div className="footer-legal">
+              <NavLink to="/academia">Institucional</NavLink>
+              <NavLink to="/contato">Contato</NavLink>
+              <span>Portal oficial da A.L.L.</span>
+            </div>
+          </div>
         </div>
       </footer>
     </>
