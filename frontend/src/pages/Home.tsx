@@ -158,6 +158,9 @@ export default function Home() {
               </article>
             ))}
           </div>
+          <NavLink className="text-link centered-link" to="/acervo">
+            Consultar acervo completo <ArrowUpRight size={15} />
+          </NavLink>
         </div>
       </section>
 

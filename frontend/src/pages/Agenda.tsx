@@ -6,16 +6,15 @@ import { NavLink } from 'react-router'
 import { ArrowUpRight } from 'lucide-react'
 import { fetchEventos, fetchGaleria } from '@/services/api'
 
-import { TIPOS_EVENTOS as tipos, EVENTO_TIPO_COR as tipoColor } from '@/constants'
+import { EVENTO_TIPO_COR as tipoColor } from '@/constants'
 import { formatData, formatMes, formatDia } from '@/utils/formatters'
 
 export default function Agenda() {
-  const [filtro, setFiltro] = useState('Todos')
   const [galeriaModal, setGaleriaModal] = useState<number | null>(null)
   const load = useCallback(async (signal: AbortSignal) => {
-    const [eventos, fotos] = await Promise.all([fetchEventos(filtro, signal), fetchGaleria(signal)])
+    const [eventos, fotos] = await Promise.all([fetchEventos(undefined, signal), fetchGaleria(signal)])
     return { eventos, fotos }
-  }, [filtro])
+  }, [])
   const state = useResource(load, { eventos: [], fotos: [] })
   if (state.loading || state.error) return <main><LoadState {...state} /></main>
   const eventosList = state.data.eventos
@@ -23,9 +22,6 @@ export default function Agenda() {
 
   const proximos = eventosList.filter(e => !e.passado)
   const passados = eventosList.filter(e => e.passado).sort((a, b) => b.data.localeCompare(a.data))
-
-  const filtrados = (lista: typeof eventosList) =>
-    filtro === 'Todos' ? lista : lista.filter(e => e.tipo === filtro)
 
   return (
     <main>
@@ -37,28 +33,15 @@ export default function Agenda() {
         </p>
       </section>
 
-      {/* Filtros */}
-      <div className="cadeiras-filtros wrap">
-        {tipos.map(t => (
-          <button
-            key={t}
-            className={`filtro-btn ${filtro === t ? 'active' : ''}`}
-            onClick={() => setFiltro(t)}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
-      {eventosList.length === 0 && <p className="wrap" role="status">Nenhum evento encontrado para este filtro.</p>}
+      {eventosList.length === 0 && <p className="wrap" role="status">Nenhum evento encontrado.</p>}
       {/* Próximos eventos */}
-      {filtrados(proximos).length > 0 && (
+      {proximos.length > 0 && (
         <section className="agenda-section wrap">
           <div className="agenda-section-header">
-            <p className="eyebrow">Próximos eventos</p>
+            <h2>Próximos <em>eventos</em></h2>
           </div>
           <div className="agenda-list">
-            {filtrados(proximos).map(ev => (
+            {proximos.map(ev => (
               <article className="agenda-card" key={ev.id}>
                 <div className="agenda-date">
                   <span className="agenda-mes">{formatMes(ev.data)}</span>
@@ -85,13 +68,13 @@ export default function Agenda() {
       )}
 
       {/* Eventos passados */}
-      {filtrados(passados).length > 0 && (
+      {passados.length > 0 && (
         <section className="agenda-section agenda-passados wrap">
           <div className="agenda-section-header">
-            <p className="eyebrow">Eventos anteriores</p>
+            <h2>Eventos <em>anteriores</em></h2>
           </div>
           <div className="agenda-list agenda-list-past">
-            {filtrados(passados).map(ev => (
+            {passados.map(ev => (
               <article className="agenda-card agenda-card-past" key={ev.id}>
                 <div className="agenda-date agenda-date-past">
                   <span className="agenda-mes">{formatMes(ev.data)}</span>
@@ -114,10 +97,8 @@ export default function Agenda() {
         <div className="wrap">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Registros fotográficos</p>
-              <h2>Galeria <em>de eventos</em></h2>
+              <h2>Registros <em>de eventos</em></h2>
             </div>
-            <p className="heading-note">Solenidades, encontros culturais<br />e momentos da vida acadêmica.</p>
           </div>
           <div className="galeria-grid">
             {fotos.map((foto, i) => (
@@ -139,13 +120,14 @@ export default function Agenda() {
 
       {/* CTA Contato */}
       <section className="agenda-cta wrap">
-        <div className="section-rule"><span>—</span><span>Participação</span><span>—</span></div>
         <div className="agenda-cta-inner">
           <h2>Quer participar<br /><em>de nossos eventos?</em></h2>
-          <p>Todos os eventos da Academia são abertos ao público e de entrada franca. Para informações sobre datas e programação, entre em contato com nossa secretaria.</p>
-          <NavLink className="text-link" to="/contato">
-            Fale com a secretaria <ArrowUpRight size={15} />
-          </NavLink>
+          <div className="agenda-cta-copy">
+            <p>Todos os eventos da Academia são abertos ao público e de entrada franca. Para informações sobre datas e programação, entre em contato com nossa secretaria.</p>
+            <NavLink className="text-link" to="/contato">
+              Fale com a secretaria <ArrowUpRight size={15} />
+            </NavLink>
+          </div>
         </div>
       </section>
     </main>

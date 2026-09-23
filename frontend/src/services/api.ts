@@ -33,7 +33,7 @@ export const fetchAcervo = (tipo?: string, q?: string, signal?: AbortSignal) => 
 export type Page<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number }
 export const emptyPage = <T>(): Page<T> => ({ items: [], total: 0, page: 1, pageSize: 12, totalPages: 1 })
 export const fetchNoticiasPage = (page: number, categoria?: string, q?: string, signal?: AbortSignal) => request<Page<Noticia>>(`/noticias?${query({ page: String(page), pageSize: '10', categoria, q, resumo: 'true' })}`, { signal })
-export const fetchAcervoPage = (page: number, tipo?: string, q?: string, signal?: AbortSignal) => request<Page<AcervoItem>>(`/acervo?${query({ page: String(page), pageSize: '12', tipo, q })}`, { signal })
+export const fetchAcervoPage = (page: number, tipo?: string, q?: string, signal?: AbortSignal) => request<Page<AcervoItem>>(`/acervo?${query({ page: String(page), pageSize: '8', tipo, q })}`, { signal })
 export const fetchAcervoById = (id: string, signal?: AbortSignal) => request<AcervoItem>(`/acervo/${encodeURIComponent(id)}`, { signal })
 export const postContato = (dados: ContatoForm) => request<{ sucesso: boolean; mensagem: string; id: string }>('/contato', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) })
 

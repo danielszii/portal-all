@@ -3,9 +3,8 @@ import { fetchInstituicao } from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { useEffect, useRef, useState } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router'
-import { LayoutDashboard, LockKeyhole, LogOut, Mail, MapPin, Menu, Phone, Search, X } from 'lucide-react'
+import { LayoutDashboard, LockKeyhole, LogOut, Mail, Menu, Phone, Search, X } from 'lucide-react'
 import logoSrc from '@/imports/Logo_Vetorizada_A.L.L_sem_fundo.svg'
-import footerLogoSrc from '@/imports/Logo Versão Negativa Branca (Alta Qualidade).png'
 
 export default function Layout() {
   const institution = useResource(fetchInstituicao, { info: null, gestao: null })
@@ -143,67 +142,50 @@ export default function Layout() {
       </div>
 
       <footer id="contato-rodape" className="site-footer">
-        <div className="wrap footer-main">
-          <div className="footer-brand">
-            <img src={footerLogoSrc} alt="Academia Limoeirense de Letras" className="footer-logo" />
-            <p className="footer-about">
-              Preservando a memória, promovendo a literatura e fortalecendo a cultura
-              de Limoeiro do Norte e do Vale do Jaguaribe.
-            </p>
-            <div className="footer-social" aria-label="Atalhos de contato">
-              {institutionInfo?.email && (
-                <a href={`mailto:${institutionInfo.email}`} aria-label="Enviar e-mail">
-                  <Mail size={17} strokeWidth={1.8} />
+        <div className="wrap footer-minimal">
+          <div className="footer-minimal-main">
+            <NavLink to="/" className="footer-minimal-brand" aria-label="Página inicial da Academia Limoeirense de Letras">
+              <span className="footer-seal" aria-hidden="true">
+                <svg viewBox="0 0 120 120">
+                  <defs>
+                    <path id="footer-seal-path" d="M 60,60 m -45,0 a 45,45 0 1,1 90,0 a 45,45 0 1,1 -90,0" />
+                  </defs>
+                  <circle cx="60" cy="60" r="57" />
+                  <text>
+                    <textPath href="#footer-seal-path" startOffset="1%" textLength="278" lengthAdjust="spacing">
+                      ACADEMIA LIMOEIRENSE DE LETRAS •
+                    </textPath>
+                  </text>
+                </svg>
+                <img src={logoSrc} alt="" />
+              </span>
+            </NavLink>
+
+            <nav className="footer-minimal-nav" aria-label="Navegação no rodapé">
+              <NavLink to="/academia">Academia</NavLink>
+              <NavLink to="/cadeiras">Cadeiras</NavLink>
+              <NavLink to="/acervo">Acervo</NavLink>
+              <NavLink to="/agenda">Agenda</NavLink>
+              <NavLink to="/noticias">Notícias</NavLink>
+              <NavLink to="/contato">Contato</NavLink>
+            </nav>
+          </div>
+
+          <div className="footer-minimal-meta">
+            <span>© {new Date().getFullYear()} Academia Limoeirense de Letras</span>
+            <div className="footer-minimal-contact">
+              {institutionInfo?.telefone && (
+                <a href={`tel:${phoneHref}`}>
+                  <Phone size={13} aria-hidden="true" />
+                  {institutionInfo.telefone}
                 </a>
               )}
-            </div>
-          </div>
-
-          <nav className="footer-column" aria-label="Navegação no rodapé">
-            <p className="footer-label">Explore</p>
-            <NavLink to="/">Início</NavLink>
-            <NavLink to="/cadeiras">Cadeiras</NavLink>
-            <NavLink to="/acervo">Acervo</NavLink>
-            <NavLink to="/agenda">Agenda</NavLink>
-            <NavLink to="/noticias">Notícias</NavLink>
-          </nav>
-
-          <nav className="footer-column" aria-label="Links institucionais">
-            <p className="footer-label">Academia</p>
-            <NavLink to="/academia">Nossa história</NavLink>
-            <NavLink to="/academia">Diretoria</NavLink>
-            <NavLink to="/acervo?q=estatuto">Estatuto social</NavLink>
-            <NavLink to="/contato">Fale conosco</NavLink>
-          </nav>
-
-          <div className="footer-column footer-contact">
-            <p className="footer-label">Contato</p>
-            {institutionInfo?.telefone && (
-              <a href={`tel:${phoneHref}`}>
-                <Phone size={16} aria-hidden="true" />
-                <span>{institutionInfo.telefone}</span>
-              </a>
-            )}
-            {institutionInfo?.email && (
-              <a href={`mailto:${institutionInfo.email}`}>
-                <Mail size={16} aria-hidden="true" />
-                <span>{institutionInfo.email}</span>
-              </a>
-            )}
-            <NavLink to="/contato">
-              <MapPin size={16} aria-hidden="true" />
-              <span>{institutionInfo?.endereco ?? 'Consulte nosso endereço'}</span>
-            </NavLink>
-          </div>
-        </div>
-
-        <div className="footer-lower">
-          <div className="wrap footer-bottom">
-            <span>© {new Date().getFullYear()} Academia Limoeirense de Letras</span>
-            <div className="footer-legal">
-              <NavLink to="/academia">Institucional</NavLink>
-              <NavLink to="/contato">Contato</NavLink>
-              <span>Portal oficial da A.L.L.</span>
+              {institutionInfo?.email && (
+                <a href={`mailto:${institutionInfo.email}`}>
+                  <Mail size={13} aria-hidden="true" />
+                  {institutionInfo.email}
+                </a>
+              )}
             </div>
           </div>
         </div>

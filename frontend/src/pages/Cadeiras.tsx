@@ -1,21 +1,21 @@
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import { useState, useCallback } from 'react'
-import { ArrowUpRight } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { fetchCadeiras } from '@/services/api'
 import type { Cadeira } from '@/types'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
-
-import { FILTROS_CADEIRAS as filtros } from '@/constants'
+import Pagination from '@/components/Pagination'
 
 export default function Cadeiras() {
-  const [filtro, setFiltro] = useState('Todos')
+  const [page, setPage] = useState(1)
   const load = useCallback((signal: AbortSignal) => fetchCadeiras(undefined, undefined, signal), [])
   const state = useResource<Cadeira[]>(load, [])
-  const lista = filtro === 'Todos' ? state.data : state.data.filter(c => c.status === filtro)
-  const totalCount = state.data.length
-  const loading = state.loading
+  const lista = state.data
+  const pageSize = 12
+  const totalPages = Math.max(1, Math.ceil(lista.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const cadeirasVisiveis = lista.slice((currentPage - 1) * pageSize, currentPage * pageSize)
   if (state.loading || state.error) return <main><LoadState {...state} /></main>
 
   return (
@@ -28,26 +28,12 @@ export default function Cadeiras() {
         </p>
       </section>
 
-      {/* Filtros */}
-      <div className="cadeiras-filtros wrap">
-        {filtros.map(f => (
-          <button
-            key={f}
-            className={`filtro-btn ${filtro === f ? 'active' : ''}`}
-            onClick={() => setFiltro(f)}
-          >
-            {f}
-          </button>
-        ))}
-        <span className="filtro-count">{lista.length} cadeira{lista.length !== 1 ? 's' : ''}</span>
-      </div>
-
       {/* Grade */}
       <section className="chairs-section chairs-catalog-section">
         <div className="wrap">
           <div className="chair-grid chair-grid-catalog">
             {lista.length === 0 && <p role="status">Nenhuma cadeira encontrada para este filtro.</p>}
-            {lista.map((chair) => (
+            {cadeirasVisiveis.map((chair) => (
               <NavLink
                 to={`/cadeiras/${chair.number.toLowerCase()}`}
                 key={chair.number}
@@ -75,12 +61,7 @@ export default function Cadeiras() {
               </NavLink>
             ))}
           </div>
-          <div className="catalog-footer">
-            <p className="catalog-footer-copy">
-              Exibindo {lista.length} de {totalCount || lista.length} cadeiras {loading ? '(atualizando...)' : ''}
-            </p>
-            <NavLink className="text-link" to="/contato">Indicar membro <ArrowUpRight size={15} /></NavLink>
-          </div>
+          <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
         </div>
       </section>
     </main>

@@ -79,7 +79,9 @@ export default function Contato() {
 
         {/* Formulário */}
         <div className="contato-form-wrap">
-          <div className="section-rule form-section-rule"><span>—</span><span>Formulário de contato</span><span>—</span></div>
+          <div className="section-heading contato-form-heading">
+            <h2>Envie uma <em>mensagem</em></h2>
+          </div>
 
           {enviado ? (
             <div className="form-sucesso">

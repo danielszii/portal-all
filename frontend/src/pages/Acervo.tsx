@@ -7,9 +7,6 @@ import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import { useState, useCallback, useEffect } from 'react'
 import { ArrowUpRight, Search, X, Download } from 'lucide-react'
-
-
-import { TIPOS_ACERVO as tipos } from '@/constants'
 import { pdfViewerUrl } from '@/utils/pdf'
 
 type Pub = AcervoItem
@@ -70,7 +67,6 @@ function AcervoConteudo() {
     next.delete('ler')
     setParams(next)
   }
-  const setTipo = (value: string) => update('tipo', value === 'Todos' ? '' : value)
   const [pdfAberto, setPdfAberto] = useState<Pub | null>(null)
 
   const load = useCallback((signal: AbortSignal) => fetchAcervoPage(page, tipo, busca, signal), [page, tipo, busca])
@@ -107,11 +103,7 @@ function AcervoConteudo() {
       </section>
 
       <section className="archive-catalog wrap">
-        <div className="catalog-toolbar">
-          <div>
-            <p className="eyebrow">Publicações</p>
-            <h2>{state.data.total} <em>obras</em></h2>
-          </div>
+        <div className="archive-search-row">
           <form className="archive-search search-control" role="search" onSubmit={e => { e.preventDefault(); update('q', draft.trim()) }}>
             <Search size={14} strokeWidth={1.5} aria-hidden="true" />
             <input
@@ -123,17 +115,6 @@ function AcervoConteudo() {
             />
             <button type="submit"><span>Buscar</span></button>
           </form>
-        </div>
-
-        <div className="cadeiras-filtros catalog-filters">
-          {tipos.map(t => (
-            <button key={t} aria-pressed={tipo === t} className={`filtro-btn ${tipo === t ? 'active' : ''}`} onClick={() => setTipo(t)}>{t}</button>
-          ))}
-        </div>
-
-        <div className="catalog-meta">
-          <span>{state.data.total} publicaç{state.data.total !== 1 ? 'ões' : 'ão'} encontrada{state.data.total !== 1 ? 's' : ''}</span>
-          <span>Acesso público e gratuito</span>
         </div>
 
         {lista.length === 0 ? (
