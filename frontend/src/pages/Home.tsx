@@ -106,10 +106,8 @@ export default function Home() {
         <div className="wrap">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Catálogo histórico</p>
               <h2>Quadro de <em>cadeiras</em></h2>
             </div>
-            <p className="heading-note">Conheça os patronos, fundadores<br />e titulares que formam esta casa.</p>
           </div>
           <div className="chair-grid">
             <LoadState {...cadeiras} />
@@ -140,10 +138,8 @@ export default function Home() {
         <div className="wrap">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">Biblioteca digital</p>
               <h2>O <em>acervo</em></h2>
             </div>
-            <p className="heading-note">Edições, cadernos e antologias<br />para ler e guardar.</p>
           </div>
           <div className="bookshelf">
             <LoadState {...acervo} />
@@ -168,7 +164,9 @@ export default function Home() {
 
       {/* Notícias */}
       <section className="news-section wrap">
-        <div className="section-rule"><span>—</span><span>Últimas notícias</span><span>—</span></div>
+        <div className="section-heading news-section-heading">
+          <h2>Últimas <em>notícias</em></h2>
+        </div>
         <div className="news-list">
           <LoadState {...noticias} />
           {!noticias.error && noticias.data.map(n => <article key={n.id}>

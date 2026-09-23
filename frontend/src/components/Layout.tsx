@@ -49,7 +49,7 @@ export default function Layout() {
           </div>
 
           <div className="header-actions">
-            <form className="header-search" role="search" onSubmit={handleSearch} onClick={() => searchInputRef.current?.focus()}>
+            <form className="header-search search-control" role="search" onSubmit={handleSearch} onClick={() => searchInputRef.current?.focus()}>
               <Search size={14} strokeWidth={1.5} />
               <input
                 type="search"
@@ -85,9 +85,10 @@ export default function Layout() {
 
         {/* ── Barra de navegação ── */}
         <nav className={`main-nav-bar ${menuOpen ? 'is-open' : ''}`} aria-label="Navegação principal">
-          <form className="mobile-search wrap" role="search" onSubmit={handleSearch}>
+          <form className="mobile-search search-control wrap" role="search" onSubmit={handleSearch}>
+            <Search size={14} strokeWidth={1.5} aria-hidden="true" />
             <input type="search" aria-label="Buscar no portal" placeholder="Buscar no portal…" value={query} onChange={e => setQuery(e.target.value)} />
-            <button type="submit" aria-label="Pesquisar"><Search size={18} /></button>
+            <button type="submit" aria-label="Pesquisar"><span>Buscar</span></button>
           </form>
           <div className="main-nav-inner wrap">
             {navLinks.map(([label, path]) => (

@@ -44,9 +44,6 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
         </div>
         <div className="pdf-modal-footer">
           <span>{pub.pages} páginas · {pub.author}</span>
-          <a href={pub.pdf} download target="_blank" rel="noopener noreferrer" className="text-link text-link-flush">
-            Download direto <ArrowUpRight size={13} />
-          </a>
         </div>
       </div>
     </div>
@@ -104,8 +101,8 @@ export default function Acervo() {
             <p className="eyebrow">Publicações</p>
             <h2>{lista.length} <em>obras</em></h2>
           </div>
-          <form className="archive-search" onSubmit={e => e.preventDefault()}>
-            <Search size={14} color="var(--bronze)" strokeWidth={1.5} />
+          <form className="archive-search search-control" role="search" onSubmit={e => e.preventDefault()}>
+            <Search size={14} strokeWidth={1.5} aria-hidden="true" />
             <input
               type="search"
               placeholder="Buscar por título, autor ou tipo…"
@@ -153,11 +150,8 @@ export default function Acervo() {
                   <p className="archive-book-pages">{book.pages} páginas · {book.author}</p>
                   <div className="archive-book-actions">
                     <button className="archive-book-link archive-book-link-primary" onClick={() => setPdfAberto(book)}>
-                      [ Ler / Visualizar ]
+                      Ler / visualizar <ArrowUpRight size={14} />
                     </button>
-                    <a className="archive-book-link" href={book.pdf} download target="_blank" rel="noopener noreferrer">
-                      [ Baixar PDF ]
-                    </a>
                   </div>
                 </div>
               </article>
