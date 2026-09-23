@@ -40,7 +40,7 @@ export default function Home() {
   const publications = acervo.error ? [] : acervo.data.items
 
   return (
-    <main>
+    <main className="home-page">
       {/* Hero */}
       <section id="inicio" className="hero">
         <div className="hero-bg">
@@ -51,10 +51,6 @@ export default function Home() {
           <div className="hero-message" key={currentHero}>
             <h1>{heroSlides[currentHero].title}<br /><em>{heroSlides[currentHero].emphasis}</em></h1>
             <p className="hero-intro">{heroSlides[currentHero].description}</p>
-          </div>
-          <div className="quote">
-            <p>"A literatura é a memória de um povo quando o tempo já não consegue falar."</p>
-            <small>— Caderno de notas da Academia</small>
           </div>
         </div>
         <div className="hero-index" aria-label="Selecionar mensagem em destaque">
@@ -111,7 +107,7 @@ export default function Home() {
           </div>
           <div className="chair-grid">
             <LoadState {...cadeiras} />
-            {chairs.map((chair) => (
+            {chairs.map((chair, index) => (
               <NavLink to={`/cadeiras/${chair.number.toLowerCase()}`} key={chair.number} className="chair" aria-label={`Cadeira ${chair.number} — ${chair.patron}`}>
                 <MemberPhotoFrame
                   src={chair.image}
@@ -119,6 +115,9 @@ export default function Home() {
                   status={chair.status}
                   chairNumber={chair.number}
                   size="md"
+                  variant="ornate"
+                  photoVariant="institutional-demo"
+                  demoPortraitIndex={index}
                 />
                 <div className="chair-meta">
                   <span className="chair-number">Cadeira · {chair.number}</span>
@@ -163,17 +162,19 @@ export default function Home() {
       </section>
 
       {/* Notícias */}
-      <section className="news-section wrap">
-        <div className="section-heading news-section-heading">
-          <h2>Últimas <em>notícias</em></h2>
-        </div>
-        <div className="news-list">
-          <LoadState {...noticias} />
-          {!noticias.error && noticias.data.map(n => <article key={n.id}>
-            <time>{n.data}</time><h3>{n.titulo}</h3>
-            <NavLink to={`/noticias?id=${n.id}`}>Ler notícia <ArrowUpRight size={14} /></NavLink>
-          </article>)}
-          {!noticias.loading && !noticias.error && noticias.data.length === 0 && <p>Nenhuma notícia publicada.</p>}
+      <section className="news-section">
+        <div className="wrap">
+          <div className="section-heading news-section-heading">
+            <h2>Últimas <em>notícias</em></h2>
+          </div>
+          <div className="news-list">
+            <LoadState {...noticias} />
+            {!noticias.error && noticias.data.map(n => <article key={n.id}>
+              <time>{n.data}</time><h3>{n.titulo}</h3>
+              <NavLink to={`/noticias?id=${n.id}`}>Ler notícia <ArrowUpRight size={14} /></NavLink>
+            </article>)}
+            {!noticias.loading && !noticias.error && noticias.data.length === 0 && <p>Nenhuma notícia publicada.</p>}
+          </div>
         </div>
       </section>
     </main>

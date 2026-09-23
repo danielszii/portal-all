@@ -60,6 +60,8 @@ export default function Cadeiras() {
                   status={chair.status}
                   chairNumber={chair.number}
                   size="md"
+                  variant="ornate"
+                  photoVariant="institutional-demo"
                 />
                 <div className="chair-meta">
                   <span className="chair-number">Cadeira · {chair.number}</span>

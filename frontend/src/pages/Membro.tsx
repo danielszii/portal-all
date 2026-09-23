@@ -61,6 +61,8 @@ export default function Membro() {
               chairNumber={chair.number}
               isVaga={isVaga}
               size="lg"
+              variant="ornate"
+              photoVariant="institutional-demo"
             />
           </div>
 
