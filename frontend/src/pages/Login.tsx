@@ -1,15 +1,31 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router'
+import { NavLink, Navigate, useLocation, useNavigate } from 'react-router'
 import { ArrowLeft, LockKeyhole, Mail } from 'lucide-react'
 import logoSrc from '@/imports/Logo_Vetorizada_A.L.L_sem_fundo.svg'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Login() {
-  const [messageVisible, setMessageVisible] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { isAuthenticated, login } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setMessageVisible(true)
+    setIsSubmitting(true)
+
+    const formData = new FormData(event.currentTarget)
+    const email = String(formData.get('email') ?? '').trim()
+    const remember = formData.get('remember') === 'on'
+    const destination = typeof location.state === 'object' && location.state && 'from' in location.state
+      ? String(location.state.from)
+      : '/admin'
+
+    login(email, remember)
+    navigate(destination, { replace: true })
   }
+
+  if (isAuthenticated) return <Navigate to="/admin" replace />
 
   return (
     <main className="login-page">
@@ -43,14 +59,8 @@ export default function Login() {
               <span>Lembrar meu acesso neste dispositivo</span>
             </label>
 
-            {messageVisible && (
-              <p className="login-notice" role="status">
-                A autenticação administrativa ainda está em implantação.
-              </p>
-            )}
-
-            <button className="login-submit" type="submit">
-              Entrar
+            <button className="login-submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Entrando…' : 'Entrar'}
               <LockKeyhole size={15} strokeWidth={1.7} />
             </button>
             </form>

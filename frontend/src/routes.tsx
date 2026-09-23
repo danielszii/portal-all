@@ -11,6 +11,8 @@ import Contato from './pages/Contato'
 import Busca from './pages/Busca'
 import NaoEncontrada from './pages/NaoEncontrada'
 import Login from './pages/Login'
+import Admin from './pages/Admin'
+import RequireAuth from './components/RequireAuth'
 
 export const router = createBrowserRouter([
   { path: '/login', Component: Login },
@@ -27,6 +29,10 @@ export const router = createBrowserRouter([
       { path: 'noticias', Component: Noticias },
       { path: 'contato', Component: Contato },
       { path: 'busca', Component: Busca },
+      {
+        Component: RequireAuth,
+        children: [{ path: 'admin', Component: Admin }],
+      },
       { path: '*', Component: NaoEncontrada },
     ],
   },

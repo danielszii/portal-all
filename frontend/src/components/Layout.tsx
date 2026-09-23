@@ -1,13 +1,15 @@
 import { useResource } from '@/hooks/useResource'
 import { fetchInstituicao } from '@/services/api'
+import { useAuth } from '@/contexts/AuthContext'
 import { useEffect, useRef, useState } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router'
-import { LockKeyhole, Mail, MapPin, Menu, Phone, Search, X } from 'lucide-react'
+import { LayoutDashboard, LockKeyhole, LogOut, Mail, MapPin, Menu, Phone, Search, X } from 'lucide-react'
 import logoSrc from '@/imports/Logo_Vetorizada_A.L.L_sem_fundo.svg'
 import footerLogoSrc from '@/imports/Logo Versão Negativa Branca (Alta Qualidade).png'
 
 export default function Layout() {
   const institution = useResource(fetchInstituicao, { info: null, gestao: null })
+  const { isAuthenticated, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -25,6 +27,12 @@ export default function Layout() {
     e.preventDefault()
     navigate(`/busca?q=${encodeURIComponent(query.trim())}`)
     close()
+  }
+
+  const handleLogout = () => {
+    logout()
+    close()
+    navigate('/')
   }
 
   const navLinks = [
@@ -63,14 +71,21 @@ export default function Layout() {
                 <span>Buscar</span>
               </button>
             </form>
-            <NavLink
-              className={({ isActive }) => `header-login ${isActive ? 'nav-active' : ''}`}
-              to="/login"
-              aria-label="Entrar na área restrita"
-            >
-              <LockKeyhole size={14} strokeWidth={1.7} />
-              <span>Login</span>
-            </NavLink>
+            {isAuthenticated ? (
+              <button className="header-login" type="button" onClick={handleLogout} aria-label="Encerrar sessão administrativa">
+                <LogOut size={14} strokeWidth={1.7} />
+                <span>Sair</span>
+              </button>
+            ) : (
+              <NavLink
+                className={({ isActive }) => `header-login ${isActive ? 'nav-active' : ''}`}
+                to="/login"
+                aria-label="Entrar na área restrita"
+              >
+                <LockKeyhole size={14} strokeWidth={1.7} />
+                <span>Login</span>
+              </NavLink>
+            )}
           </div>
 
           <button
@@ -102,10 +117,23 @@ export default function Layout() {
                 {label}
               </NavLink>
             ))}
-            <NavLink className="mobile-login" to="/login" onClick={close}>
-              <LockKeyhole size={14} strokeWidth={1.7} />
-              Login
-            </NavLink>
+            {isAuthenticated && (
+              <NavLink className={({ isActive }) => `admin-nav-link ${isActive ? 'nav-active' : ''}`} to="/admin" onClick={close}>
+                <LayoutDashboard size={14} strokeWidth={1.7} />
+                Administração
+              </NavLink>
+            )}
+            {isAuthenticated ? (
+              <button className="mobile-login mobile-logout" type="button" onClick={handleLogout}>
+                <LogOut size={14} strokeWidth={1.7} />
+                Sair
+              </button>
+            ) : (
+              <NavLink className="mobile-login" to="/login" onClick={close}>
+                <LockKeyhole size={14} strokeWidth={1.7} />
+                Login
+              </NavLink>
+            )}
           </div>
         </nav>
       </header>
