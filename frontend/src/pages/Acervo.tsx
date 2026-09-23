@@ -1,4 +1,5 @@
-import { fetchAcervo } from '@/services/api'
+import { fetchAcervoPage, fetchAcervoById, emptyPage } from '@/services/api'
+import Pagination, { pageFromUrl } from '@/components/Pagination'
 import type { AcervoItem } from '@/types'
 import { useSearchParams } from 'react-router'
 import { useDialog } from '@/hooks/useDialog'
@@ -54,21 +55,35 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
 }
 
 export default function Acervo() {
+  const [params] = useSearchParams()
+  return <AcervoConteudo key={params.toString()} />
+}
+
+function AcervoConteudo() {
   const [params, setParams] = useSearchParams()
   const busca = params.get('q') ?? ''
   const leituraId = params.get('ler')
-  const setBusca = (q: string) => setParams(q ? { q } : {}, { replace: true })
-  const [tipo, setTipo] = useState('Todos')
+  const [draft, setDraft] = useState(busca)
+  const tipo = params.get('tipo') || 'Todos'
+  const page = pageFromUrl(params.get('page'))
+  const update = (key: string, value: string) => {
+    const next = new URLSearchParams(params)
+    if (value) next.set(key, value); else next.delete(key)
+    if (key !== 'page') next.delete('page')
+    next.delete('ler')
+    setParams(next)
+  }
+  const setTipo = (value: string) => update('tipo', value === 'Todos' ? '' : value)
   const [pdfAberto, setPdfAberto] = useState<Pub | null>(null)
 
-  const load = useCallback((signal: AbortSignal) => fetchAcervo(undefined, undefined, signal), [])
-  const state = useResource<Pub[]>(load, [])
+  const load = useCallback((signal: AbortSignal) => fetchAcervoPage(page, tipo, busca, signal), [page, tipo, busca])
+  const state = useResource(load, emptyPage<Pub>())
+  const loadDetail = useCallback((signal: AbortSignal) => leituraId ? fetchAcervoById(leituraId, signal) : Promise.resolve(null), [leituraId])
+  const detail = useResource<Pub | null>(loadDetail, null)
 
   useEffect(() => {
-    if (!leituraId || state.loading || state.error) return
-    const publication = state.data.find(item => String(item.id) === leituraId)
-    if (publication) setPdfAberto(publication)
-  }, [leituraId, state.data, state.error, state.loading])
+    if (leituraId && detail.data && !detail.error) setPdfAberto(detail.data)
+  }, [leituraId, detail.data, detail.error])
 
   const closePdf = () => {
     setPdfAberto(null)
@@ -79,15 +94,11 @@ export default function Acervo() {
   }
 
   if (state.loading || state.error) return <main><LoadState {...state} /></main>
-  const publications = state.data
-  const lista = publications.filter(p => {
-    const matchTipo = tipo === 'Todos' || p.type === tipo
-    const matchBusca = !busca || [p.title, p.author, p.year, p.tomo, p.type].some(v => v.toLowerCase().includes(busca.toLowerCase()))
-    return matchTipo && matchBusca
-  })
+  const lista = state.data.items
 
   return (
     <main>
+      {leituraId && <LoadState {...detail} />}
       {pdfAberto && <PdfModal pub={pdfAberto} onClose={closePdf} />}
 
       <section className="archive-hero wrap">
@@ -102,28 +113,29 @@ export default function Acervo() {
         <div className="catalog-toolbar">
           <div>
             <p className="eyebrow">Publicações</p>
-            <h2>{lista.length} <em>obras</em></h2>
+            <h2>{state.data.total} <em>obras</em></h2>
           </div>
-          <form className="archive-search" onSubmit={e => e.preventDefault()}>
+          <form className="archive-search" onSubmit={e => { e.preventDefault(); update('q', draft.trim()) }}>
             <Search size={14} color="var(--bronze)" strokeWidth={1.5} />
             <input
               type="search"
               placeholder="Buscar por título, autor ou tipo…"
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
               aria-label="Buscar no acervo"
             />
+            <button type="submit" className="filtro-btn">Buscar</button>
           </form>
         </div>
 
         <div className="cadeiras-filtros catalog-filters">
           {tipos.map(t => (
-            <button key={t} className={`filtro-btn ${tipo === t ? 'active' : ''}`} onClick={() => setTipo(t)}>{t}</button>
+            <button key={t} aria-pressed={tipo === t} className={`filtro-btn ${tipo === t ? 'active' : ''}`} onClick={() => setTipo(t)}>{t}</button>
           ))}
         </div>
 
         <div className="catalog-meta">
-          <span>{lista.length} publicaç{lista.length !== 1 ? 'ões' : 'ão'} encontrada{lista.length !== 1 ? 's' : ''}</span>
+          <span>{state.data.total} publicaç{state.data.total !== 1 ? 'ões' : 'ão'} encontrada{state.data.total !== 1 ? 's' : ''}</span>
           <span>Acesso público e gratuito</span>
         </div>
 
@@ -164,6 +176,7 @@ export default function Acervo() {
             ))}
           </div>
         )}
+        <Pagination page={state.data.page} totalPages={state.data.totalPages} onChange={value => update('page', String(value))} />
       </section>
     </main>
   )

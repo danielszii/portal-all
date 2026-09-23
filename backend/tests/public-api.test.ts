@@ -60,6 +60,28 @@ test('instituição sem cadastro não inventa conteúdo nem diretoria', async t 
 })
 
 const mensagem = { nome: '  Maria  ', email: 'maria@example.com', mensagem: 'Consulta ao acervo.' }
+test('resumo de notícias omite texto completo sem mudar o contrato padrão ou detalhe', async t => {
+  const row = { id: 1, titulo: 'Memórias', lede: 'Resumo', categoria: 'Acervo', img: '/capa.jpg', publicadoEm: new Date('2020-01-01'), conteudo: 'Texto completo' }
+  mockMethod(t, prisma, '$transaction', async callback => callback({ $queryRaw: async (query: { sql: string; values: unknown[] }) => {
+    assert.ok(query.values.includes('acervo'))
+    assert.ok(query.values.includes('%memorias%'))
+    if (query.sql.startsWith('SELECT count')) return [{ total: 1 }]
+    return [query.sql.startsWith('SELECT *') ? row : { ...row, conteudo: undefined }]
+  } }))
+  mockMethod(t, prisma.noticia, 'findFirst', async () => row)
+  const url = await serve(t, createApp())
+  const path = '/api/noticias?categoria=Acervo&q=mem%C3%B3rias'
+  const summary = await fetch(url + path + '&resumo=true')
+  assert.equal(summary.status, 200)
+  const rows = await summary.json() as Record<string, unknown>[]
+  assert.equal(rows[0].titulo, 'Memórias')
+  assert.equal(Object.hasOwn(rows[0], 'conteudo'), false)
+  const full = await (await fetch(url + path)).json() as Record<string, unknown>[]
+  assert.equal(full[0].conteudo, 'Texto completo')
+  const detail = await (await fetch(url + '/api/noticias/1')).json() as Record<string, unknown>
+  assert.equal(detail.conteudo, 'Texto completo')
+})
+
 test('contato HTTP valida antes de salvar, normaliza e mantém leitura privada', async t => {
   const create = mockMethod(t, prisma.contatoMensagem, 'create', async ({ data }) => ({ ...data, dataEnvio: new Date() }))
   const url = await serve(t, createApp())

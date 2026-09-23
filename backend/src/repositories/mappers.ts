@@ -50,7 +50,7 @@ export function mapEvento(row: Prisma.EventoGetPayload<object>): Evento {
     local: row.local, descricao: row.descricao, foto: row.foto ?? undefined,
     passado: (row.fimEm ?? row.inicioEm).getTime() < Date.now() }
 }
-export function mapNoticia(row: Prisma.NoticiaGetPayload<object>): Noticia {
+export function mapNoticia(row: Pick<Prisma.NoticiaGetPayload<object>, 'id' | 'titulo' | 'categoria' | 'lede' | 'img' | 'publicadoEm'> & { conteudo?: string }): Noticia {
   return { id: row.id, titulo: row.titulo, categoria: row.categoria, lede: row.lede, img: row.img, conteudo: row.conteudo,
     data: row.publicadoEm?.toLocaleDateString('pt-BR', { timeZone: zone, day: '2-digit', month: 'short', year: 'numeric' }).replaceAll(' de ', ' ').replace('.', '').toUpperCase() ?? '' }
 }

@@ -5,14 +5,24 @@ import { requestLogger, errorHandler } from './middlewares/index.js'
 import apiRouter from './routes/index.js'
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { securityHeaders, validateSearch } from './middlewares/security.middleware.js'
+import { createRequestLimit } from './middlewares/contato-limit.middleware.js'
 
 export function createApp(frontendDir = fileURLToPath(new URL('../../frontend/dist/', import.meta.url))) {
   const app = express()
+  app.disable('x-powered-by')
+  app.use(securityHeaders)
 
   // Middlewares globais
   app.use(cors(corsConfig))
   app.use(express.json({ limit: '32kb' }))
   app.use(requestLogger)
+  const readLimit = createRequestLimit({ limit: 120, windowMs: 60_000 })
+  app.use('/api', (req, res, next) => {
+    if ((req.method === 'GET' || req.method === 'HEAD') && req.path !== '/health') {
+      readLimit(req, res, next)
+    } else next()
+  }, validateSearch)
 
   // Informações da API não interceptam a página inicial do portal.
   const apiInfo = (_req: Request, res: Response) => {
@@ -21,6 +31,7 @@ export function createApp(frontendDir = fileURLToPath(new URL('../../frontend/di
       status: 'operacional',
       endpoints: {
         health: '/api/health',
+        ready: '/api/ready',
         cadeiras: '/api/cadeiras',
         cadeiraPorNumero: '/api/cadeiras/:numero',
         eventos: '/api/eventos',

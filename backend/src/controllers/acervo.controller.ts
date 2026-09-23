@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { acervoService } from '../services/acervo.service.js'
+import { parsePagination } from '../repositories/catalog-query.js'
 
 export const getAcervo = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -10,9 +11,14 @@ export const getAcervo = async (req: Request, res: Response, next: NextFunction)
       ? req.query.search
       : undefined
 
-    const items = await acervoService.getAll(tipo, search)
+    const pagination = parsePagination(req.query)
+    const items = pagination ? await acervoService.getPage(pagination, tipo, search) : await acervoService.getAll(tipo, search)
     res.json(items)
   } catch (error) {
     next(error)
   }
+}
+
+export const getAcervoPorId = async (req: Request, res: Response, next: NextFunction) => {
+  try { res.json(await acervoService.getById(String(req.params.id))) } catch (error) { next(error) }
 }

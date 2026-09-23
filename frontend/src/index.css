@@ -701,7 +701,9 @@ h2 { font-size: clamp(50px, 6vw, 76px); letter-spacing: -.04em; }
 .catalog-toolbar h2 { font-size: clamp(42px, 5vw, 64px); }
 .archive-search { display: flex; align-items: center; gap: 12px; width: min(100%, 350px); border-bottom: 1.5px solid var(--line); padding: 10px 0; color: var(--bronze); transition: border-color .2s; }
 .archive-search:focus-within { border-bottom-color: var(--bronze); }
-.archive-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--navy); font: 400 10.5px/1 'Cinzel', serif; letter-spacing: .06em; }
+.archive-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--navy); font: 400 10.5px/1 'Cinzel', serif; letter-spacing: .06em; }
+.catalog-pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 2rem 0; }
+.catalog-pagination button:disabled { opacity: .45; cursor: not-allowed; }
 .archive-search input::placeholder { color: var(--muted); }
 .catalog-meta { display: flex; justify-content: space-between; border-block: 1px solid var(--line); padding: 13px 0; color: var(--muted); font: 9px 'Space Mono', monospace; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 0; }
 .archive-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 0; border-left: 1px solid var(--line); }

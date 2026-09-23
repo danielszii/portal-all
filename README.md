@@ -107,6 +107,30 @@ npm run dev
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:3001`
 - Verificação da API: `http://localhost:3001/api/health`
+- Disponibilidade do banco: `http://localhost:3001/api/ready`
+
+`/api/health` verifica o processo HTTP. `/api/ready` consulta o PostgreSQL e retorna
+HTTP 200 (`database: "up"`) ou 503 (`database: "down"`), com limite de espera de
+3 segundos e sem expor erros internos. Use `/api/ready` para verificar disponibilidade
+antes de encaminhar tráfego; ela não verifica se todas as migrations foram aplicadas.
+
+A página de notícias filtra por categoria e termo na API. A listagem usa
+`GET /api/noticias?resumo=true`, que omite o texto completo, e o detalhe usa
+`GET /api/noticias/:id`. Sem `resumo=true`, a API preserva a resposta completa existente.
+Categoria e busca são mantidas na URL ao abrir uma notícia e voltar para a listagem.
+
+Notícias exibem 1 destaque e até 9 itens na grade por página (10 no total); acervo exibe 12, com botões Anterior/Próxima. A API aceita
+`page` e `pageSize` (1 a 50, padrão 12) e retorna `{ items, total, page, pageSize, totalPages }`.
+Sem esses parâmetros, mantém a lista tradicional para consumidores existentes.
+Páginas além do final são limitadas à última disponível; parâmetros inválidos retornam 400.
+Filtros são aplicados antes da contagem e paginação, com desempate por ID na ordenação.
+Trocar categoria, tipo ou busca volta à primeira página. No acervo, confirme a busca
+com Enter ou Buscar. `GET /api/acervo/:id` mantém os links diretos para PDFs funcionais
+mesmo quando a publicação não está na página atual.
+
+A busca em cadeiras, notícias e acervo ignora acentos e diferenças de caixa:
+`memorias` encontra `Memórias` e `joao` encontra `João`. Os textos originais não são alterados.
+As consultas normalizam Unicode e usam parâmetros SQL, tratando `%` e `_` como texto literal.
 
 ## Dados fictícios
 
@@ -172,7 +196,8 @@ Crie um banco **exclusivo de testes**, com `test` no nome, e um usuário com per
 para criar e remover schemas nesse banco. Use UTF-8 e PostgreSQL com suporte a ICU.
 A migration `20260920000100_busca_portugues` configura ICU `pt-BR` nos campos
 pesquisados de notícias, acervo e tipo de evento, inclusive em bancos com localidade
-`C`. Assim, `MEMÓRIAS` encontra `Memórias`; buscar sem acento continua sendo diferente.
+`C`. Assim, `MEMÓRIAS` encontra `Memórias`. Além disso, as buscas de texto do catálogo
+normalizam acentos durante a consulta, permitindo também pesquisar `memorias`.
 Para aplicar em um ambiente existente, use `npm --prefix backend run db:deploy`.
 A migration preserva os textos e registros; os comandos ALTER TABLE podem bloquear
 temporariamente o acesso às tabelas, portanto aplique em uma janela de manutenção.
@@ -217,6 +242,53 @@ sem essa configuração, os clientes do mesmo proxy compartilham o limite.
 
 ## Migração de dados legados
 
+### Demonstração temporária com SQL rastreado
+
+O comando abaixo aceita somente a versão revisada do arquivo `demo-inserts.sql`
+(verificada por SHA-256). Ele usa o banco de `backend/.env`, no schema `public`:
+
+```powershell
+npm --prefix backend run db:demo-session -- import "C:\Users\Caue\Downloads\demo-inserts.sql"
+```
+
+Cada execução retorna um ID e registra atomicamente apenas as linhas realmente
+inseridas em `public."_PortalDemoSession"`. Registros preexistentes não são assumidos
+como parte da importação. O registro inclui o ID automático da notícia e a instituição
+`all` somente se ela tiver sido criada pelo comando. Não execute o SQL diretamente
+se precisar deste controle de remoção.
+
+Importação local realizada em 22/09/2026: `33883c04-8046-4bf1-a0f7-266058f5926a`
+(15 registros; notícia ID 1). Para conferir a remoção sem executá-la:
+
+```powershell
+npm --prefix backend run db:demo-session -- remove 33883c04-8046-4bf1-a0f7-266058f5926a
+```
+
+Quando terminar de testar, acrescente `--apply` para remover os registros dessa
+importação. A remoção é transacional, respeita os relacionamentos e não usa CASCADE.
+Se uma linha tiver sido editada ou possuir novas referências que impeçam a exclusão,
+a operação é cancelada integralmente. O histórico da importação permanece no banco.
+Os arquivos externos de imagens e PDF não são importados: o SQL guarda seus links.
+
+Lote ampliado: `backend/prisma/demo-expanded.sql`, com 12 novas cadeiras/patronos/acadêmicos,
+24 notícias (quatro categorias), 12 eventos em diferentes meses e tipos, 12 fotos e
+12 publicações nas seis categorias do acervo, além das obras e relações.
+Inclui duas cadeiras vagas e duas in memoriam. Conteúdo exclusivamente fictício.
+
+```powershell
+npm --prefix backend run db:demo-session -- import prisma/demo-expanded.sql
+```
+
+Lote ampliado importado em 22/09/2026: `37019c1f-3435-4152-9aa7-2917c33dad59`
+(142 registros novos). A remoção desse lote é independente do SQL inicial:
+
+```powershell
+# Prévia; acrescente --apply somente quando quiser remover o lote.
+npm --prefix backend run db:demo-session -- remove 37019c1f-3435-4152-9aa7-2917c33dad59
+```
+
+### Importação do SQLite
+
 Existe um importador aditivo para o banco SQLite utilizado por versões anteriores:
 
 ```bash
@@ -226,6 +298,19 @@ npm --prefix backend run db:import-sqlite -- "CAMINHO/PARA/dev.db"
 O importador abre o SQLite somente para leitura e não sobrescreve registros existentes. Faça backup antes de qualquer migração e aplique as migrações do PostgreSQL antes da importação.
 
 ## Segurança e preservação dos dados
+
+- Consultas GET/HEAD em `/api` aceitam até 120 requisições por IP por minuto,
+  por processo; o excesso retorna 429 com `Retry-After`. `/api/health` é isento.
+  O limite de contato continua separado (5 tentativas em 15 minutos).
+- Filtros `q`, `search`, `categoria` e `tipo` aceitam uma única string de até
+  200 caracteres. Listas sem paginação continuam disponíveis por compatibilidade;
+  o limitador reduz abuso, mas não limita o custo de uma consulta individual.
+- O backend envia CSP, proteção contra enquadramento, `nosniff`, política de
+  referência e restrição de câmera, microfone e geolocalização. A CSP permite
+  as fontes Google, imagens externas e o visualizador em `docs.google.com`.
+  Estes cabeçalhos se aplicam ao frontend servido pelo backend, não ao Vite.
+- Logs de acesso omitem query strings, corpos e cabeçalhos privados.
+  Retenção de logs, HTTPS e limites compartilhados dependem da infraestrutura.
 
 - Não utilize `prisma migrate reset` em bancos existentes.
 - Não utilize `db push --accept-data-loss`.

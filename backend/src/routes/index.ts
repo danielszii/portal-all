@@ -6,6 +6,7 @@ import acervoRouter from './acervo.routes.js'
 import contatoRouter from './contato.routes.js'
 import { findInstituicao } from '../repositories/instituicao.repository.js'
 import inicioRouter from './inicio.routes.js'
+import { databaseReady } from '../services/readiness.service.js'
 
 const apiRouter = Router()
 
@@ -22,6 +23,16 @@ apiRouter.get('/health', (_req, res) => {
     instituicao: 'Academia Limoeirense de Letras (A.L.L.)',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+  })
+})
+
+// Disponibilidade para receber tráfego; /health permanece como verificação do processo.
+apiRouter.get('/ready', async (_req, res) => {
+  const ready = await databaseReady()
+  res.setHeader('Cache-Control', 'no-store')
+  res.status(ready ? 200 : 503).json({
+    status: ready ? 'ok' : 'unavailable',
+    database: ready ? 'up' : 'down',
   })
 })
 

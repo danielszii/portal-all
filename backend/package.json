@@ -13,6 +13,7 @@
     "db:generate": "prisma generate",
     "db:deploy": "prisma migrate deploy",
     "db:import-sqlite": "tsx prisma/import-sqlite.ts",
+    "db:demo-session": "node prisma/demo-session.mjs",
     "check": "tsc -p tsconfig.check.json",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:integration": "node tests/run-integration.mjs"

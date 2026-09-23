@@ -20,6 +20,7 @@ test('API com migrations e PostgreSQL real', async t => {
   }
 
   await t.test('banco recém-migrado fornece respostas vazias', async () => {
+    assert.deepEqual(await get('/ready'), { status: 'ok', database: 'up' })
     for (const path of ['/cadeiras', '/eventos', '/eventos/galeria', '/noticias', '/acervo', '/inicio/noticias']) {
       assert.deepEqual(await get(path), [], path)
     }
@@ -76,6 +77,11 @@ test('API com migrations e PostgreSQL real', async t => {
     assert.deepEqual((await get('/noticias?categoria=cultura&q=LITERÁRIO')).map((n: any) => n.id), [ids[0]])
     assert.deepEqual(await get('/noticias?search=ausente'), [])
     assert.equal((await get(`/noticias/${ids[0]}`)).conteudo, 'Texto oficial')
+    const resumos = await get('/noticias?resumo=true&categoria=cultura&q=oficial')
+    assert.deepEqual(resumos.map((n: any) => n.id), [ids[0]])
+    assert.equal(Object.hasOwn(resumos[0], 'conteudo'), false)
+    assert.equal(resumos[0].lede, 'Resumo')
+    assert.equal((await get('/noticias'))[0].conteudo, 'Texto oficial')
     for (const id of ids.slice(1)) await get(`/noticias/${id}`, 404)
     assert.deepEqual((await get('/inicio/noticias')).map((n: any) => n.id), [ids[0]])
   })
@@ -168,6 +174,53 @@ test('API com migrations e PostgreSQL real', async t => {
       local: 'Sede', descricao: 'Texto', status: 'PUBLICADO',
     } })
     assert.ok((await get('/eventos?tipo=' + encodeURIComponent('SESSÃO SOLENE'))).some((e: any) => e.id === evento.id))
+  })
+
+  await t.test('busca sem acentos e paginação preservam total, filtros e ordem estável', async () => {
+    const ids: number[] = []
+    for (let i = 0; i < 17; i++) {
+      const row = await prisma.noticia.create({ data: {
+        titulo: 'Memórias da edição', categoria: 'Publicações', lede: 'João', img: '/teste.jpg',
+        conteudo: 'Texto exclusivo', status: 'PUBLICADO', publicadoEm: new Date('2020-02-01'),
+      } })
+      ids.push(row.id)
+      await prisma.acervoItem.create({ data: {
+        id: `pagina-${String(i).padStart(2, '0')}`, titulo: 'Memo\u0301rias da edição', categoria: 'Coleção',
+        descricao: 'Texto', pdfUrl: '/teste.pdf', ano: 2026, status: 'PUBLICADO',
+      } })
+    }
+    const query = '/noticias?resumo=true&q=MEMORIAS&categoria=publicacoes&pageSize=12'
+    const first = await get(query + '&page=1')
+    const second = await get(query + '&page=2')
+    assert.equal(first.total, 17)
+    assert.equal(first.totalPages, 2)
+    assert.equal(first.items.length, 12)
+    assert.equal(second.items.length, 5)
+    assert.equal(Object.hasOwn(first.items[0], 'conteudo'), false)
+    assert.deepEqual([...first.items, ...second.items].map((n: any) => n.id), ids.reverse())
+    assert.deepEqual(await get(query + '&page=999'), second)
+    const empty = await get('/noticias?page=20&q=xxxxxxxxxx')
+    assert.deepEqual([empty.total, empty.page, empty.totalPages, empty.items.length], [0, 1, 1, 0])
+    const legacy = await get('/noticias?q=memorias&categoria=publicacoes')
+    assert.ok(Array.isArray(legacy))
+    assert.equal(legacy.length, 17)
+    assert.equal(legacy[0].conteudo, 'Texto exclusivo')
+    const archive = '/acervo?q=memorias&tipo=colecao&pageSize=12'
+    const a = await get(archive + '&page=1')
+    const b = await get(archive + '&page=2')
+    assert.equal(a.total, 17)
+    assert.equal(a.items.length, 12)
+    assert.equal(b.items.length, 5)
+    assert.equal(new Set([...a.items, ...b.items].map((x: any) => x.id)).size, 17)
+    assert.equal((await get('/acervo/pagina-16')).title, 'Memo\u0301rias da edição')
+    await prisma.acervoItem.update({ where: { id: 'pagina-16' }, data: { status: 'RASCUNHO' } })
+    await get('/acervo/pagina-16', 404)
+    await prisma.academico.update({ where: { id: titular.id }, data: { nome: 'João da Memória' } })
+    assert.equal((await get('/cadeiras?q=joao'))[0].holder, 'João da Memória')
+    // %, _ e aspas são texto literal, nunca curingas nem comandos SQL.
+    for (const term of ['%', '_', "' OR 1=1 --", '\\']) {
+      assert.equal((await get('/noticias?page=1&q=' + encodeURIComponent(term))).total, 0)
+    }
   })
 
   await t.test('restrições SQL impedem inconsistências e exclusão do histórico', async () => {

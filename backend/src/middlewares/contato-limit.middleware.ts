@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express'
 
 // Proteção local ao processo. Não confia em X-Forwarded-For enviado pelo cliente.
-export function createContatoLimit({ limit = 5, windowMs = 15 * 60_000, maxEntries = 10_000, now = Date.now } = {}): RequestHandler {
+export function createRequestLimit({ limit = 5, windowMs = 15 * 60_000, maxEntries = 10_000, now = Date.now } = {}): RequestHandler {
   const entries = new Map<string, { count: number; expires: number }>()
   let nextCleanup = 0
   return (req, res, next) => {
@@ -15,7 +15,7 @@ export function createContatoLimit({ limit = 5, windowMs = 15 * 60_000, maxEntri
     if (entry && entry.expires <= time) { entries.delete(key); entry = undefined }
     if ((!entry && entries.size >= maxEntries) || (entry && entry.count >= limit)) {
       res.setHeader('Retry-After', Math.max(1, Math.ceil(((entry?.expires ?? nextCleanup) - time) / 1000)))
-      res.status(429).json({ error: 'Muitas tentativas de envio. Aguarde alguns minutos e tente novamente.' })
+      res.status(429).json({ error: 'Muitas requisições. Aguarde e tente novamente.' })
       return
     }
     if (!entry) { entry = { count: 0, expires: time + windowMs }; entries.set(key, entry) }
@@ -23,3 +23,5 @@ export function createContatoLimit({ limit = 5, windowMs = 15 * 60_000, maxEntri
     next()
   }
 }
+
+export const createContatoLimit = createRequestLimit

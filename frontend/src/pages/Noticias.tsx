@@ -1,8 +1,9 @@
-import { fetchNoticias } from '@/services/api'
+import { fetchNoticiasPage, fetchNoticiaById, emptyPage } from '@/services/api'
+import Pagination, { pageFromUrl } from '@/components/Pagination'
 import type { Noticia } from '@/types'
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import { ArrowUpRight } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 
@@ -10,27 +11,47 @@ import { useSearchParams } from 'react-router'
 import { CATEGORIAS_NOTICIAS as categorias } from '@/constants'
 
 export default function Noticias() {
+  const [params] = useSearchParams()
+  return <NoticiasConteudo key={params.toString()} />
+}
+
+function NoticiasConteudo() {
   const [searchParams, setSearchParams] = useSearchParams()
   const q = searchParams.get('q') || ''
-  const [cat, setCat] = useState('Todas')
-  const aberta = searchParams.has('id') ? Number(searchParams.get('id')) : null
+  const cat = searchParams.get('categoria') || 'Todas'
+  const page = pageFromUrl(searchParams.get('page'))
+  const setPage = (value: number) => {
+    const next = new URLSearchParams(searchParams)
+    next.set('page', String(value))
+    setSearchParams(next)
+  }
+  const setCat = (categoria: string) => {
+    const next = new URLSearchParams(searchParams)
+    if (categoria === 'Todas') next.delete('categoria'); else next.set('categoria', categoria)
+    next.delete('id')
+    next.delete('page')
+    setSearchParams(next)
+  }
+  const id = searchParams.get('id')
+  const aberta = id === null ? null : /^\d+$/.test(id) ? Number(id) : NaN
   const setAberta = (id: number | null) => {
     const next = new URLSearchParams(searchParams)
     if (id === null) next.delete('id'); else next.set('id', String(id))
     setSearchParams(next)
   }
 
-  const load = useCallback((signal: AbortSignal) => fetchNoticias(undefined, undefined, signal), [])
-  const state = useResource<Noticia[]>(load, [])
+  const load = useCallback(async (signal: AbortSignal) => {
+    if (aberta === null) return fetchNoticiasPage(page, cat, q, signal)
+    if (!Number.isSafeInteger(aberta) || aberta < 1) return emptyPage<Noticia>()
+    const noticia = await fetchNoticiaById(aberta, signal)
+    return { ...emptyPage<Noticia>(), items: noticia ? [noticia] : [] }
+  }, [aberta, cat, q, page])
+  const state = useResource(load, emptyPage<Noticia>())
   if (state.loading || state.error) return <main><LoadState {...state} /></main>
-  const noticias = state.data
+  const noticias = state.data.items
 
   if (aberta !== null && !noticias.some(n => n.id === aberta)) return <main className="wrap"><h1 className="page-title">Notícia não encontrada</h1><button className="text-link" onClick={() => setAberta(null)}>Voltar às notícias</button></main>
-  const lista = noticias.filter(n => {
-    const matchCat = cat === 'Todas' || n.categoria === cat
-    const matchQ = !q || [n.titulo, n.lede, n.categoria].some(v => v.toLowerCase().includes(q.toLowerCase()))
-    return matchCat && matchQ
-  })
+  const lista = noticias
 
   if (aberta !== null && noticias.some(n => n.id === aberta)) {
     const noticia = noticias.find(n => n.id === aberta)!
@@ -65,9 +86,9 @@ export default function Noticias() {
       <section className="noticias-section wrap">
         <div className="cadeiras-filtros">
           {categorias.map(c => (
-            <button key={c} className={`filtro-btn ${cat === c ? 'active' : ''}`} onClick={() => setCat(c)}>{c}</button>
+            <button key={c} aria-pressed={cat === c} className={`filtro-btn ${cat === c ? 'active' : ''}`} onClick={() => setCat(c)}>{c}</button>
           ))}
-          <span className="filtro-count">{lista.length} notícia{lista.length !== 1 ? 's' : ''}</span>
+          <span className="filtro-count">{state.data.total} notícia{state.data.total !== 1 ? 's' : ''}</span>
         </div>
 
         {/* Destaque — primeira notícia */}
@@ -114,6 +135,7 @@ export default function Noticias() {
             <p>Tente outro filtro ou termo de busca.</p>
           </div>
         )}
+        <Pagination page={state.data.page} totalPages={state.data.totalPages} onChange={setPage} />
       </section>
     </main>
   )

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { noticiasService } from '../services/noticias.service.js'
+import { parsePagination } from '../repositories/catalog-query.js'
 
 export const getNoticias = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -10,7 +11,10 @@ export const getNoticias = async (req: Request, res: Response, next: NextFunctio
       ? req.query.search
       : undefined
 
-    const noticias = await noticiasService.getAll(categoria, search)
+    const pagination = parsePagination(req.query)
+    const noticias = pagination
+      ? await noticiasService.getPage(pagination, categoria, search, req.query.resumo === 'true')
+      : await noticiasService.getAll(categoria, search, req.query.resumo === 'true')
     res.json(noticias)
   } catch (error) {
     next(error)
