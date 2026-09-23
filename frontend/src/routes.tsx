@@ -13,6 +13,10 @@ import NaoEncontrada from './pages/NaoEncontrada'
 import Login from './pages/Login'
 import Admin from './pages/Admin'
 import RequireAuth from './components/RequireAuth'
+import AdminAcervo from './pages/AdminAcervo'
+import AdminNoticias from './pages/AdminNoticias'
+import AdminAgenda from './pages/AdminAgenda'
+import AdminMembros from './pages/AdminMembros'
 
 export const router = createBrowserRouter([
   { path: '/login', Component: Login },
@@ -31,7 +35,13 @@ export const router = createBrowserRouter([
       { path: 'busca', Component: Busca },
       {
         Component: RequireAuth,
-        children: [{ path: 'admin', Component: Admin }],
+        children: [
+          { path: 'admin', Component: Admin },
+          { path: 'admin/acervo', Component: AdminAcervo },
+          { path: 'admin/noticias', Component: AdminNoticias },
+          { path: 'admin/agenda', Component: AdminAgenda },
+          { path: 'admin/membros', Component: AdminMembros },
+        ],
       },
       { path: '*', Component: NaoEncontrada },
     ],

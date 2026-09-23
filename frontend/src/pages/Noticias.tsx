@@ -4,11 +4,8 @@ import type { Noticia } from '@/types'
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import { useCallback } from 'react'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight } from 'lucide-react'
 import { useSearchParams } from 'react-router'
-
-
-import { CATEGORIAS_NOTICIAS as categorias } from '@/constants'
 
 export default function Noticias() {
   const [params] = useSearchParams()
@@ -23,13 +20,6 @@ function NoticiasConteudo() {
   const setPage = (value: number) => {
     const next = new URLSearchParams(searchParams)
     next.set('page', String(value))
-    setSearchParams(next)
-  }
-  const setCat = (categoria: string) => {
-    const next = new URLSearchParams(searchParams)
-    if (categoria === 'Todas') next.delete('categoria'); else next.set('categoria', categoria)
-    next.delete('id')
-    next.delete('page')
     setSearchParams(next)
   }
   const id = searchParams.get('id')
@@ -58,10 +48,12 @@ function NoticiasConteudo() {
     return (
       <main>
         <article className="noticia-full wrap">
-          <button className="back-link" onClick={() => setAberta(null)}>← Voltar às notícias</button>
-          <div className="noticia-meta-top">
-            <span className="noticia-cat">{noticia.categoria}</span>
-            <time>{noticia.data}</time>
+          <div className="noticia-detail-topbar">
+            <div className="noticia-meta-top">
+              <span className="noticia-cat">{noticia.categoria}</span>
+              <time>{noticia.data}</time>
+            </div>
+            <button className="back-link" onClick={() => setAberta(null)}><ArrowLeft size={14} /> Voltar às notícias</button>
           </div>
           <h1 className="page-title noticia-full-title">{noticia.titulo}</h1>
           <div className="noticia-img-frame">
@@ -84,13 +76,6 @@ function NoticiasConteudo() {
       </section>
 
       <section className="noticias-section wrap">
-        <div className="cadeiras-filtros">
-          {categorias.map(c => (
-            <button key={c} aria-pressed={cat === c} className={`filtro-btn ${cat === c ? 'active' : ''}`} onClick={() => setCat(c)}>{c}</button>
-          ))}
-          <span className="filtro-count">{state.data.total} notícia{state.data.total !== 1 ? 's' : ''}</span>
-        </div>
-
         {/* Destaque — primeira notícia */}
         {lista.length > 0 && (
           <div className="noticia-destaque" role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAberta(lista[0].id) } }} onClick={() => setAberta(lista[0].id)}>

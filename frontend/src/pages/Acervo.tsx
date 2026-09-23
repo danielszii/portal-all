@@ -57,7 +57,6 @@ function AcervoConteudo() {
   const [params, setParams] = useSearchParams()
   const busca = params.get('q') ?? ''
   const leituraId = params.get('ler')
-  const [draft, setDraft] = useState(busca)
   const tipo = params.get('tipo') || 'Todos'
   const page = pageFromUrl(params.get('page'))
   const update = (key: string, value: string) => {
@@ -103,20 +102,6 @@ function AcervoConteudo() {
       </section>
 
       <section className="archive-catalog wrap">
-        <div className="archive-search-row">
-          <form className="archive-search search-control" role="search" onSubmit={e => { e.preventDefault(); update('q', draft.trim()) }}>
-            <Search size={14} strokeWidth={1.5} aria-hidden="true" />
-            <input
-              type="search"
-              placeholder="Buscar por título, autor ou tipo…"
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              aria-label="Buscar no acervo"
-            />
-            <button type="submit"><span>Buscar</span></button>
-          </form>
-        </div>
-
         {lista.length === 0 ? (
           <div className="empty-search">
             <Search size={32} color="var(--line)" />
