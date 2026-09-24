@@ -12,7 +12,7 @@ export function useDialog(onClose: () => void) {
     const keydown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); close.current(); return }
       if (event.key !== 'Tab') return
-      const elements = Array.from(ref.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input, iframe, [tabindex="0"]') ?? [])
+      const elements = Array.from(ref.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, [tabindex="0"]') ?? [])
       if (!elements.length) { event.preventDefault(); return }
       const first = elements[0], last = elements[elements.length - 1]
       if (event.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { event.preventDefault(); last.focus() }

@@ -5552,7 +5552,7 @@ span {
 
 .admin-record {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 70px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 24px;
   border-bottom: 1px solid var(--line);
@@ -5589,12 +5589,19 @@ span {
   background: var(--surface-tint);
 }
 
-.admin-record>button {
+.admin-record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-record-actions>button {
   border: 0;
   background: transparent;
   color: var(--muted);
   font: 700 8px/1 'Space Mono', monospace;
   text-transform: uppercase;
+  padding: 10px 4px;
 }
 
 .admin-state {
@@ -5824,8 +5831,8 @@ span {
     gap: 12px;
   }
 
-  .admin-record>button {
-    display: none;
+  .admin-record-actions {
+    grid-column: 1 / -1;
   }
 }
 

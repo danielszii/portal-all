@@ -69,3 +69,24 @@ test('falha do banco nos destaques não retorna dados demonstrativos', async t =
   assert.equal(res.status, 500)
   assert.deepEqual(await res.json(), { status: 'error', statusCode: 500, error: 'Ocorreu um erro interno no servidor.' })
 })
+
+test('limitador de login desconta sucessos, preserva bloqueio de falhas e libera ao expirar', async t => {
+  let now = 0
+  const app = express()
+  let attempts = 0
+  app.post('/login', createContatoLimit({ limit: 2, windowMs: 60000, now: () => now, skipSuccessfulRequests: true }), (req, res) => {
+    attempts++
+    res.sendStatus(req.query.valid === 'true' ? 200 : 401)
+  })
+  const base = await serve(t, app)
+  for (let i = 0; i < 4; i++) assert.equal((await fetch(base + '/login?valid=true', { method: 'POST' })).status, 200)
+  assert.equal((await fetch(base + '/login', { method: 'POST' })).status, 401)
+  assert.equal((await fetch(base + '/login?valid=true', { method: 'POST' })).status, 200)
+  assert.equal((await fetch(base + '/login', { method: 'POST' })).status, 401)
+  const blocked = await fetch(base + '/login?valid=true', { method: 'POST' })
+  assert.equal(blocked.status, 429)
+  assert.equal(blocked.headers.get('retry-after'), '60')
+  assert.equal(attempts, 7)
+  now += 60000
+  assert.equal((await fetch(base + '/login?valid=true', { method: 'POST' })).status, 200)
+})

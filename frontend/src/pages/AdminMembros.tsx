@@ -1,45 +1,28 @@
 import AdminResourcePage from '@/components/admin/AdminResourcePage'
-import { useResource } from '@/hooks/useResource'
-import { fetchCadeiras } from '@/services/api'
-import { useCallback } from 'react'
+import { imageAccept } from '@/components/admin/fields'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 
 export default function AdminMembros() {
-  const load = useCallback((signal: AbortSignal) => fetchCadeiras(undefined, undefined, signal), [])
-  const state = useResource(load, [])
   return <AdminResourcePage
+    resource="cadeiras" defaults={{ status: 'Titular em exercício' }}
     title="Gerenciar" emphasis="membros"
     description="Atualize titulares, patronos, biografias e a situação das cadeiras."
-    singular="Membro" loading={state.loading} error={state.error}
-    items={state.data.map(item => ({
-      id: item.number,
-      title: item.holder,
-      meta: `Cadeira ${item.number} · Patrono: ${item.patron}`,
-      status: item.status,
-      values: {
-        nome: item.holder,
-        cadeira: item.number,
-        status: item.status,
-        patrono: item.patron,
-        fundador: item.founder,
-        posse: item.posse ?? '',
-        biografia: item.bio ?? '',
-        fotoPreview: item.image,
-      },
-    }))}
+    singular="Membro"
     fields={[
       { name: 'nome', label: 'Nome completo', required: true },
-      { name: 'cadeira', label: 'Cadeira', required: true },
+      { name: 'cadeira', label: 'Número da cadeira', type: 'number', required: true, min: 1, max: 3999, readOnlyOnEdit: true },
       { name: 'status', label: 'Situação', type: 'select', required: true, options: ['Titular em exercício', 'In memoriam', 'Vaga'] },
       { name: 'patrono', label: 'Patrono', required: true },
-      { name: 'fundador', label: 'Fundador' },
-      { name: 'posse', label: 'Data de posse', type: 'date' },
+      { name: 'fundador', label: 'Fundador (se diferente do primeiro titular)', readOnlyOnEdit: true },
+      { name: 'posse', label: 'Data de posse', type: 'date', required: true, readOnlyOnEdit: true },
+      { name: 'fimEm', label: 'Data de encerramento da ocupação', type: 'date', onlyEnd: true },
       { name: 'biografia', label: 'Biografia', type: 'textarea' },
-      { name: 'foto', label: 'Foto institucional', type: 'file', accept: 'image/*' },
+      { name: 'bioExtra', label: 'Informações biográficas adicionais', type: 'textarea' },
+      { name: 'foto', label: 'Foto institucional (até 10 MB)', type: 'file', accept: imageAccept, urlField: 'fotoUrl' },
     ]}
     renderPreview={values => {
       const status = values.status || 'Titular em exercício'
-      const photo = values.fotoPreview
+      const photo = values.fotoPreview || values.fotoUrl
       return (
         <article className="admin-member-preview-card">
           <MemberPhotoFrame

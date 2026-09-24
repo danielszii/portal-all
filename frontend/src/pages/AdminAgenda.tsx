@@ -1,24 +1,21 @@
 import AdminResourcePage from '@/components/admin/AdminResourcePage'
-import { useResource } from '@/hooks/useResource'
-import { fetchEventos } from '@/services/api'
-import { useCallback } from 'react'
+import { editorialStatus, imageAccept } from '@/components/admin/fields'
 
 export default function AdminAgenda() {
-  const load = useCallback((signal: AbortSignal) => fetchEventos(undefined, signal), [])
-  const state = useResource(load, [])
   return <AdminResourcePage
+    resource="agenda" defaults={{ status: 'RASCUNHO' }}
     title="Gerenciar" emphasis="agenda"
     description="Cadastre solenidades, posses, palestras e encontros da Academia."
-    singular="Evento" loading={state.loading} error={state.error}
-    items={state.data.map(item => ({ id: item.id, title: item.titulo, meta: `${item.tipo} · ${item.data} às ${item.hora}` }))}
+    singular="Evento"
     fields={[
       { name: 'titulo', label: 'Título', required: true },
       { name: 'tipo', label: 'Tipo', type: 'select', required: true, options: ['Sessão Solene', 'Posse', 'Palestra', 'Lançamento', 'Sarau', 'Reunião'] },
-      { name: 'data', label: 'Data', type: 'date', required: true },
-      { name: 'hora', label: 'Horário', type: 'time', required: true },
+      { name: 'inicioEm', label: 'Início (horário de Fortaleza)', type: 'datetime-local', required: true },
+      { name: 'fimEm', label: 'Término (opcional)', type: 'datetime-local' },
       { name: 'local', label: 'Local', required: true },
       { name: 'descricao', label: 'Descrição', type: 'textarea' },
-      { name: 'imagem', label: 'Imagem', type: 'file', accept: 'image/*' },
+      editorialStatus,
+      { name: 'imagem', label: 'Imagem (até 10 MB)', type: 'file', accept: imageAccept, urlField: 'foto' },
     ]}
   />
 }

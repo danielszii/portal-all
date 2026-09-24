@@ -116,7 +116,7 @@ export default function Home() {
                   chairNumber={chair.number}
                   size="md"
                   variant="ornate"
-                  photoVariant="institutional-demo"
+                  photoVariant={chair.image ? 'source' : 'institutional-demo'}
                   demoPortraitIndex={index}
                 />
                 <div className="chair-meta">

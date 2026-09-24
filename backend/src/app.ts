@@ -7,6 +7,8 @@ import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { securityHeaders, validateSearch } from './middlewares/security.middleware.js'
 import { createRequestLimit } from './middlewares/contato-limit.middleware.js'
+import adminRouter from './routes/admin.routes.js'
+import { uploadDir } from './services/admin-upload.service.js'
 
 export function createApp(frontendDir = fileURLToPath(new URL('../../frontend/dist/', import.meta.url))) {
   const app = express()
@@ -15,7 +17,6 @@ export function createApp(frontendDir = fileURLToPath(new URL('../../frontend/di
 
   // Middlewares globais
   app.use(cors(corsConfig))
-  app.use(express.json({ limit: '32kb' }))
   app.use(requestLogger)
   const readLimit = createRequestLimit({ limit: 120, windowMs: 60_000 })
   app.use('/api', (req, res, next) => {
@@ -23,6 +24,13 @@ export function createApp(frontendDir = fileURLToPath(new URL('../../frontend/di
       readLimit(req, res, next)
     } else next()
   }, validateSearch)
+  app.use('/api/admin', adminRouter)
+  app.use(express.json({ limit: '32kb' }))
+  app.use('/uploads', express.static(uploadDir, { dotfiles: 'deny', index: false, setHeaders(res) {
+    res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'; frame-ancestors 'self'")
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN')
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+  } }))
 
   // Informações da API não interceptam a página inicial do portal.
   const apiInfo = (_req: Request, res: Response) => {

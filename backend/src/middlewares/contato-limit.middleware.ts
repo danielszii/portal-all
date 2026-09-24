@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express'
 
 // Proteção local ao processo. Não confia em X-Forwarded-For enviado pelo cliente.
-export function createRequestLimit({ limit = 5, windowMs = 15 * 60_000, maxEntries = 10_000, now = Date.now } = {}): RequestHandler {
+export function createRequestLimit({ limit = 5, windowMs = 15 * 60_000, maxEntries = 10_000, now = Date.now, skipSuccessfulRequests = false } = {}): RequestHandler {
   const entries = new Map<string, { count: number; expires: number }>()
   let nextCleanup = 0
   return (req, res, next) => {
@@ -20,6 +20,12 @@ export function createRequestLimit({ limit = 5, windowMs = 15 * 60_000, maxEntri
     }
     if (!entry) { entry = { count: 0, expires: time + windowMs }; entries.set(key, entry) }
     entry.count++
+    if (skipSuccessfulRequests) {
+      const countedEntry = entry
+      res.once('finish', () => {
+        if (res.statusCode < 400) countedEntry.count = Math.max(0, countedEntry.count - 1)
+      })
+    }
     next()
   }
 }

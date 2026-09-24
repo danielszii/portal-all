@@ -6,7 +6,7 @@ const policy = [
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: https: http:",
+  "img-src 'self' data: blob: https: http:",
   "connect-src 'self'",
   "frame-src 'self' https://docs.google.com",
   "object-src 'none'",

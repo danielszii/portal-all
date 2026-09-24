@@ -7,6 +7,25 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Administrador {
+  id String @id @default(uuid())
+  email String @unique
+  senhaHash String
+  ativo Boolean @default(true)
+  sessoes SessaoAdmin[]
+  criadoEm DateTime @default(now())
+}
+
+model SessaoAdmin {
+  tokenHash String @id
+  administradorId String
+  csrfToken String
+  expiraEm DateTime
+  administrador Administrador @relation(fields: [administradorId], references: [id], onDelete: Cascade)
+  @@index([expiraEm])
+  @@index([administradorId])
+}
+
 // A migration busca_portugues aplica COLLATE portal_pt_br aos campos usados
 // em filtros ILIKE de Noticia, AcervoItem e Evento. Prisma não expressa collations;
 // preserve essa configuração SQL nas próximas migrations.

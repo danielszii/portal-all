@@ -11,6 +11,8 @@ export default function Layout() {
   const { isAuthenticated, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [logoutPending, setLogoutPending] = useState(false)
+  const [logoutError, setLogoutError] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const location = useLocation()
   const navigate = useNavigate()
@@ -28,10 +30,17 @@ export default function Layout() {
     close()
   }
 
-  const handleLogout = () => {
-    logout()
-    close()
-    navigate('/')
+  const handleLogout = async () => {
+    if (logoutPending) return
+    setLogoutPending(true)
+    setLogoutError(null)
+    try {
+      await logout()
+      close()
+      navigate('/')
+    } catch {
+      setLogoutError('Não foi possível encerrar a sessão. Atualize a página e tente sair novamente.')
+    } finally { setLogoutPending(false) }
   }
 
   const navLinks = [
@@ -71,9 +80,9 @@ export default function Layout() {
               </button>
             </form>
             {isAuthenticated ? (
-              <button className="header-login" type="button" onClick={handleLogout} aria-label="Encerrar sessão administrativa">
+              <button className="header-login" type="button" onClick={handleLogout} disabled={logoutPending} aria-label="Encerrar sessão administrativa">
                 <LogOut size={14} strokeWidth={1.7} />
-                <span>Sair</span>
+                <span>{logoutPending ? 'Saindo…' : 'Sair'}</span>
               </button>
             ) : (
               <NavLink
@@ -123,9 +132,9 @@ export default function Layout() {
               </NavLink>
             )}
             {isAuthenticated ? (
-              <button className="mobile-login mobile-logout" type="button" onClick={handleLogout}>
+              <button className="mobile-login mobile-logout" type="button" onClick={handleLogout} disabled={logoutPending}>
                 <LogOut size={14} strokeWidth={1.7} />
-                Sair
+                {logoutPending ? 'Saindo…' : 'Sair'}
               </button>
             ) : (
               <NavLink className="mobile-login" to="/login" onClick={close}>
@@ -138,6 +147,7 @@ export default function Layout() {
       </header>
 
       <div className="page-shell">
+        {logoutError && <p className="wrap login-notice" role="alert">{logoutError}</p>}
         <Outlet />
       </div>
 

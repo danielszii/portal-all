@@ -31,6 +31,7 @@ try {
   try {
     run(['node_modules/prisma/build/index.js', 'migrate', 'deploy'])
     run(['--import', 'tsx', '--test', 'tests/integration/postgres.test.ts'])
+    run(['--import', 'tsx', '--test', 'tests/integration/admin.test.ts'])
   } finally {
     await db.$executeRawUnsafe(`DROP SCHEMA "${schema}" CASCADE`)
   }
