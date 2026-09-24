@@ -5626,6 +5626,10 @@ span {
   box-shadow: -20px 0 50px rgba(2, 43, 80, .16);
 }
 
+.admin-form-panel.has-preview {
+  width: min(100%, 620px);
+}
+
 .admin-form-panel>header {
   display: flex;
   align-items: flex-start;
@@ -5664,6 +5668,82 @@ span {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px 18px;
+}
+
+.admin-form-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 38px;
+  align-items: start;
+}
+
+.admin-form-panel.has-preview .admin-form-content {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-live-preview {
+  position: sticky;
+  top: 0;
+  border-left: 1px solid var(--line);
+  padding-left: 30px;
+}
+
+.admin-form-panel.has-preview .admin-live-preview {
+  position: fixed;
+  top: 50%;
+  left: max(28px, calc((100vw - 940px) / 2));
+  width: 320px;
+  border: 0;
+  padding: 0;
+  transform: translateY(-50%);
+}
+
+.admin-form-panel.has-preview .admin-live-preview>span {
+  color: rgba(255, 255, 255, .88);
+  text-align: center;
+}
+
+.admin-live-preview>span {
+  display: block;
+  margin-bottom: 18px;
+  color: var(--muted);
+  font: 700 8px/1 'Space Mono', monospace;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.admin-member-preview-card {
+  border-radius: 6px;
+  padding: 16px;
+  background: var(--surface-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-member-preview-copy {
+  padding: 18px 3px 4px;
+}
+
+.admin-member-preview-copy>span {
+  color: var(--institutional-blue);
+  font: 700 7px/1 'Space Mono', monospace;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.admin-member-preview-copy h3 {
+  margin: 9px 0 5px;
+  color: var(--heading-dark);
+  font: 600 24px/1.05 'Cormorant Garamond', serif;
+}
+
+.admin-member-preview-copy p {
+  margin: 0;
+  color: var(--muted);
+  font: 9px/1.5 'Space Mono', monospace;
+}
+
+.admin-member-preview-copy .status {
+  margin-top: 12px;
 }
 
 .admin-field {
@@ -5746,6 +5826,27 @@ span {
 
   .admin-record>button {
     display: none;
+  }
+}
+
+@media (max-width: 1050px) {
+  .admin-form-panel.has-preview .admin-form-content {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-form-panel.has-preview .admin-live-preview {
+    position: static;
+    grid-row: 1;
+    width: min(100%, 340px);
+    border-left: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 0 0 30px;
+    transform: none;
+  }
+
+  .admin-form-panel.has-preview .admin-live-preview>span {
+    color: var(--muted);
+    text-align: left;
   }
 }
 

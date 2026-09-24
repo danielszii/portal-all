@@ -18,7 +18,7 @@ export default function AdminAgenda() {
       { name: 'hora', label: 'Horário', type: 'time', required: true },
       { name: 'local', label: 'Local', required: true },
       { name: 'descricao', label: 'Descrição', type: 'textarea' },
-      { name: 'imagem', label: 'Imagem', type: 'file' },
+      { name: 'imagem', label: 'Imagem', type: 'file', accept: 'image/*' },
     ]}
   />
 }

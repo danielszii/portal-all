@@ -17,7 +17,7 @@ export default function AdminAcervo() {
       { name: 'tipo', label: 'Tipo', type: 'select', required: true, options: ['Livro', 'Caderno', 'Antologia', 'Revista', 'Discurso', 'Estatuto'] },
       { name: 'ano', label: 'Ano', type: 'number' },
       { name: 'descricao', label: 'Descrição', type: 'textarea' },
-      { name: 'arquivo', label: 'Arquivo PDF', type: 'file' },
+      { name: 'arquivo', label: 'Arquivo PDF', type: 'file', accept: 'application/pdf' },
     ]}
   />
 }

@@ -17,7 +17,7 @@ export default function AdminNoticias() {
       { name: 'data', label: 'Data de publicação', type: 'date', required: true },
       { name: 'resumo', label: 'Resumo', type: 'textarea', required: true },
       { name: 'conteudo', label: 'Conteúdo', type: 'textarea', required: true },
-      { name: 'imagem', label: 'Imagem de capa', type: 'file' },
+      { name: 'imagem', label: 'Imagem de capa', type: 'file', accept: 'image/*' },
     ]}
   />
 }
