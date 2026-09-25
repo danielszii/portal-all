@@ -63,7 +63,7 @@ export default function Membro() {
               chairNumber={chair.number}
               isVaga={isVaga}
               size="lg"
-              photoVariant={chair.image ? 'source' : 'institutional-demo'}
+              photoVariant="institutional-demo"
             />
           </div>
 

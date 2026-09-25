@@ -17,9 +17,21 @@ const institutionalDemoPortraits = [
   '/images/membros/retrato-institucional-02.png',
   '/images/membros/retrato-institucional-03.png',
   '/images/membros/retrato-institucional-04.png',
+  '/images/membros/retrato-institucional-05.png',
+  '/images/membros/retrato-institucional-06.jpeg',
+  '/images/membros/retrato-institucional-07.jpeg',
+  '/images/membros/retrato-institucional-08.jpeg',
+  '/images/membros/retrato-institucional-09.jpeg',
+  '/images/membros/retrato-institucional-10.jpeg',
+  '/images/membros/retrato-institucional-11.jpeg',
 ]
 
 function getInstitutionalDemoPortrait(chairNumber?: string) {
+  const numericChairNumber = Number(formatNumeroCadeira(chairNumber || ''))
+  if (Number.isInteger(numericChairNumber) && numericChairNumber > 0) {
+    return institutionalDemoPortraits[(numericChairNumber - 1) % institutionalDemoPortraits.length]
+  }
+
   const key = chairNumber || 'academia'
   const index = [...key].reduce((total, character) => total + character.charCodeAt(0), 0) % institutionalDemoPortraits.length
   return institutionalDemoPortraits[index]

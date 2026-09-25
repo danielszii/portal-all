@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { fetchInicioCadeiras, fetchInicioAcervo, fetchInicioNoticias, fetchInstituicao } from '@/services/api'
 import { ArrowUpRight } from 'lucide-react'
 import { NavLink } from 'react-router'
-import heroImg from '@/imports/academialetras.png'
+import heroImg from '@/imports/academialetters.png'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 import { formatNumeroCadeira } from '@/utils/formatters'
 
@@ -108,7 +108,7 @@ export default function Home() {
           </div>
           <div className="chair-grid">
             <LoadState {...cadeiras} />
-            {chairs.map((chair, index) => (
+            {chairs.map((chair) => (
               <NavLink to={`/cadeiras/${chair.number.toLowerCase()}`} key={chair.number} className="chair" aria-label={`Cadeira ${formatNumeroCadeira(chair.number)} — ${chair.patron}`}>
                 <MemberPhotoFrame
                   src={chair.image}
@@ -116,8 +116,7 @@ export default function Home() {
                   status={chair.status}
                   chairNumber={chair.number}
                   size="md"
-                  photoVariant={chair.image ? 'source' : 'institutional-demo'}
-                  demoPortraitIndex={index}
+                  photoVariant="institutional-demo"
                 />
                 <div className="chair-meta">
                   <span className="chair-number">Cadeira · {formatNumeroCadeira(chair.number)}</span>
