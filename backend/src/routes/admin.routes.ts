@@ -11,6 +11,7 @@ import { parsePagination } from '../repositories/catalog-query.js'
 import { numeroCadeira } from '../repositories/mappers.js'
 import { AppError, ValidationError } from '../errors/app.error.js'
 import * as v from '../services/admin-validation.js'
+import { PersonConflict } from '../services/admin-person.service.js'
 
 const router = Router()
 const handle = (fn: RequestHandler): RequestHandler => (req, res, next) => { Promise.resolve(fn(req, res, next)).catch(next) }
@@ -26,7 +27,7 @@ router.post('/auth/login', createRequestLimit({ limit: 5, windowMs: 15 * 60_000,
   res.json({ user: result.user, csrfToken: result.csrfToken, expiraEm: new Date(Date.now() + result.maxAge) })
 }))
 router.use(requireAdmin)
-router.get('/auth/me', (req, res) => {
+router.get('/auth/me', (_req, res) => {
   const current = res.locals.adminSession
   res.json({ user: { id: current.administrador.id, email: current.administrador.email }, csrfToken: current.csrfToken, expiraEm: current.expiraEm })
 })
@@ -109,7 +110,9 @@ for (const name of ['academicos', 'patronos'] as const) {
   }))
 }
 const adminErrors: ErrorRequestHandler = (error, _req, res, next) => {
-  if (error instanceof CadeiraConflict) {
+  if (error instanceof PersonConflict) {
+    res.status(409).json({ error: error.message, code: 'CONFIRMACAO_PESSOA', role: error.role, candidates: error.candidates })
+  } else if (error instanceof CadeiraConflict) {
     res.status(409).json({ error: error.message, code: 'CONFIRMACAO_CADEIRA', cadeira: error.cadeira, ocupacaoAtualId: error.ocupacaoAtualId })
   } else if (error instanceof Prisma.PrismaClientKnownRequestError && ['P2002', 'P2003', 'P2025', 'P2034', 'P2004'].includes(error.code)) {
     res.status(error.code === 'P2025' ? 404 : 409).json({ error: 'Registro inexistente ou conflito com os dados atuais. Recarregue e confira os dados.' })

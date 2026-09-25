@@ -31,7 +31,6 @@ export default function AdminMembros() {
             status={status}
             chairNumber={values.cadeira || '—'}
             size="md"
-            variant="ornate"
             photoVariant={photo ? 'source' : 'institutional-demo'}
           />
           <div className="admin-member-preview-copy">

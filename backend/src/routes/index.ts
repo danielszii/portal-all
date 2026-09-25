@@ -7,8 +7,17 @@ import contatoRouter from './contato.routes.js'
 import { findInstituicao } from '../repositories/instituicao.repository.js'
 import inicioRouter from './inicio.routes.js'
 import { databaseReady } from '../services/readiness.service.js'
+import { findSearchPage } from '../repositories/busca.repository.js'
+import { parsePagination } from '../repositories/catalog-query.js'
 
 const apiRouter = Router()
+
+apiRouter.get('/busca', async (req, res, next) => {
+  try {
+    const pagination = parsePagination(req.query) ?? { page: 1, pageSize: 30 }
+    res.json(await findSearchPage(typeof req.query.q === 'string' ? req.query.q : '', pagination))
+  } catch (error) { next(error) }
+})
 
 apiRouter.get('/instituicao', async (_req, res, next) => {
   try {

@@ -6,6 +6,7 @@ import { fetchCadeiras } from '@/services/api'
 import type { Cadeira } from '@/types'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 import Pagination from '@/components/Pagination'
+import { formatNumeroCadeira } from '@/utils/formatters'
 
 export default function Cadeiras() {
   const [page, setPage] = useState(1)
@@ -38,7 +39,7 @@ export default function Cadeiras() {
                 to={`/cadeiras/${chair.number.toLowerCase()}`}
                 key={chair.number}
                 className="chair"
-                aria-label={`Cadeira ${chair.number} — ${chair.patron}`}
+                aria-label={`Cadeira ${formatNumeroCadeira(chair.number)} — ${chair.patron}`}
               >
                 <MemberPhotoFrame
                   src={chair.image}
@@ -46,11 +47,10 @@ export default function Cadeiras() {
                   status={chair.status}
                   chairNumber={chair.number}
                   size="md"
-                  variant="ornate"
                   photoVariant={chair.image ? 'source' : 'institutional-demo'}
                 />
                 <div className="chair-meta">
-                  <span className="chair-number">Cadeira · {chair.number}</span>
+                  <span className="chair-number">Cadeira · {formatNumeroCadeira(chair.number)}</span>
                   <h3>{chair.holder}</h3>
                   <p className="chair-patron">{chair.patron}</p>
                   <span className={

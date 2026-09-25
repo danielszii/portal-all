@@ -19,7 +19,8 @@ Entre os recursos disponíveis estão:
 - agenda de eventos e galeria fotográfica;
 - notícias e comunicados;
 - busca global no portal;
-- formulário público de contato.
+- formulário público de contato;
+- painel administrativo autenticado para membros, notícias, agenda e acervo, com uploads.
 
 ## Tecnologias
 
@@ -38,7 +39,7 @@ Entre os recursos disponíveis estão:
 - Express
 - TypeScript
 - Prisma ORM
-- PostgreSQL
+- PostgreSQL com banco em UTF-8 e suporte a ICU
 
 ## Estrutura
 
@@ -81,15 +82,24 @@ cd portal-all
 npm run install:all
 ```
 
-Crie o arquivo `backend/.env`:
+Copie o modelo [backend/.env.example](backend/.env.example) para `backend/.env`.
+No PowerShell, a partir da raiz do projeto:
 
-```env
-DATABASE_URL="postgresql://USUARIO:SENHA@localhost:5432/portal_all?schema=public"
-PORT=3001
-FRONTEND_URL=http://localhost:5173
+```powershell
+Copy-Item backend/.env.example backend/.env
 ```
 
-Não versione o arquivo `.env` nem credenciais reais.
+No Bash, use `cp backend/.env.example backend/.env`. Se já houver um `.env`,
+preserve-o e ajuste apenas as configurações necessárias.
+
+Crie o banco `portal_all` no PostgreSQL e ajuste `DATABASE_URL` com o usuário,
+a senha e o endereço dessa máquina. O modelo explica as demais configurações,
+incluindo origem do frontend e diretório de uploads. Não versione o arquivo
+`.env` nem credenciais reais.
+
+O frontend não precisa de `.env`: usa `/api` e `/uploads`, encaminhados ao backend
+na porta 3001 pelo Vite. Se alterar `PORT`, ajuste também os dois destinos em
+`frontend/vite.config.ts`.
 
 Gere o Prisma Client e aplique as migrações:
 
@@ -97,6 +107,11 @@ Gere o Prisma Client e aplique as migrações:
 npm --prefix backend run db:generate
 npm --prefix backend run db:deploy
 ```
+
+Para acessar o painel, crie uma conta seguindo o [guia administrativo](backend/ADMIN_API.md#contas-predefinidas).
+As migrations não criam usuário ou senha padrão. Para levar os dados existentes
+a outra máquina, transfira também um backup do PostgreSQL e os arquivos de
+`backend/uploads` (ou do diretório definido em `UPLOAD_DIR`); eles não acompanham o Git.
 
 Inicie frontend e backend em modo de desenvolvimento:
 
@@ -119,18 +134,27 @@ A página de notícias filtra por categoria e termo na API. A listagem usa
 `GET /api/noticias/:id`. Sem `resumo=true`, a API preserva a resposta completa existente.
 Categoria e busca são mantidas na URL ao abrir uma notícia e voltar para a listagem.
 
-Notícias exibem 1 destaque e até 9 itens na grade por página (10 no total); acervo exibe 12, com botões Anterior/Próxima. A API aceita
+Notícias exibem 1 destaque e até 9 itens na grade por página (10 no total); acervo exibe 8, com botões Anterior/Próxima. A API aceita
 `page` e `pageSize` (1 a 50, padrão 12) e retorna `{ items, total, page, pageSize, totalPages }`.
 Sem esses parâmetros, mantém a lista tradicional para consumidores existentes.
 Páginas além do final são limitadas à última disponível; parâmetros inválidos retornam 400.
 Filtros são aplicados antes da contagem e paginação, com desempate por ID na ordenação.
-Trocar categoria, tipo ou busca volta à primeira página. No acervo, confirme a busca
-com Enter ou Buscar. `GET /api/acervo/:id` mantém os links diretos para PDFs funcionais
+Os filtros de categoria, tipo e busca são aceitos pela API e pela URL das páginas;
+as telas atuais não apresentam controles locais de filtro. `GET /api/acervo/:id` mantém os links diretos para PDFs funcionais
 mesmo quando a publicação não está na página atual.
 
 A busca em cadeiras, notícias e acervo ignora acentos e diferenças de caixa:
 `memorias` encontra `Memórias` e `joao` encontra `João`. Os textos originais não são alterados.
 As consultas normalizam Unicode e usam parâmetros SQL, tratando `%` e `_` como texto literal.
+
+A busca global usa `GET /api/busca?q=...&page=1&pageSize=30`, com resultados
+resumidos por categoria. As próximas páginas são carregadas ao rolar a listagem,
+sem transferir biografias, obras ou textos completos de notícias. As rotas públicas
+existentes preservam seus contratos.
+
+O [guia administrativo](backend/ADMIN_API.md) descreve acesso, cadastro de pessoas,
+edição concorrente e uploads. Os tipos públicos são definidos uma única vez em
+`backend/src/types/index.ts` e importados pelo frontend somente como tipos.
 
 ## Dados fictícios
 
@@ -184,11 +208,15 @@ npm start
 
 O backend serve o frontend compilado e mantém o acesso direto às rotas da aplicação React.
 As informações da API ficam em `/api`. Sem um frontend compilado, `/` também mostra essas informações.
+Ao abrir essa versão localmente, ajuste `FRONTEND_URL` para `http://localhost:3001`.
+Em produção, configure a origem HTTPS real do site e `NODE_ENV=production`.
 
 `npm test` exercita serviços, mapeamentos e rotas HTTP com persistência simulada,
 sem acessar o banco configurado em `.env`. Inclui listas vazias, registros inexistentes,
 IDs inválidos, falhas de persistência e validação e privacidade do contato.
 `npm run check` também verifica os arquivos TypeScript dos testes.
+Os testes React do frontend usam DOM simulado e verificam a preservação do
+formulário durante indisponibilidade da sessão e o bloqueio após revogação.
 
 ### Integração com PostgreSQL real
 
@@ -321,9 +349,6 @@ O importador abre o SQLite somente para leitura e não sobrescreve registros exi
 
 ## Recursos planejados
 
-- autenticação e autorização administrativa;
-- painel para gerenciamento do conteúdo;
-- upload de imagens e PDFs;
 - entrega de mensagens por e-mail;
 - configuração dos links oficiais das redes sociais.
 

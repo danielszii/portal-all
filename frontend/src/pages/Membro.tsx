@@ -7,6 +7,7 @@ import type { Cadeira } from '@/types'
 import type { ProducaoLiteraria } from '@/types'
 import { fetchCadeiraByNumber } from '@/services/api'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
+import { formatNumeroCadeira } from '@/utils/formatters'
 
 function TextoLiterario({ item }: { item: ProducaoLiteraria }) {
   const [aberto, setAberto] = useState(false)
@@ -40,6 +41,7 @@ export default function Membro() {
 
   const isVaga = chair.status === 'Vaga'
   const isMemoriam = chair.status === 'In memoriam'
+  const chairNumber = formatNumeroCadeira(chair.number)
 
   return (
     <main>
@@ -61,13 +63,12 @@ export default function Membro() {
               chairNumber={chair.number}
               isVaga={isVaga}
               size="lg"
-              variant="ornate"
               photoVariant={chair.image ? 'source' : 'institutional-demo'}
             />
           </div>
 
           <div className="membro-hero-meta">
-            <p className="eyebrow">Cadeira · {chair.number}</p>
+            <p className="eyebrow">Cadeira · {chairNumber}</p>
             <h1 className="membro-name">{isVaga ? 'Cadeira Vaga' : chair.holder}</h1>
             <span className={isMemoriam || isVaga ? 'status memorial' : 'status'}>
               {chair.status}
@@ -183,7 +184,7 @@ export default function Membro() {
           <div className="membro-aside-block">
             <p className="eyebrow">Informações</p>
             <dl className="membro-aside-dl">
-              <div><dt>Cadeira</dt><dd>{chair.number}</dd></div>
+              <div><dt>Cadeira</dt><dd>{chairNumber}</dd></div>
               <div><dt>Patrono</dt><dd>{chair.patron}</dd></div>
               <div><dt>Fundador</dt><dd>{chair.founder}</dd></div>
               <div><dt>Situação</dt><dd>{chair.status}</dd></div>

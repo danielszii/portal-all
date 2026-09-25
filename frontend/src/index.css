@@ -295,16 +295,14 @@ button:focus-visible {
   box-shadow: 0 0 0 3px rgba(3, 83, 163, .15), 0 10px 28px rgba(3, 83, 163, .1);
 }
 
-.header-login.nav-active,
-.header-login.active {
+.header-login.nav-active {
   background: var(--institutional-gradient);
   border-color: transparent;
   color: var(--paper);
   box-shadow: 0 4px 14px rgba(3, 83, 163, .22);
 }
 
-.header-login.nav-active svg,
-.header-login.active svg {
+.header-login.nav-active svg {
   color: var(--paper);
 }
 
@@ -781,49 +779,6 @@ h2 {
     inset 0 0 0 3px rgba(51, 157, 226, 0.42);
 }
 
-/* Corner Ornaments */
-.academic-frame-corner {
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  color: var(--bronze);
-  z-index: 3;
-  pointer-events: none;
-  transition: color 0.3s ease, transform 0.3s ease;
-}
-
-.academic-frame-corner--top-left {
-  top: 2px;
-  left: 2px;
-}
-
-.academic-frame-corner--top-right {
-  top: 2px;
-  right: 2px;
-}
-
-.academic-frame-corner--bottom-right {
-  bottom: 2px;
-  right: 2px;
-}
-
-.academic-frame-corner--bottom-left {
-  bottom: 2px;
-  left: 2px;
-}
-
-.corner-svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  filter: drop-shadow(0 0.5px 0.5px rgba(255, 255, 255, 0.7));
-}
-
-.chair:hover .academic-frame-corner,
-.academic-frame:hover .academic-frame-corner {
-  color: var(--gold-on-dark);
-}
-
 /* Passe-partout (Paspatur) matting */
 .academic-frame-matting {
   flex: 1;
@@ -853,7 +808,7 @@ h2 {
   overflow: hidden;
 }
 
-/* Chair Number Plaque (top-left corner inside the card - Roman numeral) */
+/* Chair Number Plaque (top-left corner inside the card) */
 .academic-chair-tag {
   position: absolute;
   top: 5px;
@@ -945,32 +900,7 @@ h2 {
   color: var(--bronze);
 }
 
-/* Variations: Small */
-.academic-frame--sm .academic-frame-outer {
-  padding: 6px;
-}
-
-.academic-frame--sm .academic-frame-corner {
-  width: 16px;
-  height: 16px;
-}
-
-.academic-frame--sm .academic-chair-tag {
-  top: 3px;
-  left: 3px;
-  padding: 2px 6px;
-  min-width: 18px;
-}
-
-.academic-frame--sm .academic-chair-tag-num {
-  font-size: 9px;
-}
-
-.academic-frame--sm .academic-frame-matting {
-  padding: 3px;
-}
-
-/* Variations: Large (Individual profile page Membro.tsx) */
+/* Large frame used on the member profile */
 .academic-frame--lg .academic-frame-outer {
   padding: 14px;
   border-width: 3px;
@@ -979,11 +909,6 @@ h2 {
     0 3px 10px rgba(0, 0, 0, 0.08),
     inset 0 0 0 1px rgba(255, 255, 255, 0.7),
     inset 0 0 0 4px rgba(51, 157, 226, 0.28);
-}
-
-.academic-frame--lg .academic-frame-corner {
-  width: 32px;
-  height: 32px;
 }
 
 .academic-frame--lg .academic-chair-tag {
@@ -2694,33 +2619,6 @@ h2 {
   top: 120px;
 }
 
-.membro-photo {
-  aspect-ratio: 1/1;
-  overflow: hidden;
-  background: var(--linen);
-}
-
-.membro-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-  filter: grayscale(1);
-}
-
-.vaga-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.vaga-placeholder span {
-  font: 9px 'Space Mono', monospace;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 .membro-hero-meta {
   display: flex;
   flex-direction: column;
@@ -3954,10 +3852,6 @@ button:disabled {
 
 .chair-grid-catalog {
   padding-block: 60px;
-}
-
-.catalog-filters {
-  padding-bottom: 16px;
 }
 
 .modal-eyebrow {

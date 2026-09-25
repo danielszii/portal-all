@@ -45,9 +45,11 @@ test('administração com sessão e PostgreSQL real', async t => {
     const body = { titulo: 'Notícia administrativa', categoria: 'Cultura', lede: 'Resumo', conteudo: 'Texto' }
     const { data: created } = await request('/noticias', 'POST', body, 201)
     assert.equal((await fetch(base + '/api/noticias/' + created.id)).status, 404)
-    await request('/noticias/' + created.id, 'PUT', { ...body, status: 'PUBLICADO', publicadoEm: '2020-01-01T12:00:00-03:00' })
+    await request('/noticias/' + created.id, 'PUT', body, 400)
+    const { data: published } = await request('/noticias/' + created.id, 'PUT', { ...body, atualizadoEm: created.atualizadoEm, status: 'PUBLICADO', publicadoEm: '2020-01-01T12:00:00-03:00' })
     assert.equal((await fetch(base + '/api/noticias/' + created.id)).status, 200)
-    await request('/noticias/' + created.id, 'PUT', { ...body, status: 'ARQUIVADO' })
+    await request('/noticias/' + created.id, 'PUT', { ...body, atualizadoEm: created.atualizadoEm, status: 'ARQUIVADO' }, 409)
+    await request('/noticias/' + created.id, 'PUT', { ...body, atualizadoEm: published.atualizadoEm, status: 'ARQUIVADO' })
     assert.equal((await fetch(base + '/api/noticias/' + created.id)).status, 404)
     assert.ok((await request('/noticias')).data.items.some((n: { id: number }) => n.id === created.id))
   })
@@ -66,13 +68,13 @@ test('administração com sessão e PostgreSQL real', async t => {
     const book = { titulo: 'Livro administrativo', categoria: 'Livro', pdfUrl: file.url, status: 'PUBLICADO' }
     const { data } = await request('/acervo', 'POST', book, 201)
     assert.equal((await fetch(base + '/api/acervo/' + data.id)).status, 200)
-    await request('/acervo/' + data.id, 'PUT', { ...book, status: 'RASCUNHO' })
+    await request('/acervo/' + data.id, 'PUT', { ...book, atualizadoEm: data.atualizadoEm, status: 'RASCUNHO' })
     assert.equal((await fetch(base + '/api/acervo/' + data.id)).status, 404)
   })
   await t.test('agenda cria, edita e exclui junto das referências da galeria', async () => {
     const body = { titulo: 'Sarau teste', tipo: 'Sarau', inicioEm: '2026-09-01T15:00:00-03:00', local: 'Sede', status: 'PUBLICADO' }
     const { data: event } = await request('/agenda', 'POST', body, 201)
-    await request('/agenda/' + event.id, 'PUT', { ...body, titulo: 'Sarau editado' })
+    await request('/agenda/' + event.id, 'PUT', { ...body, atualizadoEm: event.atualizadoEm, titulo: 'Sarau editado' })
     await prisma.galeriaFoto.create({ data: { eventoId: event.id, src: '/foto.png', legenda: 'Foto do evento' } })
     await request('/agenda/' + event.id, 'DELETE', undefined, 204)
     assert.equal(await prisma.galeriaFoto.count({ where: { eventoId: event.id } }), 0)
@@ -224,6 +226,50 @@ test('administração com sessão e PostgreSQL real', async t => {
       assert.equal((await loadAdminPage('noticias', 1, '%')).total, 0)
       assert.equal((await loadAdminPage('cadeiras', 1, 'Titular do formulário')).total, 1)
     })
+  })
+  await t.test('duas edições simultâneas não sobrescrevem conteúdo silenciosamente', async () => {
+    const body = { titulo: 'Notícia concorrente', categoria: 'Cultura', lede: 'Resumo', conteudo: 'Original' }
+    const { data: created } = await request('/noticias', 'POST', body, 201)
+    const attempts = await Promise.all(['primeiro', 'segundo'].map(conteudo => fetch(base + '/api/admin/noticias/' + created.id, {
+      method: 'PUT', headers: { Cookie: cookie, Origin: origin, 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...body, atualizadoEm: created.atualizadoEm, conteudo }),
+    })))
+    assert.deepEqual(attempts.map(res => res.status).sort(), [200, 409])
+    const winner = await attempts.find(res => res.status === 200)!.json() as { conteudo: string }
+    assert.equal((await request('/noticias/' + created.id)).data.conteudo, winner.conteudo)
+  })
+  await t.test('nomes existentes exigem escolha e cadastro concorrente não duplica pessoas', async () => {
+    const patrono = await prisma.patrono.create({ data: { nome: 'Patrono de identidade' } })
+    const academic = await prisma.academico.create({ data: { nome: 'João da Silva', biografia: 'Biografia existente' } })
+    const body = { numero: 3020, patronoId: patrono.id, academico: { nome: ' JOAO  DA SILVA ' }, inicioEm: '2020-01-01' }
+    const { data: conflict } = await request('/cadeiras', 'POST', body, 409)
+    assert.equal(conflict.code, 'CONFIRMACAO_PESSOA')
+    assert.equal(conflict.candidates[0].id, academic.id)
+    const { academico: _newPerson, ...reuse } = body
+    await request('/cadeiras', 'POST', { ...reuse, academicoId: academic.id }, 201)
+    assert.equal((await prisma.academico.findUniqueOrThrow({ where: { id: academic.id } })).biografia, 'Biografia existente')
+    await request('/cadeiras', 'POST', { ...reuse, numero: 3021, academicoId: academic.id }, 409)
+    const attempts = await Promise.all([3022, 3023].map(numero => fetch(base + '/api/admin/cadeiras', {
+      method: 'POST', headers: { Cookie: cookie, Origin: origin, 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ numero, patronoId: patrono.id, academico: { nome: 'Pessoa concorrente única' }, inicioEm: '2020-01-01' }),
+    })))
+    assert.deepEqual(attempts.map(res => res.status).sort(), [201, 409])
+    assert.equal(await prisma.academico.count({ where: { nome: 'Pessoa concorrente única' } }), 1)
+    await request('/cadeiras', 'POST', { numero: 3025, patronoId: patrono.id, academico: { nome: 'Nova pessoa' }, fundador: { nome: 'NOVA  PESSOA' }, inicioEm: '2020-01-01' }, 409)
+    assert.equal(await prisma.academico.count({ where: { nome: 'Nova pessoa' } }), 0)
+    await request('/cadeiras', 'POST', { ...body, numero: 3024, confirmarHomonimos: ['academico'] }, 201)
+    assert.equal(await prisma.academico.count({ where: { nome: 'JOAO  DA SILVA' } }), 1)
+  })
+  await t.test('busca retorna resultados compactos, paginados e sem rascunhos', async () => {
+    const marker = 'Busca exclusiva de integração'
+    await prisma.noticia.createMany({ data: Array.from({ length: 32 }, (_, index) => ({ titulo: `${marker} ${index}`, categoria: 'Cultura', lede: 'Resumo', conteudo: 'Texto completo que não deve ser enviado', img: '', status: index === 31 ? 'RASCUNHO' : 'PUBLICADO', publicadoEm: new Date('2020-01-01') })) })
+    const first = await (await fetch(`${base}/api/busca?q=${encodeURIComponent(marker)}&page=1&pageSize=30`)).json() as { noticias: { id: number; titulo: string }[]; totalPages: number }
+    const second = await (await fetch(`${base}/api/busca?q=${encodeURIComponent(marker)}&page=2&pageSize=30`)).json() as typeof first
+    assert.equal(first.totalPages, 2)
+    assert.equal(first.noticias.length, 30)
+    assert.equal(second.noticias.length, 1)
+    assert.deepEqual(Object.keys(first.noticias[0]).sort(), ['id', 'titulo'])
+    assert.equal(new Set([...first.noticias, ...second.noticias].map(n => n.id)).size, 31)
   })
   await t.test('sessões expiradas, revogadas e contas desativadas são recusadas', async () => {
     await prisma.administrador.update({ where: { id: user.id }, data: { ativo: false } })

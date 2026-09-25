@@ -36,7 +36,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (version.current === current) setSession(result)
     } catch (err) {
       if (version.current === current && !controller.signal.aborted) {
-        setSession(null)
+        // Falhas de rede não revogam a sessão nem desmontam formulários. Um
+        // /me com 401 retorna null; a expiração local continua sendo respeitada.
         setError(err instanceof Error ? err.message : 'Não foi possível verificar sua sessão.')
       }
     } finally {

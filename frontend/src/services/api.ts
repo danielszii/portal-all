@@ -1,4 +1,4 @@
-import type { Cadeira, Evento, GaleriaFoto, Noticia, AcervoItem, ContatoForm } from '@/types'
+import type { Cadeira, Evento, GaleriaFoto, Noticia, AcervoItem, ContatoForm, SearchPage } from '@/types'
 
 export class ApiError extends Error {
   constructor(message: string, public status: number) { super(message) }
@@ -23,13 +23,12 @@ export async function fetchCadeiraByNumber(numero: string, signal?: AbortSignal)
 }
 export const fetchEventos = (tipo?: string, signal?: AbortSignal) => request<Evento[]>(`/eventos?${query({ tipo })}`, { signal })
 export const fetchGaleria = (signal?: AbortSignal) => request<GaleriaFoto[]>('/eventos/galeria', { signal })
-export const fetchNoticias = (categoria?: string, q?: string, signal?: AbortSignal) => request<Noticia[]>(`/noticias?${query({ categoria, q })}`, { signal })
-export const fetchNoticiasResumo = (categoria?: string, q?: string, signal?: AbortSignal) => request<Noticia[]>(`/noticias?${query({ categoria, q, resumo: 'true' })}`, { signal })
 export async function fetchNoticiaById(id: number, signal?: AbortSignal): Promise<Noticia | null> {
   try { return await request<Noticia>(`/noticias/${id}`, { signal }) }
   catch (error) { if (error instanceof ApiError && error.status === 404) return null; throw error }
 }
-export const fetchAcervo = (tipo?: string, q?: string, signal?: AbortSignal) => request<AcervoItem[]>(`/acervo?${query({ tipo, q })}`, { signal })
+export const emptySearchPage: SearchPage = { cadeiras: [], noticias: [], acervo: [], page: 0, totalPages: 1 }
+export const fetchSearchPage = (q: string, page: number, signal?: AbortSignal) => request<SearchPage>(`/busca?${query({ q, page: String(page), pageSize: '30' })}`, { signal })
 export type Page<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number }
 export const emptyPage = <T>(): Page<T> => ({ items: [], total: 0, page: 1, pageSize: 12, totalPages: 1 })
 export const fetchNoticiasPage = (page: number, categoria?: string, q?: string, signal?: AbortSignal) => request<Page<Noticia>>(`/noticias?${query({ page: String(page), pageSize: '10', categoria, q, resumo: 'true' })}`, { signal })

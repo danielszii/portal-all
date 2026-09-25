@@ -2,6 +2,7 @@ import { prisma } from '../db/prisma.js'
 import type { Prisma } from '@prisma/client'
 import { AppError, ValidationError } from '../errors/app.error.js'
 import * as v from './admin-validation.js'
+import { checkPersonName, confirmedHomonyms, lockPersonNames, normalizePersonName, PersonConflict, type PersonRole } from './admin-person.service.js'
 
 export const adminCadeiraInclude = {
   patrono: true,
@@ -36,7 +37,8 @@ function checkDate(inicio: Date, atual?: { inicioEm: Date | null; inicioAno: num
 
 export async function createOrReplaceCadeira(input: unknown) {
   const b = v.object(input)
-  v.keys(b, ['numero', 'patronoId', 'patrono', 'academicoId', 'academico', 'inicioEm', 'fundadorId', 'fundador', 'confirmarSubstituicao', 'ocupacaoAtualId'])
+  v.keys(b, ['numero', 'patronoId', 'patrono', 'academicoId', 'academico', 'inicioEm', 'fundadorId', 'fundador', 'confirmarSubstituicao', 'ocupacaoAtualId', 'confirmarHomonimos'])
+  const homonyms = confirmedHomonyms(b.confirmarHomonimos)
   const numero = v.integer(b.numero, 'numero', 1, 3999)
   const inicioEm = v.day(b.inicioEm, 'inicioEm')
   const confirmar = v.bool(b.confirmarSubstituicao)
@@ -57,6 +59,23 @@ export async function createOrReplaceCadeira(input: unknown) {
     // Alterar patrono exige PUT, evitando mudanças acidentais durante a sucessão.
     if (atual && atual.academicoId === academicoId) throw new ValidationError('Este acadêmico já é o titular. Use a edição de dados.')
     checkDate(inicioEm, atual)
+    if (!cadeira && novo && novoFundador && normalizePersonName(novo.nome) === normalizePersonName(novoFundador.nome) && !homonyms.includes('fundador')) {
+      throw new PersonConflict('fundador', [])
+    }
+    const people: { role: PersonRole; nome: string }[] = []
+    if (novo) people.push({ role: 'academico', nome: novo.nome })
+    if (!cadeira && novoPatrono) people.push({ role: 'patrono', nome: novoPatrono.nome })
+    if (!cadeira && novoFundador) people.push({ role: 'fundador', nome: novoFundador.nome })
+    await lockPersonNames(tx, people)
+    for (const person of people) await checkPersonName(tx, person.role, person.nome, homonyms)
+    // Uma cadeira vaga também possui história: uma nova posse não pode voltar
+    // para antes do encerramento de uma ocupação já registrada.
+    for (const previous of cadeira?.ocupacoes ?? []) {
+      if (!previous.vigente && ((previous.fimEm && inicioEm < previous.fimEm)
+        || (previous.fimAno && inicioEm.getUTCFullYear() < previous.fimAno))) {
+        throw new ValidationError('A posse não pode preceder o encerramento de uma ocupação anterior.')
+      }
+    }
     const membro = academicoId
       ? await tx.academico.findUnique({ where: { id: academicoId } })
       : await tx.academico.create({ data: novo! })

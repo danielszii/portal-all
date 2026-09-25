@@ -302,3 +302,30 @@ upload, histórico de cadeiras, confirmações antigas, concorrência e revogaç
 
 Referências de segurança: [OWASP Password Storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
 e [OWASP Session Management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html).
+
+## Integridade das edições
+
+PUT de notícias, acervo e agenda exige `atualizadoEm` recebido no GET que abriu
+a edição. A comparação ocorre na própria escrita: uma versão antiga retorna
+409 sem sobrescrever o registro; versão ausente ou inválida retorna 400. Reabra
+o registro para comparar as alterações e aplicar sua edição à versão atual.
+
+Cadastros de pessoas com o mesmo nome (ignorando caixa, acentos e espaços
+repetidos) retornam 409 `CONFIRMACAO_PESSOA`, com `role` e `candidates`.
+O painel permite confirmar a reutilização por `academicoId`, `fundadorId` ou
+`patronoId`, preservando biografia e relações existentes. Se forem pessoas
+diferentes, a confirmação explícita envia o papel em `confirmarHomonimos`.
+Nomes iguais nunca são mesclados automaticamente. Reservas transacionais por
+nome impedem que cadastros simultâneos criem duplicatas sem essa confirmação.
+
+Portal e painel compartilham a ordem das ocupações, considerando fundador,
+datas completas, anos conhecidos e um desempate estável. Uma posse não pode
+anteceder o encerramento de ocupações anteriores, mesmo em cadeira vaga.
+
+Falhas temporárias em `/auth/me` preservam formulários abertos e a sessão em
+memória. Respostas 401 e a expiração da sessão continuam encerrando o acesso;
+todas as escritas permanecem autenticadas pelo backend.
+
+Para preservar a aparência existente, os retratos ilustrativos foram mantidos
+quando não há foto cadastrada; seu texto alternativo identifica a ilustração
+sem atribuir o rosto ao acadêmico. Cadastre fotos reais antes da publicação.

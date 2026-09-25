@@ -80,3 +80,11 @@ export type ContatoMensagem = {
   mensagem: string
   dataEnvio?: string
 }
+
+export type SearchPage = {
+  cadeiras: Pick<Cadeira, 'number' | 'patron' | 'holder'>[]
+  noticias: Pick<Noticia, 'id' | 'titulo'>[]
+  acervo: Pick<AcervoItem, 'id' | 'title' | 'author'>[]
+  page: number
+  totalPages: number
+}

@@ -6,6 +6,7 @@ import { ArrowUpRight } from 'lucide-react'
 import { NavLink } from 'react-router'
 import heroImg from '@/imports/academialetras.png'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
+import { formatNumeroCadeira } from '@/utils/formatters'
 
 const heroSlides = [
   {
@@ -108,19 +109,18 @@ export default function Home() {
           <div className="chair-grid">
             <LoadState {...cadeiras} />
             {chairs.map((chair, index) => (
-              <NavLink to={`/cadeiras/${chair.number.toLowerCase()}`} key={chair.number} className="chair" aria-label={`Cadeira ${chair.number} — ${chair.patron}`}>
+              <NavLink to={`/cadeiras/${chair.number.toLowerCase()}`} key={chair.number} className="chair" aria-label={`Cadeira ${formatNumeroCadeira(chair.number)} — ${chair.patron}`}>
                 <MemberPhotoFrame
                   src={chair.image}
                   alt={`Retrato de ${chair.holder}`}
                   status={chair.status}
                   chairNumber={chair.number}
                   size="md"
-                  variant="ornate"
                   photoVariant={chair.image ? 'source' : 'institutional-demo'}
                   demoPortraitIndex={index}
                 />
                 <div className="chair-meta">
-                  <span className="chair-number">Cadeira · {chair.number}</span>
+                  <span className="chair-number">Cadeira · {formatNumeroCadeira(chair.number)}</span>
                   <h3>{chair.holder}</h3>
                   <p className="chair-patron">{chair.patron}</p>
                   <span className={chair.status === 'In memoriam' ? 'status memorial' : 'status'}>{chair.status}</span>

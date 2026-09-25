@@ -11,7 +11,7 @@ import { adminItem, adminRequest, loadAdminPage, loadAdminRecord, saveAdminForm,
 export type AdminField = {
   name: string; label: string; type?: 'text' | 'date' | 'datetime-local' | 'number' | 'textarea' | 'select' | 'file'
   options?: (string | { value: string; label: string })[]; required?: boolean; placeholder?: string; accept?: string
-  publishedRequired?: boolean; urlField?: string; readOnlyOnEdit?: boolean; onlyCreate?: boolean; onlyEnd?: boolean
+  publishedRequired?: boolean; urlField?: string; readOnlyOnEdit?: boolean; onlyEnd?: boolean
   min?: number; max?: number; maxLength?: number
 }
 type Props = {
@@ -142,7 +142,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
       </header>
       <div className="admin-form-content">
         <form onSubmit={submit} aria-busy={saving}>
-          {fields.filter(field => !(field.onlyCreate && editing) && !(field.onlyEnd && (!editing || !values.ocupacaoAtualId || values.status === 'Titular em exercício'))).map(field => {
+          {fields.filter(field => !(field.onlyEnd && (!editing || !values.ocupacaoAtualId || values.status === 'Titular em exercício'))).map(field => {
             const disabled = saving || (editing && field.readOnlyOnEdit) || (resource === 'cadeiras' && field.name === 'status' && (!editing || !values.ocupacaoAtualId))
               || (resource === 'cadeiras' && editing && !values.ocupacaoAtualId && ['nome', 'biografia', 'bioExtra', 'foto'].includes(field.name))
             const required = field.required || (field.publishedRequired && values.status === 'PUBLICADO') || field.onlyEnd

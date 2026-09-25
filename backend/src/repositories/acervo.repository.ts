@@ -15,8 +15,6 @@ export class PrismaAcervoRepository implements IAcervoRepository {
     }
     return (await prisma.acervoItem.findMany({ where: {
       status: 'PUBLICADO',
-      ...(tipo && tipo !== 'Todos' ? { categoria: { equals: tipo, mode: 'insensitive' as const } } : {}),
-      ...(search?.trim() ? { OR: ['titulo', 'autoriaTexto', 'descricao', 'edicao'].map(key => ({ [key]: { contains: search.trim(), mode: 'insensitive' } })) } : {}),
     }, orderBy: [{ ano: { sort: 'desc', nulls: 'last' } }, { titulo: 'asc' }] })).map(mapAcervo)
   }
   async findPage(pagination: Pagination, tipo?: string, search?: string): Promise<Page<AcervoItem>> {

@@ -1,24 +1,22 @@
 import { prisma } from '../db/prisma.js'
 import { romano } from './mappers.js'
+import { situacaoCadeira } from '../domain/ocupacoes.js'
 
 export async function findInicioCadeiras() {
   // Apenas os campos dos cartões; biografias e textos literários ficam no perfil.
   const rows = await prisma.cadeira.findMany({
     orderBy: { numero: 'asc' },
     select: { numero: true, patrono: { select: { nome: true } }, ocupacoes: {
-      select: { vigente: true, inicioAno: true, academico: {
+      select: { id: true, fundador: true, vigente: true, inicioAno: true, inicioEm: true, fimAno: true, fimEm: true, academico: {
         select: { nome: true, fotoUrl: true, inMemoriam: true },
       } },
     } },
   })
   const items = rows.map(row => {
-    const ocupacoes = [...row.ocupacoes].sort((a, b) => (a.inicioAno ?? 0) - (b.inicioAno ?? 0))
-    const atual = ocupacoes.find(o => o.vigente)
-    const ultimo = ocupacoes.at(-1)
-    const membro = atual?.academico ?? (ultimo?.academico.inMemoriam ? ultimo.academico : undefined)
+    const { membro, status } = situacaoCadeira(row.ocupacoes)
     return { number: romano(row.numero), patron: row.patrono.nome,
       holder: membro?.nome ?? 'Vaga', image: membro?.fotoUrl ?? '',
-      status: atual ? 'Titular em exercício' : membro?.inMemoriam ? 'In memoriam' : 'Vaga',
+      status,
     }
   }).filter(c => c.status !== 'Vaga').slice(0, 4)
   return { total: rows.length, items }

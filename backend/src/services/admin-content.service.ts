@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma.js'
+import { Prisma } from '@prisma/client'
 import { AppError, ValidationError } from '../errors/app.error.js'
 import * as v from './admin-validation.js'
 
@@ -34,27 +35,48 @@ export function eventoInput(input: unknown) {
     foto: v.url(b.foto, 'foto') || null, status: v.status(b.status) }
 }
 
+async function updateVersioned<T, D>(input: unknown, validate: (value: unknown) => D,
+  update: (expected: Date, next: Date, data: D) => Promise<T>, exists: () => Promise<unknown>): Promise<T> {
+  const { atualizadoEm, ...fields } = v.object(input)
+  const expected = v.date(atualizadoEm, 'atualizadoEm')
+  const data = validate(fields)
+  // Mesmo dois salvamentos no mesmo milissegundo precisam de versões distintas.
+  const next = new Date(Math.max(Date.now(), expected.getTime() + 1))
+  try { return await update(expected, next, data) }
+  catch (error) {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2025') throw error
+    if (!await exists()) throw new AppError('Registro não encontrado.', 404)
+    throw new AppError('Este registro foi alterado por outra pessoa. Reabra a edição e confira as alterações antes de salvar.', 409)
+  }
+}
+
 export const contentResources = {
   noticias: {
     list: (skip: number, take: number, q = '') => prisma.noticia.findMany({ skip, take, where: { OR: [{ titulo: search(q) }, { categoria: search(q) }] }, orderBy: { id: 'desc' } }),
     count: (q = '') => prisma.noticia.count({ where: { OR: [{ titulo: search(q) }, { categoria: search(q) }] } }),
     get: (id: string) => prisma.noticia.findUnique({ where: { id: noticiaId(id) } }),
     create: (b: unknown) => prisma.noticia.create({ data: noticiaInput(b) }),
-    update: (id: string, b: unknown) => prisma.noticia.update({ where: { id: noticiaId(id) }, data: noticiaInput(b) }),
+    update: (id: string, b: unknown) => updateVersioned(b, noticiaInput,
+      (expected, next, data) => prisma.noticia.update({ where: { id: noticiaId(id), atualizadoEm: expected }, data: { ...data, atualizadoEm: next } }),
+      () => prisma.noticia.findUnique({ where: { id: noticiaId(id) }, select: { id: true } })),
   },
   acervo: {
     list: (skip: number, take: number, q = '') => prisma.acervoItem.findMany({ skip, take, where: { OR: [{ titulo: search(q) }, { autoriaTexto: search(q) }, { categoria: search(q) }] }, orderBy: [{ criadoEm: 'desc' }, { id: 'asc' }] }),
     count: (q = '') => prisma.acervoItem.count({ where: { OR: [{ titulo: search(q) }, { autoriaTexto: search(q) }, { categoria: search(q) }] } }),
     get: (id: string) => prisma.acervoItem.findUnique({ where: { id } }),
     create: (b: unknown) => prisma.acervoItem.create({ data: acervoInput(b) }),
-    update: (id: string, b: unknown) => prisma.acervoItem.update({ where: { id }, data: acervoInput(b) }),
+    update: (id: string, b: unknown) => updateVersioned(b, acervoInput,
+      (expected, next, data) => prisma.acervoItem.update({ where: { id, atualizadoEm: expected }, data: { ...data, atualizadoEm: next } }),
+      () => prisma.acervoItem.findUnique({ where: { id }, select: { id: true } })),
   },
   agenda: {
     list: (skip: number, take: number, q = '') => prisma.evento.findMany({ skip, take, where: { OR: [{ titulo: search(q) }, { tipo: search(q) }, { local: search(q) }] }, orderBy: [{ inicioEm: 'desc' }, { id: 'asc' }] }),
     count: (q = '') => prisma.evento.count({ where: { OR: [{ titulo: search(q) }, { tipo: search(q) }, { local: search(q) }] } }),
     get: (id: string) => prisma.evento.findUnique({ where: { id } }),
     create: (b: unknown) => prisma.evento.create({ data: eventoInput(b) }),
-    update: (id: string, b: unknown) => prisma.evento.update({ where: { id }, data: eventoInput(b) }),
+    update: (id: string, b: unknown) => updateVersioned(b, eventoInput,
+      (expected, next, data) => prisma.evento.update({ where: { id, atualizadoEm: expected }, data: { ...data, atualizadoEm: next } }),
+      () => prisma.evento.findUnique({ where: { id }, select: { id: true } })),
   },
 }
 const search = (value: string) => ({ contains: value.trim().replace(/[\\%_]/g, '\\$&'), mode: 'insensitive' as const })

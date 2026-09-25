@@ -26,7 +26,7 @@ const configs = {
 const foldedColumn = (column: string) => Prisma.sql`lower(regexp_replace(normalize(coalesce(${Prisma.raw('"' + column + '"')}::text, ''), NFD), U&'[\\0300-\\036f]', '', 'g') COLLATE "portal_pt_br")`
 
 export async function queryCatalog<T>(table: keyof typeof configs, options: {
-  filter?: string; search?: string; pagination?: Pagination; summary?: boolean
+  filter?: string; search?: string; pagination?: Pagination; summary?: boolean; searchSummary?: boolean
 }): Promise<Page<T>> {
   const config = configs[table]
   const conditions = [Prisma.sql`"status" = 'PUBLICADO'`]
@@ -39,7 +39,9 @@ export async function queryCatalog<T>(table: keyof typeof configs, options: {
     conditions.push(Prisma.sql`(${Prisma.join(config.fields.map(field => Prisma.sql`${foldedColumn(field)} LIKE ${pattern}`), ' OR ')})`)
   }
   const from = Prisma.sql`FROM ${Prisma.raw('"' + table + '"')} WHERE ${Prisma.join(conditions, ' AND ')}`
-  const columns = table === 'Noticia' && options.summary
+  const columns = options.searchSummary
+    ? Prisma.raw(table === 'Noticia' ? '"id", "titulo"' : '"id", "titulo", "autoriaTexto"')
+    : table === 'Noticia' && options.summary
     ? Prisma.raw('"id", "categoria", "titulo", "lede", "img", "publicadoEm"') : Prisma.raw('*')
   return prisma.$transaction(async tx => {
     const [{ total }] = await tx.$queryRaw<{ total: number }[]>(Prisma.sql`SELECT count(*)::int AS total ${from}`)

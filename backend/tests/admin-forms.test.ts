@@ -106,3 +106,43 @@ test('upload envia arquivo binário autenticado e recusa tamanho/tipo inválidos
   assert.throws(() => uploadAdminFile(new Blob([], { type: 'application/pdf' }), 'csrf-test'), /conteúdo/)
   assert.throws(() => uploadAdminFile(new Blob([new Uint8Array(10 * 1024 * 1024 + 1)], { type: 'application/pdf' }), 'csrf-test'), /10 MB/)
 })
+
+test('seleção explícita reutiliza pessoa existente sem substituir biografia nem enviar novo cadastro', async t => {
+  let count = 0
+  t.mock.method(globalThis, 'fetch', async (_path: string, init: RequestInit) => {
+    if (++count === 1) return Response.json({ code: 'CONFIRMACAO_PESSOA', role: 'academico', candidates: [{ id: 'existing', nome: 'Novo titular', descricao: 'Cadeira anterior' }] }, { status: 409 })
+    const body = JSON.parse(String(init.body))
+    assert.equal(body.academicoId, 'existing')
+    assert.equal(body.academico, undefined)
+    assert.equal(body.confirmarHomonimos, undefined)
+    return Response.json(chair)
+  })
+  assert.equal(await saveAdminForm('cadeiras', newMember, null, 'csrf', () => true), true)
+  assert.equal(count, 2)
+})
+
+test('homônimos exigem confirmação separada e cancelar não grava', async t => {
+  const fetch = t.mock.method(globalThis, 'fetch', async (_path: string, _init: RequestInit) => Response.json({ code: 'CONFIRMACAO_PESSOA', role: 'academico', candidates: [{ id: 'existing', nome: 'Novo titular' }] }, { status: 409 }))
+  assert.equal(await saveAdminForm('cadeiras', newMember, null, 'csrf', () => false), false)
+  assert.equal(fetch.mock.callCount(), 1)
+  let count = 0
+  fetch.mock.mockImplementation(async (_path: string, init: RequestInit) => {
+    if (++count === 1) return Response.json({ code: 'CONFIRMACAO_PESSOA', role: 'academico', candidates: [] }, { status: 409 })
+    const body = JSON.parse(String(init.body))
+    assert.deepEqual(body.confirmarHomonimos, ['academico'])
+    assert.equal(body.academico.nome, newMember.nome)
+    return Response.json(chair)
+  })
+  assert.equal(await saveAdminForm('cadeiras', newMember, null, 'csrf', () => true), true)
+})
+
+test('edição envia a versão original e mantém conflito visível sem repetir a escrita', async t => {
+  const atualizadoEm = '2020-01-01T00:00:00.000Z'
+  const values = adminItem('noticias', { id: 1, titulo: 'Título', status: 'RASCUNHO', atualizadoEm }).values
+  const fetch = t.mock.method(globalThis, 'fetch', async (_path: string, init: RequestInit) => {
+    assert.equal(JSON.parse(String(init.body)).atualizadoEm, atualizadoEm)
+    return Response.json({ error: 'Registro alterado por outra pessoa.' }, { status: 409 })
+  })
+  await assert.rejects(saveAdminForm('noticias', values, '1', 'csrf', () => true), /outra pessoa/)
+  assert.equal(fetch.mock.callCount(), 1)
+})

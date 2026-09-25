@@ -15,8 +15,6 @@ export class PrismaNoticiasRepository implements INoticiasRepository {
     }
     return (await prisma.noticia.findMany({ where: {
       status: 'PUBLICADO', publicadoEm: { lte: new Date() },
-      ...(categoria && categoria !== 'Todas' ? { categoria: { equals: categoria, mode: 'insensitive' as const } } : {}),
-      ...(search?.trim() ? { OR: ['titulo', 'lede', 'conteudo', 'categoria'].map(key => ({ [key]: { contains: search.trim(), mode: 'insensitive' } })) } : {}),
     }, select: { id: true, categoria: true, titulo: true, lede: true, img: true, publicadoEm: true, conteudo: !resumo },
     orderBy: [{ publicadoEm: 'desc' }, { id: 'desc' }] })).map(mapNoticia)
   }
