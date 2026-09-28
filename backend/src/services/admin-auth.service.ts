@@ -1,6 +1,7 @@
 import { randomBytes, createHash, scrypt, timingSafeEqual } from 'node:crypto'
 import { prisma } from '../db/prisma.js'
 import { AppError, ValidationError } from '../errors/app.error.js'
+import { recordAudit, type AuditActor } from './admin-audit.service.js'
 
 const derive = (password: string, salt: string) => new Promise<Buffer>((resolve, reject) => {
   scrypt(password, salt, 64, { N: 131072, r: 8, p: 1, maxmem: 160 * 1024 * 1024 }, (err, key) => err ? reject(err) : resolve(key))
@@ -35,9 +36,16 @@ export async function login(email: string, password: string, remember: boolean) 
       if (!current?.ativo || current.senhaHash !== user.senhaHash) throw new AppError('E-mail ou senha inválidos.', 401)
       await tx.sessaoAdmin.deleteMany({ where: { OR: [{ expiraEm: { lte: new Date() } }, { administradorId: user.id }] } })
       await tx.sessaoAdmin.create({ data: { tokenHash: tokenHash(token), administradorId: user.id, csrfToken, expiraEm: new Date(Date.now() + maxAge) } })
+      await recordAudit(tx, user, { acao: 'LOGIN', recurso: 'SESSAO', registroId: user.id, resumo: 'Entrada no painel administrativo.' })
     })
     return { token, csrfToken, maxAge, user: { id: user.id, email: user.email } }
   } finally { activeLogins-- }
+}
+export async function logout(hash: string, actor: AuditActor) {
+  await prisma.$transaction(async tx => {
+    const removed = await tx.sessaoAdmin.deleteMany({ where: { tokenHash: hash } })
+    if (removed.count) await recordAudit(tx, actor, { acao: 'LOGOUT', recurso: 'SESSAO', registroId: actor.id, resumo: 'Saída do painel administrativo.' })
+  })
 }
 export async function session(token: string) {
   if (!/^[a-f0-9]{64}$/.test(token)) throw new AppError('Autenticação necessária.', 401)

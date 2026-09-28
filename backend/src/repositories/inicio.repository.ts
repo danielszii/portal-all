@@ -1,5 +1,5 @@
 import { prisma } from '../db/prisma.js'
-import { romano } from './mappers.js'
+import { mapEventoResumo, romano } from './mappers.js'
 import { situacaoCadeira } from '../domain/ocupacoes.js'
 
 export async function findInicioCadeiras() {
@@ -46,4 +46,18 @@ export async function findInicioNoticias() {
       timeZone: 'America/Fortaleza', day: '2-digit', month: 'short', year: 'numeric',
     }).replaceAll(' de ', ' ').replace('.', '').toUpperCase() ?? '',
   }))
+}
+
+export async function findInicioEventos() {
+  const now = new Date()
+  const rows = await prisma.evento.findMany({
+    where: { status: 'PUBLICADO', OR: [
+      { fimEm: { gte: now } },
+      { fimEm: null, inicioEm: { gte: now } },
+    ] },
+    take: 3,
+    orderBy: [{ inicioEm: 'asc' }, { id: 'asc' }],
+    select: { id: true, titulo: true, tipo: true, inicioEm: true, local: true, foto: true },
+  })
+  return rows.map(mapEventoResumo)
 }

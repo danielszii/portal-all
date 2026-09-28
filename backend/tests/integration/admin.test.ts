@@ -4,6 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { serve } from '../serve.js'
+import { imageFixture, pdfFixture } from '../upload-fixtures.js'
 import { adminItem, adminRequest, loadAdminPage, loadAdminRecord, saveAdminForm, uploadAdminFile, type CadeiraAdmin, type EditorialRecord } from '../../../frontend/src/services/admin.js'
 
 const schema = process.env.INTEGRATION_SCHEMA ?? ''
@@ -57,12 +58,12 @@ test('administração com sessão e PostgreSQL real', async t => {
     const headers = { Cookie: cookie, Origin: origin, 'X-CSRF-Token': csrf, 'Content-Type': 'application/pdf' }
     assert.equal((await fetch(base + '/api/admin/uploads', { method: 'POST', headers, body: '<html>Não é PDF</html>' })).status, 400)
     assert.equal((await fetch(base + '/api/admin/uploads', { method: 'POST', headers, body: Buffer.alloc(10 * 1024 * 1024 + 1) })).status, 413)
-    const bytes = '%PDF-1.4\n%%EOF'
+    const bytes = await pdfFixture()
     const uploaded = await fetch(base + '/api/admin/uploads', { method: 'POST', headers: { Cookie: cookie, Origin: origin, 'X-CSRF-Token': csrf, 'Content-Type': 'application/pdf' }, body: bytes })
     assert.equal(uploaded.status, 201)
     const file = await uploaded.json() as { url: string }
     const publicFile = await fetch(base + file.url)
-    assert.equal(await publicFile.text(), bytes)
+    assert.deepEqual(new Uint8Array(await publicFile.arrayBuffer()), bytes)
     assert.match(publicFile.headers.get('content-security-policy')!, /sandbox/)
     assert.equal(publicFile.headers.get('x-frame-options'), 'SAMEORIGIN')
     const book = { titulo: 'Livro administrativo', categoria: 'Livro', pdfUrl: file.url, status: 'PUBLICADO' }
@@ -136,11 +137,11 @@ test('administração com sessão e PostgreSQL real', async t => {
       return realFetch(base + path, { ...init, headers })
     })
     const confirm = () => true
-    const pdfBytes = '%PDF-1.4\n%%EOF'
-    const pdf = await uploadAdminFile(new Blob([pdfBytes], { type: 'application/pdf' }), csrf)
-    const pngBytes = Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==', 'base64'))
-    const image = await uploadAdminFile(new Blob([pngBytes], { type: 'image/png' }), csrf)
-    assert.equal(await (await realFetch(base + pdf.url)).text(), pdfBytes)
+    const pdfBytes = await pdfFixture()
+    const pdf = await uploadAdminFile(new Blob([pdfBytes], { type: 'application/pdf' }), csrf, 'pdf')
+    const pngBytes = Uint8Array.from(await imageFixture())
+    const image = await uploadAdminFile(new Blob([pngBytes], { type: 'image/png' }), csrf, 'image')
+    assert.deepEqual(new Uint8Array(await (await realFetch(base + pdf.url)).arrayBuffer()), pdfBytes)
 
     await forms.test('notícia só aparece após publicar; editar preserva imagem e horário', async () => {
       const values = { titulo: 'Formulário notícia', categoria: 'Institucional', lede: 'Resumo', conteudo: 'Conteúdo original', publicadoEm: '2020-02-02T23:34:45.123', img: image.url, status: 'RASCUNHO' }

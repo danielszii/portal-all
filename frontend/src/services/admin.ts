@@ -1,4 +1,5 @@
 import { situacaoCadeira } from '../../../backend/src/domain/ocupacoes.js'
+import { maxUploadBytes, mediaMimeTypes, type MediaKind } from '../../../backend/src/domain/media.js'
 
 export type AdminResource = 'noticias' | 'acervo' | 'agenda' | 'cadeiras'
 export type AdminPage<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number }
@@ -53,9 +54,9 @@ export function loadAdminPage(resource: AdminResource, page: number, q: string, 
 export function loadAdminRecord(resource: AdminResource, id: string, signal?: AbortSignal) {
   return adminRequest<AdminRecord>(`/${resource}/${encodeURIComponent(id)}`, { signal })
 }
-export function uploadAdminFile(file: Blob, csrfToken: string) {
-  if (!['image/png', 'image/jpeg', 'image/webp', 'application/pdf'].includes(file.type)) throw new AdminApiError('Escolha uma imagem PNG, JPEG ou WebP, ou um PDF.', 400)
-  if (!file.size || file.size > 10 * 1024 * 1024) throw new AdminApiError('O arquivo deve ter conteúdo e no máximo 10 MB.', 400)
+export function uploadAdminFile(file: Blob, csrfToken: string, kind: MediaKind) {
+  if (!mediaMimeTypes[kind].includes(file.type)) throw new AdminApiError(kind === 'pdf' ? 'Escolha um arquivo PDF.' : 'Escolha uma imagem PNG, JPEG ou WebP.', 400)
+  if (!file.size || file.size > maxUploadBytes) throw new AdminApiError('O arquivo deve ter conteúdo e no máximo 10 MB.', 400)
   return adminRequest<{ url: string }>('/uploads', { method: 'POST', file, csrfToken })
 }
 

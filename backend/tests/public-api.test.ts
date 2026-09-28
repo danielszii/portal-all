@@ -8,6 +8,7 @@ import { serve } from './serve.js'
 const lists = [
   ['/api/cadeiras', prisma.cadeira],
   ['/api/eventos', prisma.evento],
+  ['/api/inicio/eventos', prisma.evento],
   ['/api/eventos/galeria', prisma.galeriaFoto],
   ['/api/noticias', prisma.noticia],
   ['/api/acervo', prisma.acervoItem],

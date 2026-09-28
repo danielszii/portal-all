@@ -1,12 +1,12 @@
 import { prisma } from '../db/prisma.js'
 import { romano } from './mappers.js'
-import { foldSearch, queryCatalog, type Pagination } from './catalog-query.js'
+import { queryCatalog, type Pagination } from './catalog-query.js'
+import { matchesCadeiraSearch } from './cadeira-search.js'
 import { situacaoCadeira } from '../domain/ocupacoes.js'
 import type { SearchPage } from '../types/index.js'
 
 export async function findSearchPage(q: string, pagination: Pagination): Promise<SearchPage> {
   if (!q.trim()) return { cadeiras: [], noticias: [], acervo: [], page: 1, totalPages: 1 }
-  const term = foldSearch(q.trim())
   const [rows, noticias, acervo] = await Promise.all([
     prisma.cadeira.findMany({ orderBy: { numero: 'asc' }, select: {
       numero: true, patrono: { select: { nome: true } }, ocupacoes: { select: {
@@ -20,7 +20,7 @@ export async function findSearchPage(q: string, pagination: Pagination): Promise
   const cadeiras = rows.map(row => {
     const { membro, ocupacoes } = situacaoCadeira(row.ocupacoes)
     return { number: romano(row.numero), patron: row.patrono.nome, holder: membro?.nome ?? 'Vaga', founder: ocupacoes.find(o => o.fundador)?.academico.nome ?? '' }
-  }).filter(c => [c.number, c.patron, c.holder, c.founder].some(value => foldSearch(value).includes(term)))
+  }).filter(c => matchesCadeiraSearch(c, q))
   const { page, pageSize } = pagination
   return {
     page, totalPages: Math.max(Math.ceil(cadeiras.length / pageSize), noticias.totalPages, acervo.totalPages),

@@ -26,13 +26,17 @@ export function mapCadeira(row: CadeiraRow): Cadeira {
   }
 }
 const zone = 'America/Fortaleza'
-export function mapEvento(row: Prisma.EventoGetPayload<object>): Evento {
+type EventoResumoRow = Pick<Prisma.EventoGetPayload<object>, 'id' | 'titulo' | 'tipo' | 'inicioEm' | 'local' | 'foto'>
+export function mapEventoResumo(row: EventoResumoRow): Pick<Evento, 'id' | 'titulo' | 'tipo' | 'data' | 'hora' | 'local' | 'foto'> {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(row.inicioEm)
   const part = (type: string) => parts.find(p => p.type === type)?.value
   return { id: row.id, titulo: row.titulo, tipo: row.tipo as Evento['tipo'],
     data: `${part('year')}-${part('month')}-${part('day')}`,
     hora: row.inicioEm.toLocaleTimeString('pt-BR', { timeZone: zone, hour: '2-digit', minute: '2-digit' }).replace(':', 'h'),
-    local: row.local, descricao: row.descricao, foto: row.foto ?? undefined,
+    local: row.local, foto: row.foto ?? undefined }
+}
+export function mapEvento(row: Prisma.EventoGetPayload<object>): Evento {
+  return { ...mapEventoResumo(row), descricao: row.descricao,
     passado: (row.fimEm ?? row.inicioEm).getTime() < Date.now() }
 }
 export function mapNoticia(row: Pick<Prisma.NoticiaGetPayload<object>, 'id' | 'titulo' | 'categoria' | 'lede' | 'img' | 'publicadoEm'> & { conteudo?: string }): Noticia {

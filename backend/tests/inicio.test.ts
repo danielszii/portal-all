@@ -2,7 +2,7 @@ import { mockMethod } from './mock-method.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { prisma } from '../src/db/prisma.js'
-import { findInicioCadeiras, findInicioNoticias, findInicioAcervo } from '../src/repositories/inicio.repository.js'
+import { findInicioCadeiras, findInicioNoticias, findInicioAcervo, findInicioEventos } from '../src/repositories/inicio.repository.js'
 
 test('home mantém total de cadeiras, pula vagas e limita os cartões a quatro', async t => {
   const rows = Array.from({ length: 7 }, (_, i) => ({
@@ -45,4 +45,15 @@ test('home conta todo o acervo publicado mas consulta somente três destaques', 
   assert.deepEqual(count.mock.calls[0].arguments[0], { where: { status: 'PUBLICADO' } })
   assert.equal(query.mock.calls[0].arguments[0]?.take, 3)
   assert.equal(query.mock.calls[0].arguments[0]?.where?.status, 'PUBLICADO')
+})
+
+test('eventos da home mantêm data e hora de Fortaleza e omitem descrição e dados editoriais', async t => {
+  mockMethod(t, prisma.evento, 'findMany', async () => [{
+    id: 'sarau', titulo: 'Sarau literário', tipo: 'Sarau', inicioEm: new Date('2099-01-02T01:00:00Z'),
+    local: 'Sede', foto: '/uploads/sarau.jpg', descricao: 'Texto extenso', status: 'PUBLICADO',
+  }])
+  assert.deepEqual(await findInicioEventos(), [{
+    id: 'sarau', titulo: 'Sarau literário', tipo: 'Sarau', data: '2099-01-01',
+    hora: '22h00', local: 'Sede', foto: '/uploads/sarau.jpg',
+  }])
 })

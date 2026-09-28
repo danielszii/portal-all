@@ -60,12 +60,14 @@ export default function MemberPhotoFrame({
   chairNumber,
   className = '',
   isVaga = false,
-  photoVariant = 'source',
+  photoVariant: fallbackVariant = 'source',
   demoPortraitIndex,
 }: MemberPhotoFrameProps) {
   const displayedChairNumber = chairNumber ? formatNumeroCadeira(chairNumber) : ''
   const isMemoriam = status === 'In memoriam'
   const isChairVaga = isVaga || status === 'Vaga'
+  // Uma foto cadastrada sempre tem prioridade sobre o retrato demonstrativo.
+  const photoVariant = src?.trim() ? 'source' : fallbackVariant
   const normalizedPortraitIndex = demoPortraitIndex === undefined
     ? undefined
     : Math.abs(demoPortraitIndex) % institutionalDemoPortraits.length

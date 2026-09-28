@@ -95,11 +95,11 @@ Esses limitadores são locais ao processo; a sessão é persistida no PostgreSQL
 
 ## Notícias, acervo e agenda
 
-| Recurso | Listar | Detalhar | Criar | Editar |
-| --- | --- | --- | --- | --- |
-| Notícias | GET `/noticias` | GET `/noticias/:id` | POST `/noticias` | PUT `/noticias/:id` |
-| Acervo | GET `/acervo` | GET `/acervo/:id` | POST `/acervo` | PUT `/acervo/:id` |
-| Agenda | GET `/agenda` | GET `/agenda/:id` | POST `/agenda` | PUT `/agenda/:id` |
+| Recurso | Listar | Detalhar | Criar | Editar | Excluir |
+| --- | --- | --- | --- | --- | --- |
+| Notícias | GET `/noticias` | GET `/noticias/:id` | POST `/noticias` | PUT `/noticias/:id` | DELETE `/noticias/:id` |
+| Acervo | GET `/acervo` | GET `/acervo/:id` | POST `/acervo` | PUT `/acervo/:id` | DELETE `/acervo/:id` |
+| Agenda | GET `/agenda` | GET `/agenda/:id` | POST `/agenda` | PUT `/agenda/:id` | DELETE `/agenda/:id` |
 
 Listas sempre paginadas: `?page=1&pageSize=20&q=termo`, máximo 50, retorno
 `{ items, total, page, pageSize, totalPages }`. Incluem todos os estados editoriais.
@@ -111,8 +111,58 @@ Campos opcionais omitidos são limpos/defaultados no PUT; não é PATCH.
 Campos desconhecidos são recusados para evitar alterações indevidas.
 
 Status: `RASCUNHO` (padrão), `PUBLICADO`, `ARQUIVADO`.
-Não existe exclusão definitiva de notícias ou obras: use `ARQUIVADO` para retirar
-do portal. Não há acesso administrativo às mensagens de contato neste escopo.
+Use `ARQUIVADO` para retirar do portal e manter o registro recuperável no painel.
+DELETE remove o registro definitivamente, conforme as regras abaixo.
+Não há acesso administrativo às mensagens de contato neste escopo.
+
+### Exclusões definitivas
+
+Todas as rotas abaixo usam a base `/api/admin`, exigem sessão, `Origin` autorizado
+e `X-CSRF-Token`, e estão sujeitas ao limite de escritas. Não recebem corpo JSON.
+Retornam **204 sem corpo** somente depois da remoção, **404** para ID inexistente
+(inclusive ao repetir a exclusão), **400** para ID inválido e **409** para vínculos
+que impeçam a operação. Sem sessão: **401**; origem/CSRF inválidos: **403**.
+
+| Rota DELETE | Efeito |
+| --- | --- |
+| `/noticias/:id` | Exclui a notícia em qualquer estado editorial. |
+| `/acervo/:id` | Exclui a publicação e suas relações de autoria na mesma transação. Preserva os acadêmicos e as demais publicações. |
+| `/agenda/:id` | Exclui o evento e suas linhas de galeria na mesma transação, mantendo o comportamento existente. |
+| `/academicos/:id` | Exclui somente acadêmico sem ocupações, obras, produções, autorias ou mandatos. |
+| `/patronos/:id` | Exclui somente patrono sem vínculo com cadeira. |
+| `/galeria/:id` | Exclui somente a referência da foto na galeria; preserva o evento e as outras fotos. |
+
+As restrições do banco protegem as pessoas inclusive contra vínculos criados
+simultaneamente. Ocupações encerradas e mandatos antigos também impedem exclusão:
+o histórico não é apagado. Não existe exclusão em cascata de pessoas ou cadeiras.
+
+Exclusões atuam sobre o estado atual do registro pelo ID; diferentemente do PUT,
+não recebem `atualizadoEm`. O consumidor deve apresentar o registro atual e obter
+a confirmação do administrador antes de enviar DELETE. A implementação destas
+rotas não acrescenta botões nem modifica os formulários existentes do frontend.
+
+PDFs e imagens físicos **não são apagados**, pois podem ser compartilhados por
+outros registros. Suas URLs diretas continuam acessíveis. O arquivamento permanece
+disponível quando a intenção for apenas retirar o conteúdo das listagens públicas.
+
+Para obter o ID de uma foto, use **GET `/galeria?page=1&pageSize=20`** autenticado.
+Pode filtrar por `eventoId`; retorna `{ items, total, page, pageSize, totalPages }`
+com os campos da galeria, inclusive `id`, `eventoId`, `src` e `legenda`. Inclui fotos
+de eventos em rascunho/arquivados, por ser administrativo. Limite de 50 itens por
+página, ordem por `ordem` e `id`, e páginas além do final ajustadas à última.
+A rota pública `/api/eventos/galeria` mantém seu contrato e filtro de publicação.
+
+```js
+const response = await fetch('/api/admin/acervo/' + encodeURIComponent(id), {
+  method: 'DELETE', credentials: 'include',
+  headers: { 'X-CSRF-Token': csrfToken },
+})
+if (!response.ok) throw new Error('Não foi possível excluir a publicação')
+// 204 não possui JSON. Atualize a lista somente após o sucesso.
+```
+
+Os testes de integração verificam remoção, bloqueio por vínculos, preservação de
+arquivos compartilhados e reversão completa caso a exclusão de acervo falhe.
 
 ### Notícia
 
@@ -172,6 +222,27 @@ Relações antigas de autoria são preservadas ao editar o formulário.
 
 Título, tipo, início e local obrigatórios. Fim opcional, não pode preceder início.
 O formulário converte data e hora para ISO com fuso de Fortaleza (`-03:00`).
+
+Ao criar ou salvar um evento `PUBLICADO` com `foto`, o backend inclui essa imagem
+automaticamente na galeria **Registros de eventos**, com o título como legenda.
+Evento e foto são gravados na mesma transação. O formulário atual envia uma foto;
+salvamentos repetidos não geram novas cópias. Alterar a foto ou o título atualiza
+a referência automática; limpar `foto`, arquivar ou voltar para rascunho remove
+essa referência. Fotos extras cadastradas manualmente são preservadas e só ficam
+públicas enquanto o evento estiver publicado. Se a mesma imagem já estiver
+vinculada manualmente ao evento, sua legenda e seus metadados são preservados,
+sem criar uma cópia automática.
+
+`automatica` é um campo interno da galeria; não é aceito no formulário do evento.
+Excluir uma foto automática por `DELETE /galeria/:id` não limpa `Evento.foto`:
+salvar o evento publicado novamente recria a referência. Arquivos físicos não
+são apagados. A resposta pública da galeria continua `{ src, legenda }`.
+Eventos anteriores passam por essa sincronização no próximo salvamento;
+a migration preserva as fotos existentes como manuais.
+
+Antes de iniciar a versão atualizada, execute `npm --prefix backend run db:generate`
+e `npm --prefix backend run db:deploy` para adicionar o campo e suas restrições.
+
 `DELETE /agenda/:id` retorna 204. Exclui o evento e suas linhas de galeria numa
 transação; não apaga arquivos físicos nem outras fotos. O frontend pede confirmação
 ao administrador antes de chamar essa rota.
@@ -266,9 +337,23 @@ Não existe DELETE de cadeira ou histórico.
 
 POST `/uploads` (sob `/api/admin`) recebe **o arquivo binário**, não FormData.
 Envie `Content-Type: application/pdf`, `image/png`, `image/jpeg` ou `image/webp`,
-cookie, origem e `X-CSRF-Token`. Máximo 10 MB; tipo e assinatura precisam coincidir.
+cookie, origem e `X-CSRF-Token`. Máximo 10 MB; o conteúdo precisa corresponder ao tipo.
 SVG, HTML, executáveis e nomes de arquivo fornecidos pelo cliente não são aceitos.
 O servidor cria nome UUID e responde 201 com `{ url, contentType, size }`.
+
+Imagens passam por decodificação de pixels com `sharp`, incluindo os quadros de
+WebP animado, e têm limite de 40 milhões de pixels no total. PDFs passam por
+leitura estrutural com `pdf-lib`: precisam ter páginas, dimensões válidas e não
+podem estar criptografados/protegidos por senha. Cabeçalhos isolados, arquivos
+truncados e tipos divergentes retornam 400 antes de gravar no disco. Os arquivos
+aceitos são preservados byte a byte, sem recompressão ou alteração do documento.
+
+O formulário verifica o tipo de cada campo antes do envio: imagens para membros,
+notícias e eventos; PDF para acervo. A API também valida as URLs ao criar ou editar,
+impedindo que um upload PDF seja usado como foto e uma imagem como PDF. Extensões
+são verificadas sem query/fragmento e após decodificação. Links externos sem
+extensão (por exemplo, endpoints de download) continuam aceitos por compatibilidade;
+o backend não baixa arquivos remotos nem garante o conteúdo desses links.
 
 ```js
 const response = await fetch('/api/admin/uploads', {
@@ -281,14 +366,87 @@ const response = await fetch('/api/admin/uploads', {
 
 Arquivos ficam em `backend/uploads`, ignorado pelo Git; `UPLOAD_DIR` permite
 configurar outro diretório. URLs são públicas, inclusive antes da publicação do
-registro: não envie documentos confidenciais. A checagem de assinatura não é
-antivírus nem validação completa de PDF. Arquivos recebem nosniff e CSP sandbox.
+registro: não envie documentos confidenciais. A validação estrutural não é
+antivírus nem garantia de renderização de todo PDF. Arquivos recebem nosniff e CSP sandbox.
 Uploads sem registro e arquivos de registros excluídos não são removidos
 automaticamente, evitando apagar arquivos ainda utilizados por outro conteúdo.
 O Vite encaminha `/uploads` ao backend. A prévia de foto usa uma URL temporária
 `blob:`, liberada ao trocar o arquivo ou fechar o formulário. Imagens cadastradas
 são usadas nas páginas públicas; os retratos demonstrativos permanecem apenas
 quando o registro não possui foto.
+
+## Auditoria administrativa — sprint 5
+
+As operações administrativas bem-sucedidas passam a gerar registros permanentes
+em `RegistroAuditoria`. Cada entrada guarda ID/e-mail do administrador autenticado,
+ação, recurso, ID do registro afetado, resumo, data/hora UTC e detalhes essenciais.
+O usuário é obtido da sessão; não pode ser informado no corpo da requisição.
+
+| Ação | Operações registradas |
+| --- | --- |
+| `CRIAR` | Cadastro de notícia, acervo, evento ou cadeira. O estado editorial inicial fica nos detalhes. |
+| `EDITAR` | Edição de conteúdo ou dados de cadeira/pessoas. Inclui retorno a rascunho. |
+| `PUBLICAR` / `ARQUIVAR` | Mudança de estado editorial em uma edição. |
+| `TROCAR_TITULAR` | Posse em cadeira já cadastrada, após confirmação. |
+| `ENCERRAR_OCUPACAO` | Encerramento por rota própria ou pelo formulário de edição. |
+| `EXCLUIR` | Exclusão de notícia, acervo, evento, acadêmico, patrono ou foto da galeria. |
+| `ENVIAR_ARQUIVO` | Upload concluído, com URL, tipo e tamanho; sem os bytes do arquivo. |
+| `LOGIN` / `LOGOUT` | Entrada e saída administrativas concluídas. |
+
+O registro corresponde à operação: cadastrar uma cadeira inclui suas pessoas e
+ocupações; salvar um evento inclui a sincronização da galeria; excluir acervo/evento
+inclui a remoção dos respectivos vínculos/fotos. Os detalhes de cadeira identificam
+número, patrono, fundador e titulares anterior/atual. Nas edições são guardados os
+nomes dos campos alterados e, quando aplicável, os estados editoriais anterior/atual.
+Salvar sem mudança de conteúdo continua sendo uma operação `EDITAR`, com a lista
+de campos alterados vazia. Não se trata de versionamento integral dos conteúdos.
+
+Senhas, hashes, cookies, tokens, corpos HTTP, mensagens de contato, arquivos binários
+e textos completos de conteúdo/biografia não são copiados para a auditoria.
+IDs e e-mail são snapshots sem exclusão em cascata; permanecem após excluir o
+conteúdo ou a conta administrativa. A migration bloqueia UPDATE, DELETE e TRUNCATE
+na tabela. Não existem rotas para criar, editar ou apagar esses registros manualmente.
+
+Alteração e auditoria são gravadas na mesma transação de banco. Se o registro de
+auditoria falhar, a alteração é revertida e a API não confirma sucesso. Nos uploads,
+o arquivo novo é removido se a gravação da auditoria falhar; banco e filesystem
+não formam uma transação distribuída (uma interrupção abrupta ainda pode deixar
+arquivo órfão). Validações recusadas, conflitos, falhas de login, acessos negados e
+leituras não geram entradas de sucesso. Os logs técnicos de acesso continuam separados.
+
+### Consultar histórico
+
+**GET `/api/admin/auditoria`**, com sessão administrativa. Retorna
+`{ items, total, page, pageSize, totalPages }`, ordenado do mais recente para o mais
+antigo, com desempate pelo ID. Padrão de 20 itens, máximo 50, e páginas além do final
+limitadas à última. Os filtros são combinados antes da contagem e da paginação:
+
+| Parâmetro | Valores |
+| --- | --- |
+| `page`, `pageSize` | Inteiros positivos; `pageSize` até 50. |
+| `acao` | Uma das ações da tabela acima. |
+| `recurso` | `NOTICIA`, `ACERVO`, `EVENTO`, `CADEIRA`, `ACADEMICO`, `PATRONO`, `GALERIA`, `UPLOAD`, `SESSAO`. |
+| `registroId` | ID exato do registro; para cadeira, seu UUID (o número está em `detalhes.numero`). |
+| `administradorId` | ID exato do administrador. |
+| `inicio`, `fim` | Datas ISO com fuso; limites inclusivos. Ex.: `2026-09-28T00:00:00-03:00`. |
+
+```js
+const filtros = new URLSearchParams({
+  recurso: 'NOTICIA', acao: 'EXCLUIR', page: '1', pageSize: '20',
+  inicio: '2026-09-28T00:00:00-03:00',
+})
+const response = await fetch('/api/admin/auditoria?' + filtros, { credentials: 'include' })
+if (!response.ok) throw new Error('Não foi possível consultar o histórico')
+const pagina = await response.json()
+```
+
+Sem sessão: 401; filtros inválidos: 400. A auditoria não é exposta pelas rotas
+públicas. Esta entrega implementa o backend e a consulta; não adiciona tela ao painel.
+Depois de atualizar as dependências, gere o cliente e aplique a migration
+`20260928000100_auditoria_administrativa` com `npm --prefix backend run db:generate`
+e `npm --prefix backend run db:deploy`. O registro começa após a implantação:
+não reconstrói alterações anteriores, e não cobre SQL manual, seed/importações
+ou comandos de manutenção de contas executados fora da API administrativa.
 
 ## Erros e validação
 

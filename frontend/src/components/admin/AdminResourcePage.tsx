@@ -122,7 +122,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
       for (const field of fields) {
         const file = files[field.name]
         if (file && field.urlField) {
-          next[field.urlField] = (await uploadAdminFile(file, csrfToken)).url
+          next[field.urlField] = (await uploadAdminFile(file, csrfToken, field.urlField === 'pdfUrl' ? 'pdf' : 'image')).url
           update(field.urlField, next[field.urlField])
           setFiles(current => { const remaining = { ...current }; delete remaining[field.name]; return remaining })
         }

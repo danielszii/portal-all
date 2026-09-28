@@ -101,10 +101,12 @@ test('upload envia arquivo binário autenticado e recusa tamanho/tipo inválidos
     assert.equal(new Headers(init.headers).get('X-CSRF-Token'), 'csrf-test')
     return Response.json({ url: '/uploads/test.pdf' }, { status: 201 })
   })
-  assert.equal((await uploadAdminFile(blob, 'csrf-test')).url, '/uploads/test.pdf')
-  assert.throws(() => uploadAdminFile(new Blob(['<svg/>'], { type: 'image/svg+xml' }), 'csrf-test'), /PNG, JPEG/)
-  assert.throws(() => uploadAdminFile(new Blob([], { type: 'application/pdf' }), 'csrf-test'), /conteúdo/)
-  assert.throws(() => uploadAdminFile(new Blob([new Uint8Array(10 * 1024 * 1024 + 1)], { type: 'application/pdf' }), 'csrf-test'), /10 MB/)
+  assert.equal((await uploadAdminFile(blob, 'csrf-test', 'pdf')).url, '/uploads/test.pdf')
+  assert.throws(() => uploadAdminFile(new Blob(['<svg/>'], { type: 'image/svg+xml' }), 'csrf-test', 'image'), /PNG, JPEG/)
+  assert.throws(() => uploadAdminFile(new Blob([], { type: 'application/pdf' }), 'csrf-test', 'pdf'), /conteúdo/)
+  assert.throws(() => uploadAdminFile(new Blob([new Uint8Array(10 * 1024 * 1024 + 1)], { type: 'application/pdf' }), 'csrf-test', 'pdf'), /10 MB/)
+  assert.throws(() => uploadAdminFile(blob, 'csrf-test', 'image'), /imagem/)
+  assert.throws(() => uploadAdminFile(new Blob(['imagem'], { type: 'image/png' }), 'csrf-test', 'pdf'), /PDF/)
 })
 
 test('seleção explícita reutiliza pessoa existente sem substituir biografia nem enviar novo cadastro', async t => {

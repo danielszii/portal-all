@@ -4,7 +4,7 @@ import { ValidationError } from '../errors/app.error.js'
 
 export type Pagination = { page: number; pageSize: number }
 export type Page<T> = Pagination & { items: T[]; total: number; totalPages: number }
-export function parsePagination(query: Record<string, unknown>): Pagination | undefined {
+export function parsePagination(query: Record<string, unknown>, defaultPageSize = 12): Pagination | undefined {
   if (query.page === undefined && query.pageSize === undefined) return undefined
   const integer = (value: unknown, fallback: number, max: number) => {
     if (value === undefined) return fallback
@@ -13,7 +13,7 @@ export function parsePagination(query: Record<string, unknown>): Pagination | un
     }
     return Number(value)
   }
-  return { page: integer(query.page, 1, 2147483647), pageSize: integer(query.pageSize, 12, 50) }
+  return { page: integer(query.page, 1, 2147483647), pageSize: integer(query.pageSize, defaultPageSize, 50) }
 }
 
 export const foldSearch = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()

@@ -21,7 +21,7 @@ test('API com migrations e PostgreSQL real', async t => {
 
   await t.test('banco recém-migrado fornece respostas vazias', async () => {
     assert.deepEqual(await get('/ready'), { status: 'ok', database: 'up' })
-    for (const path of ['/cadeiras', '/eventos', '/eventos/galeria', '/noticias', '/acervo', '/inicio/noticias']) {
+    for (const path of ['/cadeiras', '/eventos', '/eventos/galeria', '/noticias', '/acervo', '/inicio/noticias', '/inicio/eventos']) {
       assert.deepEqual(await get(path), [], path)
     }
     for (const path of ['/inicio/cadeiras', '/inicio/acervo']) {
@@ -60,6 +60,18 @@ test('API com migrations e PostgreSQL real', async t => {
     assert.deepEqual(await get('/cadeiras?status=Vaga'), [])
     assert.deepEqual(await get('/cadeiras?search=inexistente'), [])
     assert.equal((await get('/inicio/cadeiras')).total, 1)
+  })
+
+  await t.test('busca numérica de cadeiras funciona nas duas rotas públicas com PostgreSQL real', async () => {
+    for (const numero of [12, 112]) {
+      await prisma.cadeira.create({ data: { numero, patrono: { create: { nome: 'Patrono numérico' } } } })
+    }
+    for (const term of ['12', 'xii']) {
+      const chairs = await get('/cadeiras?q=' + term)
+      assert.deepEqual(chairs.map((c: any) => c.number), ['XII'])
+      const result = await get('/busca?q=' + term)
+      assert.deepEqual(result.cadeiras, [{ number: 'XII', patron: 'Patrono numérico', holder: 'Vaga' }])
+    }
   })
 
   await t.test('notícias ocultam rascunhos, arquivadas e publicações futuras', async () => {
@@ -112,6 +124,40 @@ test('API com migrations e PostgreSQL real', async t => {
     assert.equal(acervo[0].pdf, '/livro.pdf')
     assert.deepEqual(await get('/acervo?search=ausente'), [])
     assert.equal((await get('/inicio/acervo')).total, 1)
+  })
+
+  await t.test('destaques da agenda incluem eventos em andamento, ocultam encerrados e limitam a três', async t => {
+    const now = new Date('2040-01-01T12:00:00Z')
+    t.mock.timers.enable({ apis: ['Date'], now })
+    const date = (hours: number) => new Date(now.getTime() + hours * 60 * 60 * 1000)
+    const events = [
+      { id: 'home-encerrado', inicioEm: date(-3), fimEm: date(-2) },
+      { id: 'home-sem-fim-passado', inicioEm: date(-2), fimEm: null },
+      { id: 'home-em-andamento', inicioEm: date(-1), fimEm: date(1) },
+      { id: 'home-futuro-a', inicioEm: date(24), fimEm: null },
+      { id: 'home-futuro-b', inicioEm: date(24), fimEm: date(25) },
+      { id: 'home-futuro-c', inicioEm: date(48), fimEm: null },
+    ]
+    for (const event of events) {
+      await prisma.evento.create({ data: {
+        ...event, titulo: 'Destaque', tipo: 'Sarau', local: 'Sede', descricao: 'Texto completo', status: 'PUBLICADO',
+      } })
+    }
+    for (const status of ['RASCUNHO', 'ARQUIVADO'] as const) {
+      await prisma.evento.create({ data: {
+        titulo: 'Evento privado', tipo: 'Sarau', local: 'Sede', descricao: '', inicioEm: date(1), status,
+      } })
+    }
+    const highlights = await get('/inicio/eventos')
+    assert.deepEqual(highlights.map((e: any) => e.id), ['home-em-andamento', 'home-futuro-a', 'home-futuro-b'])
+    assert.deepEqual(Object.keys(highlights[0]).sort(), ['data', 'hora', 'id', 'local', 'tipo', 'titulo'])
+    assert.equal(highlights[0].data, '2040-01-01')
+    assert.equal(highlights[0].hora, '08h00')
+    const detail = await get('/eventos/home-em-andamento')
+    assert.equal(detail.descricao, 'Texto completo')
+    assert.equal(detail.passado, false)
+    assert.equal(detail.data, highlights[0].data)
+    assert.equal(detail.hora, highlights[0].hora)
   })
 
   await t.test('instituição seleciona gestão e mandatos vigentes', async () => {

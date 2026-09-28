@@ -1,4 +1,6 @@
 import { ValidationError } from '../errors/app.error.js'
+import { extname } from 'node:path'
+import type { MediaKind } from '../domain/media.js'
 
 export function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new ValidationError('Envie um objeto JSON.')
@@ -47,6 +49,24 @@ export function url(value: unknown, name: string, required = false): string {
     if (!['https:', 'http:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error()
     return parsed.href
   } catch { throw new ValidationError(`${name}: use URL HTTP(S) ou caminho local absoluto.`) }
+}
+export function mediaUrl(value: unknown, name: string, kind: MediaKind, required = false): string {
+  const result = url(value, name, required)
+  if (!result) return result
+  let pathname: string
+  try { pathname = decodeURIComponent(new URL(result, 'http://portal.local').pathname) }
+  catch { throw new ValidationError(`${name}: URL inválida.`) }
+  const extension = extname(pathname).toLowerCase()
+  const images = ['.png', '.jpg', '.jpeg', '.webp']
+  const allowed = kind === 'image' ? images : ['.pdf']
+  // Uploads do portal têm extensão controlada pelo servidor. Links externos
+  // podem usar endpoints sem extensão; não os consultamos para evitar SSRF.
+  const localUpload = pathname.startsWith('/uploads/')
+  const knownMedia = [...images, '.pdf', '.gif', '.svg', '.avif', '.bmp', '.tiff'].includes(extension)
+  if ((localUpload || knownMedia) && !allowed.includes(extension)) {
+    throw new ValidationError(`${name}: informe ${kind === 'pdf' ? 'um arquivo PDF' : 'uma imagem PNG, JPEG ou WebP'}.`)
+  }
+  return result
 }
 export function status(value: unknown): 'RASCUNHO' | 'PUBLICADO' | 'ARQUIVADO' {
   if (value === undefined) return 'RASCUNHO'

@@ -1,9 +1,16 @@
 import type { Prisma } from '@prisma/client'
 import { AppError, ValidationError } from '../errors/app.error.js'
 import { foldSearch } from '../repositories/catalog-query.js'
+import { deleteRecord } from '../repositories/admin-delete.repository.js'
+import type { AuditActor } from './admin-audit.service.js'
 
 export type PersonRole = 'academico' | 'fundador' | 'patrono'
 export const normalizePersonName = (name: string) => foldSearch(name.trim().replace(/\s+/gu, ' '))
+
+export async function deletePerson(resource: 'academicos' | 'patronos', id: string, actor: AuditActor) {
+  // RESTRICT protege todos os vínculos, inclusive os criados simultaneamente.
+  await deleteRecord(resource === 'academicos' ? 'Academico' : 'Patrono', id, actor)
+}
 
 export class PersonConflict extends AppError {
   constructor(public readonly role: PersonRole, public readonly candidates: { id: string; nome: string; descricao: string }[]) {

@@ -1,20 +1,27 @@
-import { Router, raw, json, type RequestHandler, type ErrorRequestHandler } from 'express'
+import { Router, raw, json, type RequestHandler, type ErrorRequestHandler, type Response } from 'express'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../db/prisma.js'
 import { createRequestLimit } from '../middlewares/contato-limit.middleware.js'
 import { cookieName, cookieOptions, requireAdmin, requireOrigin } from '../middlewares/admin-auth.middleware.js'
-import { login } from '../services/admin-auth.service.js'
-import { contentResources, deleteEvento } from '../services/admin-content.service.js'
+import { login, logout } from '../services/admin-auth.service.js'
+import { contentResources } from '../services/admin-content.service.js'
 import { adminCadeiraInclude, CadeiraConflict, createOrReplaceCadeira, editCadeira, endOcupacao } from '../services/admin-cadeiras.service.js'
 import { saveUpload } from '../services/admin-upload.service.js'
 import { parsePagination } from '../repositories/catalog-query.js'
 import { numeroCadeira } from '../repositories/mappers.js'
 import { AppError, ValidationError } from '../errors/app.error.js'
 import * as v from '../services/admin-validation.js'
-import { PersonConflict } from '../services/admin-person.service.js'
+import { deletePerson, PersonConflict } from '../services/admin-person.service.js'
+import { deleteFoto, listGaleria } from '../services/admin-galeria.service.js'
+import { maxUploadBytes, mediaMimeTypes } from '../domain/media.js'
+import { listAudit, type AuditActor } from '../services/admin-audit.service.js'
 
 const router = Router()
 const handle = (fn: RequestHandler): RequestHandler => (req, res, next) => { Promise.resolve(fn(req, res, next)).catch(next) }
+function actor(res: Response): AuditActor {
+  const { id, email } = res.locals.adminSession.administrador
+  return { id, email }
+}
 router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next() })
 router.post('/auth/login', createRequestLimit({ limit: 5, windowMs: 15 * 60_000, skipSuccessfulRequests: true }), requireOrigin, json({ limit: '4kb' }), handle(async (req, res) => {
   const b = v.object(req.body)
@@ -32,17 +39,18 @@ router.get('/auth/me', (_req, res) => {
   res.json({ user: { id: current.administrador.id, email: current.administrador.email }, csrfToken: current.csrfToken, expiraEm: current.expiraEm })
 })
 router.post('/auth/logout', handle(async (_req, res) => {
-  await prisma.sessaoAdmin.deleteMany({ where: { tokenHash: res.locals.adminSession.tokenHash } })
+  await logout(res.locals.adminSession.tokenHash, actor(res))
   res.clearCookie(cookieName, cookieOptions)
   res.status(204).end()
 }))
 // Auth/CSRF and the limit run before reading uploaded files or larger JSON bodies.
 const writeLimit = createRequestLimit({ limit: 60, windowMs: 60_000 })
 router.use((req, res, next) => ['GET', 'HEAD'].includes(req.method) ? next() : writeLimit(req, res, next))
-router.post('/uploads', raw({ type: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'], limit: '10mb' }), handle(async (req, res) => {
-  res.status(201).json(await saveUpload(req.body, (req.get('content-type') ?? '').split(';')[0].toLowerCase()))
+router.post('/uploads', raw({ type: [...mediaMimeTypes.pdf, ...mediaMimeTypes.image], limit: maxUploadBytes }), handle(async (req, res) => {
+  res.status(201).json(await saveUpload(req.body, (req.get('content-type') ?? '').split(';')[0].toLowerCase(), actor(res)))
 }))
 router.use(json({ limit: '256kb' }))
+router.get('/auditoria', handle(async (req, res) => { res.json(await listAudit(req.query)) }))
 
 for (const [name, resource] of Object.entries(contentResources)) {
   router.get(`/${name}`, handle(async (req, res) => {
@@ -59,13 +67,13 @@ for (const [name, resource] of Object.entries(contentResources)) {
     if (!item) throw new AppError('Registro não encontrado.', 404)
     res.json(item)
   }))
-  router.post(`/${name}`, handle(async (req, res) => { res.status(201).json(await resource.create(req.body)) }))
-  router.put(`/${name}/:id`, handle(async (req, res) => { res.json(await resource.update(v.text(req.params.id, 'id', 100), req.body)) }))
+  router.post(`/${name}`, handle(async (req, res) => { res.status(201).json(await resource.create(req.body, actor(res))) }))
+  router.put(`/${name}/:id`, handle(async (req, res) => { res.json(await resource.update(v.text(req.params.id, 'id', 100), req.body, actor(res))) }))
+  router.delete(`/${name}/:id`, handle(async (req, res) => {
+    await resource.delete(v.text(req.params.id, 'id', 100), actor(res))
+    res.status(204).end()
+  }))
 }
-router.delete('/agenda/:id', handle(async (req, res) => {
-  await deleteEvento(v.text(req.params.id, 'id', 100))
-  res.status(204).end()
-}))
 router.get('/cadeiras', handle(async (req, res) => {
   const { page, pageSize } = parsePagination(req.query) ?? { page: 1, pageSize: 20 }
   const q = typeof req.query.q === 'string' ? req.query.q.trim() : ''
@@ -92,13 +100,17 @@ router.get('/cadeiras/:numero', handle(async (req, res) => {
   res.json(value)
 }))
 router.post('/cadeiras', handle(async (req, res) => {
-  const result = await createOrReplaceCadeira(req.body)
+  const result = await createOrReplaceCadeira(req.body, actor(res))
   res.status(result.created ? 201 : 200).json(result.cadeira)
 }))
-router.put('/cadeiras/:numero', handle(async (req, res) => { res.json(await editCadeira(chairNumber(req.params.numero), req.body)) }))
-router.post('/cadeiras/:numero/encerrar', handle(async (req, res) => { res.json(await endOcupacao(chairNumber(req.params.numero), req.body)) }))
+router.put('/cadeiras/:numero', handle(async (req, res) => { res.json(await editCadeira(chairNumber(req.params.numero), req.body, actor(res))) }))
+router.post('/cadeiras/:numero/encerrar', handle(async (req, res) => { res.json(await endOcupacao(chairNumber(req.params.numero), req.body, actor(res))) }))
 // Lookup de pessoas existentes evita duplicações durante cadastro de cadeiras.
 for (const name of ['academicos', 'patronos'] as const) {
+  router.delete(`/${name}/:id`, handle(async (req, res) => {
+    await deletePerson(name, v.text(req.params.id, 'id', 100), actor(res))
+    res.status(204).end()
+  }))
   router.get(`/${name}`, handle(async (req, res) => {
     const { page, pageSize } = parsePagination(req.query) ?? { page: 1, pageSize: 20 }
     const where = typeof req.query.q === 'string' ? { nome: { contains: req.query.q, mode: 'insensitive' as const } } : {}
@@ -109,6 +121,15 @@ for (const name of ['academicos', 'patronos'] as const) {
     res.json({ items, total, page, pageSize, totalPages: Math.max(1, Math.ceil(total / pageSize)) })
   }))
 }
+router.get('/galeria', handle(async (req, res) => {
+  const pagination = parsePagination(req.query) ?? { page: 1, pageSize: 20 }
+  const eventoId = req.query.eventoId === undefined ? undefined : v.text(req.query.eventoId, 'eventoId', 100)
+  res.json(await listGaleria(pagination, eventoId))
+}))
+router.delete('/galeria/:id', handle(async (req, res) => {
+  await deleteFoto(v.text(req.params.id, 'id', 100), actor(res))
+  res.status(204).end()
+}))
 const adminErrors: ErrorRequestHandler = (error, _req, res, next) => {
   if (error instanceof PersonConflict) {
     res.status(409).json({ error: error.message, code: 'CONFIRMACAO_PESSOA', role: error.role, candidates: error.candidates })

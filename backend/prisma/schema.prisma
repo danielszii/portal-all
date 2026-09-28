@@ -26,6 +26,50 @@ model SessaoAdmin {
   @@index([administradorId])
 }
 
+enum AcaoAuditoria {
+  CRIAR
+  EDITAR
+  PUBLICAR
+  ARQUIVAR
+  EXCLUIR
+  TROCAR_TITULAR
+  ENCERRAR_OCUPACAO
+  ENVIAR_ARQUIVO
+  LOGIN
+  LOGOUT
+}
+
+enum RecursoAuditoria {
+  NOTICIA
+  ACERVO
+  EVENTO
+  CADEIRA
+  ACADEMICO
+  PATRONO
+  GALERIA
+  UPLOAD
+  SESSAO
+}
+
+// Identificadores são snapshots, sem FK: exclusões não apagam o histórico.
+// A migration impede UPDATE, DELETE e TRUNCATE nesta tabela.
+model RegistroAuditoria {
+  id String @id @default(uuid())
+  administradorId String
+  administradorEmail String
+  acao AcaoAuditoria
+  recurso RecursoAuditoria
+  registroId String
+  resumo String
+  detalhes Json @default("{}")
+  criadoEm DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([criadoEm, id])
+  @@index([recurso, registroId, criadoEm])
+  @@index([administradorId, criadoEm])
+  @@index([acao, criadoEm])
+}
+
 // A migration busca_portugues aplica COLLATE portal_pt_br aos campos usados
 // em filtros ILIKE de Noticia, AcervoItem e Evento. Prisma não expressa collations;
 // preserve essa configuração SQL nas próximas migrations.
@@ -137,8 +181,10 @@ model GaleriaFoto {
   textoAlternativo String?
   credito     String?
   ordem       Int     @default(0)
+  automatica  Boolean @default(false)
   evento      Evento? @relation(fields: [eventoId], references: [id], onDelete: Restrict)
   @@index([eventoId, ordem])
+  // A migration limita a uma foto automática por evento com índice único parcial.
 }
 
 model Noticia {

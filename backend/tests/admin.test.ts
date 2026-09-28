@@ -4,7 +4,6 @@ import { createApp } from '../src/app.js'
 import { serve } from './serve.js'
 import { hashPassword, verifyPassword } from '../src/services/admin-auth.service.js'
 import { noticiaInput, acervoInput, eventoInput } from '../src/services/admin-content.service.js'
-import { uploadExtension } from '../src/services/admin-upload.service.js'
 import { prisma } from '../src/db/prisma.js'
 import { mockMethod } from './mock-method.js'
 
@@ -50,11 +49,4 @@ test('validação editorial bloqueia publicação incompleta, campos extras e UR
   assert.throws(() => acervoInput({ titulo: 'Livro', categoria: 'Livro', paginas: -1 }))
   assert.throws(() => eventoInput({ titulo: 'Evento', tipo: 'Sarau', local: 'Sede', inicioEm: '2026-02-30T15:00:00-03:00' }))
   assert.throws(() => eventoInput({ titulo: 'Evento', tipo: 'Sarau', local: 'Sede', inicioEm: '2026-01-02T15:00:00-03:00', fimEm: '2026-01-01T15:00:00-03:00' }))
-})
-
-test('upload rejeita HTML ou SVG disfarçado de imagem/PDF', () => {
-  for (const mime of ['image/png', 'image/jpeg', 'image/webp', 'application/pdf', 'image/svg+xml']) {
-    assert.throws(() => uploadExtension(Buffer.from('<svg onload="alert(1)"></svg>'), mime))
-  }
-  assert.equal(uploadExtension(Buffer.from('%PDF-1.4\n%%EOF'), 'application/pdf'), 'pdf')
 })

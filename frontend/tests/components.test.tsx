@@ -18,7 +18,7 @@ const session = { user: { id: 'admin', email: 'admin@example.test' }, csrfToken:
 
 async function editor(t: TestContext) {
   let status = 200
-  t.mock.method(globalThis, 'fetch', async (path: string) => {
+  const fetch = t.mock.method(globalThis, 'fetch', async (path: string) => {
     if (path.endsWith('/auth/me')) return status === 200 ? Response.json(session) : Response.json({ error: 'Indisponível' }, { status })
     if (path.endsWith('/noticias/1')) return Response.json(record)
     return Response.json({ items: [record], total: 1, page: 1, pageSize: 20, totalPages: 1 })
@@ -41,7 +41,7 @@ async function editor(t: TestContext) {
     Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!.call(input, 'Rascunho ainda não salvo')
     input.dispatchEvent(new dom.window.Event('input', { bubbles: true }))
   })
-  return { container, input, async refresh(nextStatus: number) {
+  return { container, input, fetch, async refresh(nextStatus: number) {
     status = nextStatus
     await act(async () => { window.dispatchEvent(new dom.window.Event('focus')) })
   } }
@@ -63,6 +63,19 @@ test('sessão revogada continua removendo o editor e redirecionando ao login', a
   await refresh(401)
   assert.equal(container.querySelector('[role="dialog"]'), null)
   assert.match(container.textContent ?? '', /Login necessário/)
+})
+
+test('formulário de notícia recusa PDF no campo de imagem antes de enviar ou salvar', async t => {
+  const { container, fetch } = await editor(t)
+  const before = fetch.mock.callCount()
+  const input = container.querySelector<HTMLInputElement>('input[type="file"]')!
+  const file = new File(['%PDF-1.4\n%%EOF'], 'livro.pdf', { type: 'application/pdf' })
+  Object.defineProperty(input, 'files', { value: [file], configurable: true })
+  await act(async () => input.dispatchEvent(new dom.window.Event('change', { bubbles: true })))
+  const form = container.querySelector('[role="dialog"] form')!
+  await act(async () => form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })))
+  assert.equal(fetch.mock.callCount(), before)
+  assert.match(container.querySelector('[role="dialog"]')!.textContent!, /Escolha uma imagem PNG, JPEG ou WebP/)
 })
 
 test('busca carrega a próxima página uma vez e preserva resultados ao tentar novamente', async t => {

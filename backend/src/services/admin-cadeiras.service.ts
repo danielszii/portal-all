@@ -1,13 +1,33 @@
 import { prisma } from '../db/prisma.js'
-import type { Prisma } from '@prisma/client'
+import type { AcaoAuditoria, Prisma } from '@prisma/client'
 import { AppError, ValidationError } from '../errors/app.error.js'
 import * as v from './admin-validation.js'
 import { checkPersonName, confirmedHomonyms, lockPersonNames, normalizePersonName, PersonConflict, type PersonRole } from './admin-person.service.js'
+import { changedFields, recordAudit, type AuditActor } from './admin-audit.service.js'
 
 export const adminCadeiraInclude = {
   patrono: true,
   ocupacoes: { orderBy: [{ inicioAno: 'asc' }, { id: 'asc' }], include: { academico: true } },
 } satisfies Prisma.CadeiraInclude
+
+type AuditCadeira = Prisma.CadeiraGetPayload<{ include: typeof adminCadeiraInclude }>
+async function auditCadeira(tx: Prisma.TransactionClient, actor: AuditActor, acao: AcaoAuditoria, after: AuditCadeira, before?: AuditCadeira | null) {
+  const campos = changedFields(before ?? {}, after, ['numero', 'patronoId'])
+  campos.push(...changedFields(before?.patrono ?? {}, after.patrono, ['nome', 'biografia', 'fotoUrl']).map(field => `patrono.${field}`))
+  const occupations = (row?: AuditCadeira | null) => (row?.ocupacoes ?? []).map(({ academico: _person, ...occupation }) => occupation).sort((a, b) => a.id.localeCompare(b.id))
+  if (JSON.stringify(occupations(before)) !== JSON.stringify(occupations(after))) campos.push('ocupacoes')
+  for (const occupation of after.ocupacoes) {
+    const previous = before?.ocupacoes.find(row => row.academicoId === occupation.academicoId)?.academico
+    campos.push(...changedFields(previous ?? {}, occupation.academico, ['nome', 'biografia', 'bioExtra', 'fotoUrl', 'inMemoriam']).map(field => `academico.${field}`))
+  }
+  await recordAudit(tx, actor, { acao, recurso: 'CADEIRA', registroId: after.id, resumo: `${acao}: cadeira ${after.numero}`,
+    detalhes: { numero: after.numero, camposAlterados: [...new Set(campos)], patronoId: after.patronoId,
+      academicoAnteriorId: before?.ocupacoes.find(row => row.vigente)?.academicoId ?? null,
+      academicoAtualId: after.ocupacoes.find(row => row.vigente)?.academicoId ?? null,
+      fundadorId: after.ocupacoes.find(row => row.fundador)?.academicoId ?? null,
+    },
+  })
+}
 
 export class CadeiraConflict extends AppError {
   constructor(public readonly cadeira: unknown, public readonly ocupacaoAtualId: string | null) {
@@ -18,12 +38,12 @@ function pessoa(input: unknown) {
   const b = v.object(input)
   v.keys(b, ['nome', 'biografia', 'fotoUrl', 'bioExtra'])
   return { nome: v.text(b.nome, 'nome', 200), biografia: v.optionalText(b.biografia, 'biografia'),
-    fotoUrl: v.url(b.fotoUrl, 'fotoUrl') || null, bioExtra: v.optionalText(b.bioExtra, 'bioExtra') }
+    fotoUrl: v.mediaUrl(b.fotoUrl, 'fotoUrl', 'image') || null, bioExtra: v.optionalText(b.bioExtra, 'bioExtra') }
 }
 function patrono(input: unknown) {
   const b = v.object(input)
   v.keys(b, ['nome', 'biografia', 'fotoUrl'])
-  return { nome: v.text(b.nome, 'nome', 200), biografia: v.optionalText(b.biografia, 'biografia'), fotoUrl: v.url(b.fotoUrl, 'fotoUrl') || null }
+  return { nome: v.text(b.nome, 'nome', 200), biografia: v.optionalText(b.biografia, 'biografia'), fotoUrl: v.mediaUrl(b.fotoUrl, 'fotoUrl', 'image') || null }
 }
 async function lock(tx: Prisma.TransactionClient, numero: number) {
   // Número reservado na transação, inclusive quando a cadeira ainda não existe.
@@ -35,7 +55,7 @@ function checkDate(inicio: Date, atual?: { inicioEm: Date | null; inicioAno: num
   if (atual && ((atual.inicioEm && inicio < atual.inicioEm) || (atual.inicioAno && inicio.getUTCFullYear() < atual.inicioAno))) throw new ValidationError('A data não pode preceder a posse do titular atual.')
 }
 
-export async function createOrReplaceCadeira(input: unknown) {
+export async function createOrReplaceCadeira(input: unknown, actor: AuditActor) {
   const b = v.object(input)
   v.keys(b, ['numero', 'patronoId', 'patrono', 'academicoId', 'academico', 'inicioEm', 'fundadorId', 'fundador', 'confirmarSubstituicao', 'ocupacaoAtualId', 'confirmarHomonimos'])
   const homonyms = confirmedHomonyms(b.confirmarHomonimos)
@@ -53,6 +73,7 @@ export async function createOrReplaceCadeira(input: unknown) {
   return prisma.$transaction(async tx => {
     await lock(tx, numero)
     let cadeira = await tx.cadeira.findUnique({ where: { numero }, include: adminCadeiraInclude })
+    const before = cadeira
     const atual = cadeira?.ocupacoes.find(o => o.vigente)
     if (cadeira && (!confirmar || b.ocupacaoAtualId !== (atual?.id ?? null))) throw new CadeiraConflict(cadeira, atual?.id ?? null)
     // Na repetição confirmada do cadastro, os dados de patrono são preservados.
@@ -98,11 +119,13 @@ export async function createOrReplaceCadeira(input: unknown) {
     }
     await tx.ocupacaoCadeira.create({ data: { cadeiraId: cadeira.id, academicoId: membro.id,
       vigente: true, fundador: isNew && (!fundadorId || fundadorId === membro.id), inicioEm, inicioAno: inicioEm.getUTCFullYear() } })
-    return { created: isNew, cadeira: await tx.cadeira.findUniqueOrThrow({ where: { numero }, include: adminCadeiraInclude }) }
+    const saved = await tx.cadeira.findUniqueOrThrow({ where: { numero }, include: adminCadeiraInclude })
+    await auditCadeira(tx, actor, isNew ? 'CRIAR' : 'TROCAR_TITULAR', saved, before)
+    return { created: isNew, cadeira: saved }
   })
 }
 
-export async function editCadeira(numero: number, input: unknown) {
+export async function editCadeira(numero: number, input: unknown, actor: AuditActor) {
   const b = v.object(input)
   v.keys(b, ['patrono', 'academico', 'ocupacaoAtualId', 'encerramento'])
   if (b.patrono === undefined && b.academico === undefined && b.encerramento === undefined) throw new ValidationError('Informe dados para editar.')
@@ -125,11 +148,13 @@ export async function editCadeira(numero: number, input: unknown) {
       await tx.ocupacaoCadeira.update({ where: { id: atual!.id }, data: { vigente: false, fimEm, fimAno: fimEm.getUTCFullYear(), periodoTexto: null } })
       if (inMemoriam) await tx.academico.update({ where: { id: atual!.academicoId }, data: { inMemoriam: true } })
     }
-    return tx.cadeira.findUniqueOrThrow({ where: { numero }, include: adminCadeiraInclude })
+    const saved = await tx.cadeira.findUniqueOrThrow({ where: { numero }, include: adminCadeiraInclude })
+    await auditCadeira(tx, actor, fimEm ? 'ENCERRAR_OCUPACAO' : 'EDITAR', saved, cadeira)
+    return saved
   })
 }
 
-export async function endOcupacao(numero: number, input: unknown) {
+export async function endOcupacao(numero: number, input: unknown, actor: AuditActor) {
   const b = v.object(input)
   v.keys(b, ['ocupacaoAtualId', 'fimEm', 'inMemoriam'])
   const fimEm = v.day(b.fimEm, 'fimEm')
@@ -143,6 +168,8 @@ export async function endOcupacao(numero: number, input: unknown) {
     checkDate(fimEm, atual)
     await tx.ocupacaoCadeira.update({ where: { id: atual.id }, data: { vigente: false, fimEm, fimAno: fimEm.getUTCFullYear(), periodoTexto: null } })
     if (inMemoriam) await tx.academico.update({ where: { id: atual.academicoId }, data: { inMemoriam: true } })
-    return tx.cadeira.findUniqueOrThrow({ where: { numero }, include: adminCadeiraInclude })
+    const saved = await tx.cadeira.findUniqueOrThrow({ where: { numero }, include: adminCadeiraInclude })
+    await auditCadeira(tx, actor, 'ENCERRAR_OCUPACAO', saved, cadeira)
+    return saved
   })
 }
