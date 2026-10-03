@@ -3,6 +3,18 @@ import { maxUploadBytes, mediaMimeTypes, type MediaKind } from '../../../backend
 
 export type AdminResource = 'noticias' | 'acervo' | 'agenda' | 'cadeiras'
 export type AdminPage<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number }
+export type GalleryRecord = {
+  id: string; eventoId: string | null; src: string; legenda: string
+  textoAlternativo: string | null; credito: string | null; ordem: number; automatica: boolean
+}
+export type PersonResource = 'academicos' | 'patronos'
+export type PersonRecord = { id: string; nome: string; biografia?: string | null; fotoUrl?: string | null; bioExtra?: string | null; inMemoriam?: boolean }
+export type AuditAction = 'CRIAR' | 'EDITAR' | 'PUBLICAR' | 'ARQUIVAR' | 'EXCLUIR' | 'TROCAR_TITULAR' | 'ENCERRAR_OCUPACAO' | 'ENVIAR_ARQUIVO' | 'LOGIN' | 'LOGOUT'
+export type AuditResource = 'NOTICIA' | 'ACERVO' | 'EVENTO' | 'CADEIRA' | 'ACADEMICO' | 'PATRONO' | 'GALERIA' | 'UPLOAD' | 'SESSAO'
+export type AuditRecord = {
+  id: string; administradorId: string; administradorEmail: string; acao: AuditAction
+  recurso: AuditResource; registroId: string; resumo: string; detalhes: Record<string, unknown>; criadoEm: string
+}
 export type Pessoa = { id: string; nome: string; biografia: string | null; fotoUrl: string | null; bioExtra?: string | null; inMemoriam?: boolean }
 export type CadeiraAdmin = {
   id: string; numero: number; patrono: Pessoa
@@ -53,6 +65,36 @@ export function loadAdminPage(resource: AdminResource, page: number, q: string, 
 }
 export function loadAdminRecord(resource: AdminResource, id: string, signal?: AbortSignal) {
   return adminRequest<AdminRecord>(`/${resource}/${encodeURIComponent(id)}`, { signal })
+}
+export function deleteAdminRecord(resource: Exclude<AdminResource, 'cadeiras'>, id: string, csrfToken: string) {
+  return adminRequest<void>(`/${resource}/${encodeURIComponent(id)}`, { method: 'DELETE', csrfToken })
+}
+export function loadAdminGallery(page: number, eventoId: string, signal?: AbortSignal) {
+  const query = new URLSearchParams({ page: String(page), pageSize: '20' })
+  if (eventoId.trim()) query.set('eventoId', eventoId.trim())
+  return adminRequest<AdminPage<GalleryRecord>>(`/galeria?${query}`, { signal })
+}
+export function deleteGalleryRecord(id: string, csrfToken: string) {
+  return adminRequest<void>(`/galeria/${encodeURIComponent(id)}`, { method: 'DELETE', csrfToken })
+}
+export function loadAdminPeople(resource: PersonResource, page: number, q: string, signal?: AbortSignal) {
+  const query = new URLSearchParams({ page: String(page), pageSize: '20' })
+  if (q.trim()) query.set('q', q.trim())
+  return adminRequest<AdminPage<PersonRecord>>(`/${resource}?${query}`, { signal })
+}
+export function deleteAdminPerson(resource: PersonResource, id: string, csrfToken: string) {
+  return adminRequest<void>(`/${resource}/${encodeURIComponent(id)}`, { method: 'DELETE', csrfToken })
+}
+export type AuditFilters = { acao: string; recurso: string; registroId: string; inicio: string; fim: string }
+export function loadAdminAudit(page: number, filters: AuditFilters, signal?: AbortSignal) {
+  const query = new URLSearchParams({ page: String(page), pageSize: '20' })
+  for (const [key, value] of Object.entries(filters)) {
+    if (!value.trim()) continue
+    if (key === 'inicio') query.set(key, `${value}T00:00:00-03:00`)
+    else if (key === 'fim') query.set(key, `${value}T23:59:59.999-03:00`)
+    else query.set(key, value.trim())
+  }
+  return adminRequest<AdminPage<AuditRecord>>(`/auditoria?${query}`, { signal })
 }
 export function uploadAdminFile(file: Blob, csrfToken: string, kind: MediaKind) {
   if (!mediaMimeTypes[kind].includes(file.type)) throw new AdminApiError(kind === 'pdf' ? 'Escolha um arquivo PDF.' : 'Escolha uma imagem PNG, JPEG ou WebP.', 400)

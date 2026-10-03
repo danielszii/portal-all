@@ -32,7 +32,7 @@ async function editor(t: TestContext) {
   ], { initialEntries: ['/admin/noticias'] })
   t.after(async () => { await act(async () => root.unmount()); router.dispose(); container.remove() })
   await act(async () => root.render(<AuthProvider><RouterProvider router={router} /></AuthProvider>))
-  const edit = [...container.querySelectorAll('button')].find(button => button.textContent === 'Editar')
+  const edit = container.querySelector<HTMLButtonElement>('button.admin-edit-action')
   assert.ok(edit)
   await act(async () => edit.click())
   const input = container.querySelector<HTMLInputElement>('input[name="titulo"]')

@@ -82,6 +82,10 @@ cd portal-all
 npm run install:all
 ```
 
+A instalação do backend também gera automaticamente o Prisma Client. Sempre
+execute esse comando depois de atualizar o repositório quando houver mudanças
+nos arquivos `package-lock.json` ou `backend/prisma/schema.prisma`.
+
 Copie o modelo [backend/.env.example](backend/.env.example) para `backend/.env`.
 No PowerShell, a partir da raiz do projeto:
 
@@ -101,10 +105,9 @@ O frontend não precisa de `.env`: usa `/api` e `/uploads`, encaminhados ao back
 na porta 3001 pelo Vite. Se alterar `PORT`, ajuste também os dois destinos em
 `frontend/vite.config.ts`.
 
-Gere o Prisma Client e aplique as migrações:
+O Prisma Client já é gerado durante a instalação. Aplique as migrações pendentes:
 
 ```bash
-npm --prefix backend run db:generate
 npm --prefix backend run db:deploy
 ```
 

@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, LayoutDashboard, Newspaper, Users } from 'lucide-react'
+import { ArrowUpRight, BookOpen, CalendarDays, History, LayoutDashboard, Newspaper, Users } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { NavLink } from 'react-router'
 
@@ -7,6 +7,7 @@ const modules = [
   { title: 'Notícias', description: 'Prepare e publique novidades da Academia.', action: 'Gerenciar notícias', to: '/admin/noticias', icon: Newspaper },
   { title: 'Agenda', description: 'Organize eventos, solenidades e encontros.', action: 'Gerenciar agenda', to: '/admin/agenda', icon: CalendarDays },
   { title: 'Membros', description: 'Atualize informações das cadeiras e seus titulares.', action: 'Gerenciar membros', to: '/admin/membros', icon: Users },
+  { title: 'Histórico', description: 'Acompanhe publicações, edições, exclusões e acessos.', action: 'Consultar histórico', to: '/admin/auditoria', icon: History },
 ]
 
 export default function Admin() {
@@ -26,17 +27,20 @@ export default function Admin() {
           </div>
         </div>
 
-        <div className="admin-module-grid">
-          {modules.map(({ title, description, action, to, icon: Icon }) => (
-            <article className="admin-module-card" key={title}>
-              <div className="admin-module-icon"><Icon size={24} strokeWidth={1.4} /></div>
+        <nav className="admin-module-grid" aria-label="Módulos administrativos">
+          {modules.map(({ title, description, action, to, icon: Icon }, index) => (
+            <NavLink className="admin-module-card" to={to} key={title}>
+              <div className="admin-module-card-top">
+                <div className="admin-module-icon"><Icon size={23} strokeWidth={1.5} /></div>
+                <span className="admin-module-number">0{index + 1}</span>
+              </div>
               <span className="admin-module-status">Módulo administrativo</span>
               <h3>{title}</h3>
               <p>{description}</p>
-              <NavLink to={to}>{action}</NavLink>
-            </article>
+              <span className="admin-module-action">{action}<ArrowUpRight size={15} /></span>
+            </NavLink>
           ))}
-        </div>
+        </nav>
 
       </section>
     </main>

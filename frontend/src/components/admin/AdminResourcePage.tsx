@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, Plus, Search, X } from 'lucide-react'
+import { ArrowLeft, Monitor, Pencil, Plus, Search, Smartphone, Tablet, Trash2, X } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
 import { useResource } from '@/hooks/useResource'
 import { useDialog } from '@/hooks/useDialog'
 import Pagination from '@/components/Pagination'
-import { adminItem, adminRequest, loadAdminPage, loadAdminRecord, saveAdminForm, uploadAdminFile, AdminApiError,
+import { useAdminConfirm } from '@/components/admin/AdminConfirmDialog'
+import { adminItem, deleteAdminRecord, loadAdminPage, loadAdminRecord, saveAdminForm, uploadAdminFile, AdminApiError,
   type AdminResource, type FormValues, type AdminListItem, type AdminPage, type AdminRecord } from '@/services/admin'
 
 export type AdminField = {
@@ -17,6 +18,7 @@ export type AdminField = {
 type Props = {
   resource: AdminResource; title: string; emphasis: string; description: string; singular: string
   fields: AdminField[]; defaults?: FormValues; renderPreview?: (values: FormValues) => ReactNode
+  relatedActions?: { label: string; to: string }[]
 }
 const empty: AdminPage<AdminRecord> = { items: [], page: 1, pageSize: 20, total: 0, totalPages: 1 }
 
@@ -30,6 +32,7 @@ export default function AdminResourcePage(props: Props) {
   const [busy, setBusy] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [error, setError] = useState('')
+  const confirmation = useAdminConfirm()
   const load = useCallback(async (signal: AbortSignal) => {
     try { return await loadAdminPage(resource, page, search, signal) }
     catch (err) { if (err instanceof AdminApiError && err.status === 401) void refresh(); throw err }
@@ -47,20 +50,29 @@ export default function AdminResourcePage(props: Props) {
     finally { setBusy(false) }
   }
   const remove = async (item: AdminListItem) => {
-    if (!csrfToken || !window.confirm(`Excluir o evento “${item.title}” e suas referências na galeria? Esta ação não pode ser desfeita.`)) return
+    if (!csrfToken || resource === 'cadeiras') return
+    const consequence = resource === 'agenda' ? ' e suas referências na galeria' : ''
+    const accepted = await confirmation.confirm({
+      title: `Excluir ${singular.toLocaleLowerCase('pt-BR')}?`,
+      message: `“${item.title}” será excluído definitivamente${consequence}. Esta ação não pode ser desfeita. Para apenas retirar o conteúdo do portal, edite-o como Arquivado.`,
+      confirmLabel: 'Excluir definitivamente',
+      tone: 'danger',
+    })
+    if (!accepted) return
     setBusy(true); setError(''); setFeedback('')
     try {
-      await adminRequest(`/agenda/${encodeURIComponent(item.id)}`, { method: 'DELETE', csrfToken })
-      setFeedback('Evento excluído.'); state.retry()
+      await deleteAdminRecord(resource, item.id, csrfToken)
+      setFeedback(`${singular} ${singular.endsWith('a') ? 'excluída' : 'excluído'} com sucesso.`); state.retry()
     } catch (err) { handleError(err) }
     finally { setBusy(false) }
   }
-  return <main className="admin-page admin-workspace-page">
+  return <><main className="admin-page admin-workspace-page">
     <div className="wrap admin-workspace">
       <header className="admin-workspace-header">
         <div><h1>{title} <em>{emphasis}</em></h1><p>{description}</p></div>
         <div className="admin-header-actions">
           <NavLink className="admin-secondary-action" to="/admin"><ArrowLeft size={15} /> Voltar ao painel</NavLink>
+          {props.relatedActions?.map(action => <NavLink className="admin-secondary-action" to={action.to} key={action.to}>{action.label}</NavLink>)}
           <button className="admin-primary-action" type="button" disabled={busy} onClick={() => {
             setError(''); setFeedback(''); setEditor({ id: null, values: { ...props.defaults } })
           }}><Plus size={16} /> Novo {singular.toLocaleLowerCase('pt-BR')}</button>
@@ -83,10 +95,10 @@ export default function AdminResourcePage(props: Props) {
         {!state.loading && !state.error && <div className="admin-record-list">
           {items.map(item => <article className="admin-record" key={item.id}>
             <div><h2>{item.title}</h2><p>{item.meta}</p></div>
-            <span className={item.status === 'Rascunho' ? 'draft' : ''}>{item.status}</span>
+            {item.status !== 'Publicado' && <span className={item.status === 'Rascunho' ? 'draft' : ''}>{item.status}</span>}
             <div className="admin-record-actions">
-              <button type="button" disabled={busy} onClick={() => void edit(item)}>Editar</button>
-              {resource === 'agenda' && <button type="button" disabled={busy} onClick={() => void remove(item)}>Excluir</button>}
+              <button className="admin-edit-action" type="button" disabled={busy} onClick={() => void edit(item)}><Pencil size={14} /> Editar</button>
+              {resource !== 'cadeiras' && <button className="admin-delete-action" type="button" disabled={busy} title="Excluir definitivamente" onClick={() => void remove(item)}><Trash2 size={14} /> Excluir</button>}
             </div>
           </article>)}
         </div>}
@@ -96,7 +108,7 @@ export default function AdminResourcePage(props: Props) {
     {editor && <AdminEditor key={editor.id ?? 'new'} {...props} editor={editor} onClose={() => setEditor(null)} onSaved={() => {
       setEditor(null); setFeedback('Dados salvos no banco com sucesso.'); state.retry()
     }} />}
-  </main>
+  </main>{confirmation.dialog}</>
 }
 
 function AdminEditor({ resource, fields, singular, renderPreview, editor, onClose, onSaved }: Props & {
@@ -107,6 +119,8 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
   const [files, setFiles] = useState<Record<string, File>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [previewViewport, setPreviewViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
+  const confirmation = useAdminConfirm()
   const lock = useRef(false)
   const previews = useRef<Record<string, string>>({})
   const dialog = useDialog(() => { if (!lock.current) onClose() })
@@ -127,14 +141,16 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
           setFiles(current => { const remaining = { ...current }; delete remaining[field.name]; return remaining })
         }
       }
-      if (await saveAdminForm(resource, next, editor.id, csrfToken, message => window.confirm(message))) onSaved()
+      if (await saveAdminForm(resource, next, editor.id, csrfToken, message => confirmation.confirm({
+        title: 'Confirmar alteração?', message, confirmLabel: 'Confirmar alteração', tone: 'warning',
+      }))) onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível salvar.')
       if (err instanceof AdminApiError && err.status === 401) void refresh()
     } finally { lock.current = false; setSaving(false) }
   }
   const editing = editor.id !== null
-  return <div className="admin-form-overlay" onMouseDown={event => { if (event.target === event.currentTarget && !saving) onClose() }}>
+  return <><div className="admin-form-overlay" onMouseDown={event => { if (event.target === event.currentTarget && !saving) onClose() }}>
     <div ref={dialog} tabIndex={-1} className={renderPreview ? 'admin-form-panel has-preview' : 'admin-form-panel'} role="dialog" aria-modal="true" aria-labelledby="admin-form-title">
       <header>
         <div><span>{editing ? 'Editar registro' : 'Novo registro'}</span><h2 id="admin-form-title">{editing ? 'Editar' : 'Cadastrar'} {singular.toLocaleLowerCase('pt-BR')}</h2></div>
@@ -142,6 +158,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
       </header>
       <div className="admin-form-content">
         <form onSubmit={submit} aria-busy={saving}>
+          <span className="visually-hidden" role="status" aria-live="polite">{saving ? 'Salvando dados, aguarde.' : ''}</span>
           {fields.filter(field => !(field.onlyEnd && (!editing || !values.ocupacaoAtualId || values.status === 'Titular em exercício'))).map(field => {
             const disabled = saving || (editing && field.readOnlyOnEdit) || (resource === 'cadeiras' && field.name === 'status' && (!editing || !values.ocupacaoAtualId))
               || (resource === 'cadeiras' && editing && !values.ocupacaoAtualId && ['nome', 'biografia', 'bioExtra', 'foto'].includes(field.name))
@@ -177,8 +194,18 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
             <button type="submit" disabled={saving}>{saving ? 'Salvando…' : 'Salvar'}</button>
           </div>
         </form>
-        {renderPreview && <aside className="admin-live-preview"><span>Pré-visualização</span>{renderPreview(values)}</aside>}
+        {renderPreview && <aside className={`admin-live-preview preview-${previewViewport}`} aria-label="Pré-visualização do conteúdo">
+          <div className="admin-preview-toolbar">
+            <span>Pré-visualização</span>
+            <div role="group" aria-label="Tamanho da pré-visualização">
+              <button type="button" aria-label="Visualizar em desktop" aria-pressed={previewViewport === 'desktop'} onClick={() => setPreviewViewport('desktop')}><Monitor size={15} /></button>
+              <button type="button" aria-label="Visualizar em tablet" aria-pressed={previewViewport === 'tablet'} onClick={() => setPreviewViewport('tablet')}><Tablet size={15} /></button>
+              <button type="button" aria-label="Visualizar em celular" aria-pressed={previewViewport === 'mobile'} onClick={() => setPreviewViewport('mobile')}><Smartphone size={15} /></button>
+            </div>
+          </div>
+          <div className="admin-preview-viewport">{renderPreview(values)}</div>
+        </aside>}
       </div>
     </div>
-  </div>
+  </div>{confirmation.dialog}</>
 }

@@ -14,6 +14,7 @@ export default function Layout() {
   const [logoutPending, setLogoutPending] = useState(false)
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
   const location = useLocation()
   const navigate = useNavigate()
   const close = () => setMenuOpen(false)
@@ -23,6 +24,17 @@ export default function Layout() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [location.pathname, location.search])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const closeWithKeyboard = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setMenuOpen(false)
+      menuButtonRef.current?.focus()
+    }
+    document.addEventListener('keydown', closeWithKeyboard)
+    return () => document.removeEventListener('keydown', closeWithKeyboard)
+  }, [menuOpen])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,6 +67,7 @@ export default function Layout() {
 
   return (
     <>
+      <a className="skip-link" href="#conteudo-principal">Ir para o conteúdo principal</a>
       <header className="site-header">
         {/* ── Barra superior ── */}
         <div className="header-top wrap">
@@ -97,9 +110,12 @@ export default function Layout() {
           </div>
 
           <button
+            ref={menuButtonRef}
+            type="button"
             className="menu-toggle"
             aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
             aria-expanded={menuOpen}
+            aria-controls="navegacao-principal"
             onClick={() => setMenuOpen(!menuOpen)}
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -107,7 +123,7 @@ export default function Layout() {
         </div>
 
         {/* ── Barra de navegação ── */}
-        <nav className={`main-nav-bar ${menuOpen ? 'is-open' : ''}`} aria-label="Navegação principal">
+        <nav id="navegacao-principal" className={`main-nav-bar ${menuOpen ? 'is-open' : ''}`} aria-label="Navegação principal">
           <form className="mobile-search search-control wrap" role="search" onSubmit={handleSearch}>
             <Search size={14} strokeWidth={1.5} aria-hidden="true" />
             <input type="search" aria-label="Buscar no portal" placeholder="Buscar no portal…" value={query} onChange={e => setQuery(e.target.value)} />
@@ -146,7 +162,8 @@ export default function Layout() {
         </nav>
       </header>
 
-      <div className="page-shell">
+      <div className="page-shell" id="conteudo-principal" tabIndex={-1}>
+        <span className="visually-hidden" role="status" aria-live="polite">{logoutPending ? 'Encerrando sessão administrativa.' : ''}</span>
         {logoutError && <p className="wrap login-notice" role="alert">{logoutError}</p>}
         <Outlet />
       </div>

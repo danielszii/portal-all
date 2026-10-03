@@ -17,6 +17,9 @@ import AdminAcervo from './pages/AdminAcervo'
 import AdminNoticias from './pages/AdminNoticias'
 import AdminAgenda from './pages/AdminAgenda'
 import AdminMembros from './pages/AdminMembros'
+import AdminGaleria from './pages/AdminGaleria'
+import AdminAuditoria from './pages/AdminAuditoria'
+import AdminPessoas from './pages/AdminPessoas'
 
 export const router = createBrowserRouter([
   { path: '/login', Component: Login },
@@ -41,6 +44,9 @@ export const router = createBrowserRouter([
           { path: 'admin/noticias', Component: AdminNoticias },
           { path: 'admin/agenda', Component: AdminAgenda },
           { path: 'admin/membros', Component: AdminMembros },
+          { path: 'admin/galeria', Component: AdminGaleria },
+          { path: 'admin/auditoria', Component: AdminAuditoria },
+          { path: 'admin/pessoas', Component: AdminPessoas },
         ],
       },
       { path: '*', Component: NaoEncontrada },

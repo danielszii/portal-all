@@ -8,6 +8,7 @@ export default function AdminMembros() {
     title="Gerenciar" emphasis="membros"
     description="Atualize titulares, patronos, biografias e a situação das cadeiras."
     singular="Membro"
+    relatedActions={[{ label: 'Cadastros sem vínculo', to: '/admin/pessoas' }]}
     fields={[
       { name: 'nome', label: 'Nome completo', required: true },
       { name: 'cadeira', label: 'Número da cadeira', type: 'number', required: true, min: 1, max: 3999, readOnlyOnEdit: true },
