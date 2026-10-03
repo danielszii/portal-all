@@ -1,4 +1,4 @@
-import { ArrowUpRight, BookOpen, CalendarDays, History, LayoutDashboard, Newspaper, Users } from 'lucide-react'
+import { ArrowUpRight, BookOpen, Building2, CalendarDays, History, LayoutDashboard, Newspaper, Users } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { NavLink } from 'react-router'
 
@@ -8,6 +8,7 @@ const modules = [
   { title: 'Agenda', description: 'Organize eventos, solenidades e encontros.', action: 'Gerenciar agenda', to: '/admin/agenda', icon: CalendarDays },
   { title: 'Membros', description: 'Atualize informações das cadeiras e seus titulares.', action: 'Gerenciar membros', to: '/admin/membros', icon: Users },
   { title: 'Histórico', description: 'Acompanhe publicações, edições, exclusões e acessos.', action: 'Consultar histórico', to: '/admin/auditoria', icon: History },
+  { title: 'Instituição', description: 'Consulte os dados institucionais e a diretoria publicados.', action: 'Consultar instituição', to: '/admin/instituicao', icon: Building2 },
 ]
 
 export default function Admin() {

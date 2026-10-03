@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --configLoader native",
+    "dev": "vite --configLoader native --logLevel error",
     "build": "tsc --noEmit && vite build --configLoader native",
     "preview": "vite preview --configLoader native",
     "format": "oxfmt",

@@ -15,7 +15,7 @@ export type AuditRecord = {
   id: string; administradorId: string; administradorEmail: string; acao: AuditAction
   recurso: AuditResource; registroId: string; resumo: string; detalhes: Record<string, unknown>; criadoEm: string
 }
-export type Pessoa = { id: string; nome: string; biografia: string | null; fotoUrl: string | null; bioExtra?: string | null; inMemoriam?: boolean }
+type Pessoa = { id: string; nome: string; biografia: string | null; fotoUrl: string | null; bioExtra?: string | null; inMemoriam?: boolean }
 export type CadeiraAdmin = {
   id: string; numero: number; patrono: Pessoa
   ocupacoes: { id: string; academicoId: string; vigente: boolean; fundador: boolean; inicioEm: string | null; inicioAno: number | null; fimEm?: string | null; fimAno?: number | null; academico: Pessoa }[]
@@ -27,7 +27,7 @@ export type EditorialRecord = {
   tipo?: string; inicioEm?: string; fimEm?: string | null; local?: string; foto?: string | null
 }
 export type AdminRecord = EditorialRecord | CadeiraAdmin
-export type ChairConfirmation = { code: 'CONFIRMACAO_CADEIRA'; cadeira: CadeiraAdmin; ocupacaoAtualId: string | null }
+type ChairConfirmation = { code: 'CONFIRMACAO_CADEIRA'; cadeira: CadeiraAdmin; ocupacaoAtualId: string | null }
 type PersonConfirmation = { code: 'CONFIRMACAO_PESSOA'; role: 'academico' | 'fundador' | 'patrono'; candidates: { id: string; nome: string; descricao: string }[] }
 export class AdminApiError extends Error {
   constructor(message: string, public status: number, public confirmation?: ChairConfirmation, public personConfirmation?: PersonConfirmation) { super(message) }
@@ -105,8 +105,8 @@ export function uploadAdminFile(file: Blob, csrfToken: string, kind: MediaKind) 
 export type FormValues = Record<string, string>
 export type AdminListItem = { id: string; title: string; meta: string; status: string; values: FormValues }
 const str = (value: unknown) => value == null ? '' : String(value)
-export const localDateTime = (value?: string | null) => value ? new Date(Date.parse(value) - 3 * 3600000).toISOString().slice(0, -1) : ''
-export function isoDateTime(value: string) {
+const localDateTime = (value?: string | null) => value ? new Date(Date.parse(value) - 3 * 3600000).toISOString().slice(0, -1) : ''
+function isoDateTime(value: string) {
   if (!value) return null
   return `${value.length === 16 ? value + ':00' : value}-03:00`
 }

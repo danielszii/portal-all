@@ -1,12 +1,12 @@
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import { useEffect, useState } from 'react'
-import { fetchInicioCadeiras, fetchInicioAcervo, fetchInicioNoticias, fetchInstituicao } from '@/services/api'
-import { ArrowUpRight } from 'lucide-react'
+import { fetchInicioCadeiras, fetchInicioAcervo, fetchInicioEventos, fetchInicioNoticias, fetchInstituicao } from '@/services/api'
+import { ArrowUpRight, Clock3, MapPin } from 'lucide-react'
 import { NavLink } from 'react-router'
-import heroImg from '@/imports/academialetters.png'
+import heroImg from '@/imports/academialetters.jpg'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
-import { formatNumeroCadeira } from '@/utils/formatters'
+import { formatData, formatDia, formatMes, formatNumeroCadeira } from '@/utils/formatters'
 
 const heroSlides = [
   {
@@ -36,16 +36,18 @@ export default function Home() {
   const cadeiras = useResource(fetchInicioCadeiras, { total: 0, items: [] })
   const acervo = useResource(fetchInicioAcervo, { total: 0, items: [] })
   const noticias = useResource(fetchInicioNoticias, [])
+  const eventos = useResource(fetchInicioEventos, [])
   const instituicao = useResource(fetchInstituicao, { info: null, gestao: null })
   const chairs = cadeiras.error ? [] : cadeiras.data.items
   const publications = acervo.error ? [] : acervo.data.items
+  const nextEvent = eventos.error ? null : eventos.data[0]
 
   return (
     <main className="home-page">
       {/* Hero */}
       <section id="inicio" className="hero">
         <div className="hero-bg">
-          <img src={heroImg} alt="Fachada da Academia Limoeirense de Letras, Limoeiro do Norte — CE" />
+          <img src={heroImg} alt="Fachada da Academia Limoeirense de Letras, Limoeiro do Norte — CE" width="1920" height="1080" fetchPriority="high" />
           <div className="hero-overlay" />
         </div>
         <div className="hero-copy">
@@ -105,6 +107,7 @@ export default function Home() {
             <div>
               <h2>Quadro de <em>cadeiras</em></h2>
             </div>
+            <NavLink className="text-link home-section-action" to="/cadeiras">Ver quadro completo <ArrowUpRight size={15} /></NavLink>
           </div>
           <div className="chair-grid">
             <LoadState {...cadeiras} />
@@ -127,7 +130,6 @@ export default function Home() {
               </NavLink>
             ))}
           </div>
-          <NavLink className="text-link centered-link" to="/cadeiras">Consultar quadro completo <ArrowUpRight size={15} /></NavLink>
         </div>
       </section>
 
@@ -138,6 +140,7 @@ export default function Home() {
             <div>
               <h2>O <em>acervo</em></h2>
             </div>
+            <NavLink className="text-link home-section-action" to="/acervo">Ver acervo completo <ArrowUpRight size={15} /></NavLink>
           </div>
           <div className="bookshelf">
             <LoadState {...acervo} />
@@ -157,17 +160,41 @@ export default function Home() {
               </article>
             ))}
           </div>
-          <NavLink className="text-link centered-link" to="/acervo">
-            Consultar acervo completo <ArrowUpRight size={15} />
-          </NavLink>
         </div>
       </section>
+
+      {/* Próximo evento */}
+      {nextEvent && <section className="home-event-section">
+        <div className="wrap">
+          <div className="section-heading home-event-heading">
+            <h2>Próximo <em>evento</em></h2>
+            <NavLink className="text-link" to="/agenda">Ver agenda completa <ArrowUpRight size={15} /></NavLink>
+          </div>
+          <article className="home-event-card">
+            <div className="home-event-date" aria-label={formatData(nextEvent.data)}>
+              <span>{formatMes(nextEvent.data)}</span>
+              <strong>{formatDia(nextEvent.data)}</strong>
+            </div>
+            <div className="home-event-copy">
+              <span className="home-event-type">{nextEvent.tipo}</span>
+              <h3>{nextEvent.titulo}</h3>
+              <div className="home-event-meta">
+                <span><Clock3 size={14} aria-hidden="true" />{formatData(nextEvent.data)} · {nextEvent.hora}</span>
+                <span><MapPin size={14} aria-hidden="true" />{nextEvent.local}</span>
+              </div>
+              <NavLink className="text-link" to="/agenda">Ver detalhes <ArrowUpRight size={14} /></NavLink>
+            </div>
+            {nextEvent.foto && <div className="home-event-image"><img src={nextEvent.foto} alt={`Imagem do evento ${nextEvent.titulo}`} loading="lazy" /></div>}
+          </article>
+        </div>
+      </section>}
 
       {/* Notícias */}
       <section className="news-section">
         <div className="wrap">
           <div className="section-heading news-section-heading">
             <h2>Últimas <em>notícias</em></h2>
+            <NavLink className="text-link home-section-action" to="/noticias">Ver todas as notícias <ArrowUpRight size={15} /></NavLink>
           </div>
           <div className="news-list">
             <LoadState {...noticias} />

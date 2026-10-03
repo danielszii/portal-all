@@ -58,7 +58,7 @@ export default function Agenda() {
                 </div>
                 {ev.foto && (
                   <div className="agenda-thumb">
-                    <img src={ev.foto} alt={ev.titulo} />
+                    <img src={ev.foto} alt={ev.titulo} loading="lazy" />
                   </div>
                 )}
               </article>
@@ -108,7 +108,7 @@ export default function Agenda() {
                 onClick={() => setGaleriaModal(i)}
                 aria-label={`Ampliar: ${foto.legenda}`}
               >
-                <img src={foto.src} alt={foto.legenda} />
+                <img src={foto.src} alt={foto.legenda} loading="lazy" />
                 <span className="galeria-legenda">{foto.legenda}</span>
               </button>
             ))}

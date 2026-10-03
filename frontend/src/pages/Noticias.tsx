@@ -5,7 +5,7 @@ import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import { useCallback } from 'react'
 import { ArrowLeft, ArrowUpRight } from 'lucide-react'
-import { useSearchParams } from 'react-router'
+import { NavLink, useSearchParams } from 'react-router'
 
 export default function Noticias() {
   const [params] = useSearchParams()
@@ -28,6 +28,11 @@ function NoticiasConteudo() {
     const next = new URLSearchParams(searchParams)
     if (id === null) next.delete('id'); else next.set('id', String(id))
     setSearchParams(next)
+  }
+  const noticiaHref = (newsId: number) => {
+    const next = new URLSearchParams(searchParams)
+    next.set('id', String(newsId))
+    return `?${next.toString()}`
   }
 
   const load = useCallback(async (signal: AbortSignal) => {
@@ -57,7 +62,7 @@ function NoticiasConteudo() {
           </div>
           <h1 className="page-title noticia-full-title">{noticia.titulo}</h1>
           <div className="noticia-img-frame">
-            <img src={noticia.img} alt={noticia.titulo} />
+            <img src={noticia.img} alt={noticia.titulo} loading="eager" fetchPriority="high" />
           </div>
           <div className="noticia-body">
             <p className="lead">{noticia.lede}</p>
@@ -78,9 +83,9 @@ function NoticiasConteudo() {
       <section className="noticias-section wrap">
         {/* Destaque — primeira notícia */}
         {lista.length > 0 && (
-          <div className="noticia-destaque" role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAberta(lista[0].id) } }} onClick={() => setAberta(lista[0].id)}>
+          <NavLink className="noticia-destaque" to={noticiaHref(lista[0].id)} aria-label={`Ler notícia: ${lista[0].titulo}`}>
             <div className="noticia-destaque-img">
-              <img src={lista[0].img} alt={lista[0].titulo} />
+              <img src={lista[0].img} alt={lista[0].titulo} loading="eager" />
             </div>
             <div className="noticia-destaque-copy">
               <span className="noticia-cat">{lista[0].categoria}</span>
@@ -89,16 +94,16 @@ function NoticiasConteudo() {
               <p>{lista[0].lede}</p>
               <span className="text-link noticia-read-link">Ler notícia <ArrowUpRight size={14} /></span>
             </div>
-          </div>
+          </NavLink>
         )}
 
         {/* Grade das demais */}
         {lista.length > 1 && (
           <div className="noticias-grid">
             {lista.slice(1).map(n => (
-              <article className="noticia-card" role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAberta(n.id) } }} key={n.id} onClick={() => setAberta(n.id)}>
+              <NavLink className="noticia-card" to={noticiaHref(n.id)} aria-label={`Ler notícia: ${n.titulo}`} key={n.id}>
                 <div className="noticia-card-img">
-                  <img src={n.img} alt={n.titulo} />
+                  <img src={n.img} alt={n.titulo} loading="lazy" />
                 </div>
                 <div className="noticia-card-body">
                   <div className="noticia-card-meta">
@@ -109,7 +114,7 @@ function NoticiasConteudo() {
                   <p>{n.lede}</p>
                   <span className="noticia-link">Ler notícia <ArrowUpRight size={13} /></span>
                 </div>
-              </article>
+              </NavLink>
             ))}
           </div>
         )}

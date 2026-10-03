@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router'
 import { LayoutDashboard, LockKeyhole, LogOut, Mail, Menu, Phone, Search, X } from 'lucide-react'
 import logoSrc from '@/imports/Logo_Vetorizada_A.L.L_sem_fundo.svg'
+import PageMetadata from './PageMetadata'
 
 export default function Layout() {
   const institution = useResource(fetchInstituicao, { info: null, gestao: null })
@@ -67,6 +68,7 @@ export default function Layout() {
 
   return (
     <>
+      <PageMetadata />
       <a className="skip-link" href="#conteudo-principal">Ir para o conteúdo principal</a>
       <header className="site-header">
         {/* ── Barra superior ── */}
@@ -143,8 +145,8 @@ export default function Layout() {
             ))}
             {isAuthenticated && (
               <NavLink className={({ isActive }) => `admin-nav-link ${isActive ? 'nav-active' : ''}`} to="/admin" onClick={close}>
-                <LayoutDashboard size={14} strokeWidth={1.7} />
-                Administração
+                <LayoutDashboard size={14} strokeWidth={1.7} aria-hidden="true" />
+                <span>Administração</span>
               </NavLink>
             )}
             {isAuthenticated ? (

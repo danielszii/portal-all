@@ -1,6 +1,6 @@
 import type { Cadeira, Evento, GaleriaFoto, Noticia, AcervoItem, ContatoForm, SearchPage } from '@/types'
 
-export class ApiError extends Error {
+class ApiError extends Error {
   constructor(message: string, public status: number) { super(message) }
 }
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -29,14 +29,14 @@ export async function fetchNoticiaById(id: number, signal?: AbortSignal): Promis
 }
 export const emptySearchPage: SearchPage = { cadeiras: [], noticias: [], acervo: [], page: 0, totalPages: 1 }
 export const fetchSearchPage = (q: string, page: number, signal?: AbortSignal) => request<SearchPage>(`/busca?${query({ q, page: String(page), pageSize: '30' })}`, { signal })
-export type Page<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number }
+type Page<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number }
 export const emptyPage = <T>(): Page<T> => ({ items: [], total: 0, page: 1, pageSize: 12, totalPages: 1 })
 export const fetchNoticiasPage = (page: number, categoria?: string, q?: string, signal?: AbortSignal) => request<Page<Noticia>>(`/noticias?${query({ page: String(page), pageSize: '10', categoria, q, resumo: 'true' })}`, { signal })
 export const fetchAcervoPage = (page: number, tipo?: string, q?: string, signal?: AbortSignal) => request<Page<AcervoItem>>(`/acervo?${query({ page: String(page), pageSize: '8', tipo, q })}`, { signal })
 export const fetchAcervoById = (id: string, signal?: AbortSignal) => request<AcervoItem>(`/acervo/${encodeURIComponent(id)}`, { signal })
 export const postContato = (dados: ContatoForm) => request<{ sucesso: boolean; mensagem: string; id: string }>('/contato', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) })
 
-export type InstituicaoResponse = {
+type InstituicaoResponse = {
   info: { nome: string; historia: string; missao: string; endereco: string | null; email: string | null; telefone: string | null; fundacaoAno: number | null; sedeTexto: string | null; trajetoriaTexto: string | null; horarioAtendimento: string | null } | null
   gestao: { inicioAno: number; fimAno: number | null; diretoria: { cargo: string; nome: string; posse: string }[] } | null
 }
@@ -44,6 +44,8 @@ export const fetchInstituicao = (signal?: AbortSignal) => request<InstituicaoRes
 
 type InicioCadeira = Pick<Cadeira, 'number' | 'patron' | 'holder' | 'image' | 'status'>
 type InicioAcervo = Pick<AcervoItem, 'id' | 'title' | 'tomo' | 'year' | 'color' | 'author'>
+type InicioEvento = Pick<Evento, 'id' | 'titulo' | 'tipo' | 'data' | 'hora' | 'local' | 'foto'>
 export const fetchInicioCadeiras = (signal: AbortSignal) => request<{ total: number; items: InicioCadeira[] }>('/inicio/cadeiras', { signal })
 export const fetchInicioAcervo = (signal: AbortSignal) => request<{ total: number; items: InicioAcervo[] }>('/inicio/acervo', { signal })
 export const fetchInicioNoticias = (signal: AbortSignal) => request<Pick<Noticia, 'id' | 'titulo' | 'data'>[]>('/inicio/noticias', { signal })
+export const fetchInicioEventos = (signal: AbortSignal) => request<InicioEvento[]>('/inicio/eventos', { signal })

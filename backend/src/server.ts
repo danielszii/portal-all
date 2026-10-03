@@ -5,10 +5,10 @@ import { prisma } from './db/prisma.js'
 await prisma.$connect()
 
 const server = app.listen(envConfig.port, () => {
-  console.log(`🏛️  Servidor da Academia Limoeirense de Letras (A.L.L.) ativo!`)
-  console.log(`📡  URL Local: http://localhost:${envConfig.port}`)
-  console.log(`🩺  Health Check: http://localhost:${envConfig.port}/api/health`)
-  console.log(`🌍  Ambiente: ${envConfig.nodeEnv}`)
+  console.log('Portal A.L.L. iniciado')
+  console.log('Site:   http://localhost:5173')
+  console.log(`API:    http://localhost:${envConfig.port}`)
+  console.log(`Status: http://localhost:${envConfig.port}/api/health · ${envConfig.nodeEnv}`)
 })
 
 process.on('SIGTERM', () => {

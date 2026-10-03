@@ -1,9 +1,9 @@
 {
-  "name": "portal-all-monorepo",
+  "name": "portal-all",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "dev": "concurrently --raw --kill-others-on-fail \"npm --silent --prefix backend run dev\" \"npm --silent --prefix frontend run dev\"",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
     "build:frontend": "npm --prefix frontend run build",
