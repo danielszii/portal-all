@@ -1,0 +1,39 @@
+-- O backend acessa o PostgreSQL diretamente pelo Prisma. Nenhuma tabela do
+-- schema public deve ser exposta pela Data API do Supabase.
+ALTER TABLE "Academico" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "AcervoItem" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Administrador" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "AutoriaAcervo" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Cadeira" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ContatoMensagem" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Evento" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "GaleriaFoto" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Gestao" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Instituicao" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "MandatoDiretoria" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Noticia" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Obra" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "OcupacaoCadeira" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Patrono" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ProducaoLiteraria" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "RegistroAuditoria" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "SessaoAdmin" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "_prisma_migrations" ENABLE ROW LEVEL SECURITY;
+
+-- Os papéis abaixo existem no Supabase, mas não necessariamente no PostgreSQL
+-- local. A condição mantém a migration portável nos dois ambientes.
+DO $$
+DECLARE
+  role_name text;
+BEGIN
+  FOREACH role_name IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
+      EXECUTE format('REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM %I', role_name);
+      EXECUTE format('REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM %I', role_name);
+      EXECUTE format('REVOKE ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public FROM %I', role_name);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM %I', role_name);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM %I', role_name);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON FUNCTIONS FROM %I', role_name);
+    END IF;
+  END LOOP;
+END $$;
