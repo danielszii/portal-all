@@ -125,6 +125,11 @@ migrations em um ambiente seguro usando `npm --prefix backend run db:deploy`;
 não distribua essa credencial nem a registre no Git. Não use o banco de dados
 oficial para testes.
 
+As tabelas do schema `public` usam RLS sem políticas para `anon` ou
+`authenticated`, e esses papéis não recebem privilégios diretos. O portal não usa
+a Data API do Supabase: todo acesso passa pela API Express autenticada e pelo
+Prisma. Preserve a migration de proteção ao adicionar novas tabelas.
+
 PDFs e imagens não devem ser armazenados no PostgreSQL. Para usar Cloudflare R2,
 crie um bucket e um token limitado a esse bucket e configure `R2_ACCOUNT_ID`,
 `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` e `R2_PUBLIC_URL`, conforme
