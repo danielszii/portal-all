@@ -108,8 +108,14 @@ test('exclusões administrativas com PostgreSQL real preservam relações e arqu
     const academic = await prisma.academico.create({ data: { nome: 'Acadêmico sem vínculos para excluir' } })
     const patron = await prisma.patrono.create({ data: { nome: 'Patrono sem vínculos para excluir' } })
     for (const [resource, row] of [['academicos', academic], ['patronos', patron]] as const) {
+      const selection = `/admin/${resource}?q=${encodeURIComponent(row.nome)}&semVinculos=true`
+      assert.equal((await get(selection)).items[0].id, row.id)
       await remove(`/${resource}/${row.id}`)
-      assert.equal((await get(`/admin/${resource}?q=` + encodeURIComponent(row.nome))).total, 0)
+      const empty = await get(selection + '&page=3')
+      assert.equal(empty.total, 0)
+      assert.equal(empty.page, 1)
+      assert.equal(empty.totalPages, 1)
+      assert.deepEqual(empty.items, [])
       await remove(`/${resource}/${row.id}`, 404)
     }
   })
@@ -124,6 +130,11 @@ test('exclusões administrativas com PostgreSQL real preservam relações e arqu
     await remove('/patronos/' + chair.patronoId, 409)
     assert.equal(await prisma.ocupacaoCadeira.count({ where: { cadeiraId: chair.id } }), 1)
     assert.equal((await get('/cadeiras/3500')).founder, academic.nome)
+    for (const [resource, name] of [['academicos', academic.nome], ['patronos', 'Patrono histórico protegido']]) {
+      const selection = `/admin/${resource}?q=${encodeURIComponent(name)}`
+      assert.equal((await get(selection)).total, 1)
+      assert.equal((await get(selection + '&semVinculos=true')).total, 0)
+    }
   })
 
   await t.test('obras, produções, autorias e mandatos também impedem exclusão de acadêmico', async () => {
@@ -135,6 +146,49 @@ test('exclusões administrativas com PostgreSQL real preservam relações e arqu
     for (const person of people) {
       await remove('/academicos/' + person.id, 409)
       assert.ok(await prisma.academico.findUnique({ where: { id: person.id } }))
+    }
+    const selection = '/admin/academicos?q=' + encodeURIComponent('Pessoa protegida por')
+    assert.equal((await get(selection + '&semVinculos=false')).total, 4)
+    assert.equal((await get(selection + '&semVinculos=true')).total, 0)
+  })
+
+  await t.test('listas de pessoas têm desempate estável e voltam à última página após exclusão', async () => {
+    for (const resource of ['academicos', 'patronos'] as const) {
+      const nome = `Paginação de exclusão ${resource}`
+      const data = Array.from({ length: 21 }, () => ({ nome }))
+      if (resource === 'academicos') await prisma.academico.createMany({ data })
+      else await prisma.patrono.createMany({ data })
+      const selection = `/admin/${resource}?q=${encodeURIComponent(nome)}&pageSize=20&semVinculos=true`
+      const first = await get(selection + '&page=1')
+      const last = await get(selection + '&page=2')
+      assert.equal(first.total, 21)
+      assert.equal(last.items.length, 1)
+      const ids: string[] = [...first.items, ...last.items].map(row => row.id)
+      assert.equal(new Set(ids).size, 21)
+      assert.deepEqual(ids, [...ids].sort())
+      await remove(`/${resource}/${last.items[0].id}`)
+      const adjusted = await get(selection + '&page=2')
+      assert.equal(adjusted.page, 1)
+      assert.equal(adjusted.totalPages, 1)
+      assert.equal(adjusted.total, 20)
+      assert.equal(adjusted.items.length, 20)
+      assert.deepEqual(adjusted.items.map((row: any) => row.id), first.items.map((row: any) => row.id))
+    }
+  })
+
+  await t.test('busca de pessoas trata curingas SQL como texto e rejeita filtros malformados', async () => {
+    for (const resource of ['academicos', 'patronos'] as const) {
+      const nome = `Busca literal ${resource} %_\\`
+      const data = [{ nome }, { nome: `Busca literal ${resource} outro` }]
+      if (resource === 'academicos') await prisma.academico.createMany({ data })
+      else await prisma.patrono.createMany({ data })
+      const result = await get(`/admin/${resource}?q=${encodeURIComponent(nome)}`)
+      assert.equal(result.total, 1)
+      assert.equal(result.items[0].nome, nome)
+      for (const filter of ['semVinculos=1', 'semVinculos=true&semVinculos=false', 'semVinculos[x]=true']) {
+        const response = await fetch(`${base}/api/admin/${resource}?${filter}`, { headers })
+        assert.equal(response.status, 400, filter)
+      }
     }
   })
 

@@ -9,27 +9,11 @@ import { maxUploadBytes, mediaMimeTypes } from '../domain/media.js'
 import { prisma } from '../db/prisma.js'
 import { recordAudit, type AuditActor } from './admin-audit.service.js'
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { readR2Config } from '../config/upload.config.js'
 
-export const uploadDir = resolve(process.env.UPLOAD_DIR || fileURLToPath(new URL('../../uploads/', import.meta.url)))
-const r2Variables = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'R2_PUBLIC_URL'] as const
+export const uploadDir = resolve(process.env.UPLOAD_DIR?.trim() || fileURLToPath(new URL('../../uploads/', import.meta.url)))
 
-function r2Config() {
-  // UPLOAD_DIR é um override explícito, usado inclusive para isolar testes de integração.
-  if (process.env.UPLOAD_DIR) return null
-  const configured = r2Variables.filter(key => process.env[key])
-  if (!configured.length) return null
-  if (configured.length !== r2Variables.length) {
-    const missing = r2Variables.filter(key => !process.env[key]).join(', ')
-    throw new Error(`Configuração incompleta do Cloudflare R2. Variáveis ausentes: ${missing}.`)
-  }
-  return {
-    accountId: process.env.R2_ACCOUNT_ID!, accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!, bucket: process.env.R2_BUCKET!,
-    publicUrl: process.env.R2_PUBLIC_URL!.replace(/\/+$/, ''),
-  }
-}
-
-function r2Client(config: NonNullable<ReturnType<typeof r2Config>>) {
+function r2Client(config: NonNullable<ReturnType<typeof readR2Config>>) {
   return new S3Client({
     region: 'auto', endpoint: `https://${config.accountId}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey },
@@ -66,23 +50,29 @@ export async function saveUpload(body: unknown, mime: string, actor: AuditActor)
   if (!Buffer.isBuffer(body) || body.length === 0) throw new ValidationError('Envie o arquivo binário no corpo da requisição.')
   const extension = await validateUpload(body, mime)
   const name = `${randomUUID()}.${extension}`
-  const cloud = r2Config()
+  const cloud = readR2Config()
   const result = { url: cloud ? `${cloud.publicUrl}/${name}` : `/uploads/${name}`, contentType: mime, size: body.length }
 
   if (cloud) {
     const client = r2Client(cloud)
-    await client.send(new PutObjectCommand({
-      Bucket: cloud.bucket, Key: name, Body: body, ContentType: mime,
-      CacheControl: 'public, max-age=31536000, immutable',
-    }))
     try {
-      await recordAudit(prisma, actor, { acao: 'ENVIAR_ARQUIVO', recurso: 'UPLOAD', registroId: name,
-        resumo: `Upload ${mime}`, detalhes: result })
+      await client.send(new PutObjectCommand({
+        Bucket: cloud.bucket, Key: name, Body: body, ContentType: mime,
+        CacheControl: 'public, max-age=31536000, immutable',
+      }), { abortSignal: AbortSignal.timeout(60_000) })
+      try {
+        await recordAudit(prisma, actor, { acao: 'ENVIAR_ARQUIVO', recurso: 'UPLOAD', registroId: name,
+          resumo: `Upload ${mime}`, detalhes: result })
+      } catch (error) {
+        try {
+          await client.send(new DeleteObjectCommand({ Bucket: cloud.bucket, Key: name }), { abortSignal: AbortSignal.timeout(60_000) })
+        } catch (cleanupError) {
+          throw new AggregateError([error, cleanupError], `Falha na auditoria e na remoção do upload R2 ${name}. Verifique o objeto órfão.`)
+        }
+        throw error
+      }
       return result
-    } catch (error) {
-      await client.send(new DeleteObjectCommand({ Bucket: cloud.bucket, Key: name }))
-      throw error
-    }
+    } finally { client.destroy() }
   }
 
   await mkdir(uploadDir, { recursive: true })

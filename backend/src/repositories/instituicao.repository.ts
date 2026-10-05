@@ -20,11 +20,15 @@ function filtroMandatosAtuais(hoje: Date): Prisma.MandatoDiretoriaWhereInput {
 export async function findInstituicao(now = new Date()) {
   const hoje = dataInstitucional(now)
   const ano = hoje.getUTCFullYear()
-  const info = await prisma.instituicao.findUnique({ where: { id: 'all' } })
+  // Metadados de edição administrativa não fazem parte do contrato público.
+  const info = await prisma.instituicao.findUnique({ where: { id: 'all' }, select: {
+    id: true, nome: true, historia: true, missao: true, endereco: true, email: true, telefone: true,
+    fundacaoAno: true, sedeTexto: true, trajetoriaTexto: true, horarioAtendimento: true,
+  } })
   const gestao = await prisma.gestao.findFirst({
     where: { inicioAno: { lte: ano }, OR: [{ fimAno: null }, { fimAno: { gte: ano } }] },
-    orderBy: { inicioAno: 'desc' },
-    include: { mandatos: { where: filtroMandatosAtuais(hoje), include: { academico: true } } },
+    orderBy: [{ inicioAno: 'desc' }, { id: 'asc' }],
+    include: { mandatos: { where: filtroMandatosAtuais(hoje), orderBy: [{ cargo: 'asc' }, { id: 'asc' }], include: { academico: true } } },
   })
   return { info, gestao: gestao ? {
     inicioAno: gestao.inicioAno, fimAno: gestao.fimAno,
