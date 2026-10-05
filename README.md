@@ -116,6 +116,23 @@ As migrations não criam usuário ou senha padrão. Para levar os dados existent
 a outra máquina, transfira também um backup do PostgreSQL e os arquivos de
 `backend/uploads` (ou do diretório definido em `UPLOAD_DIR`); eles não acompanham o Git.
 
+### Banco compartilhado e acervo em nuvem
+
+Durante o desenvolvimento, a equipe pode usar um único PostgreSQL gerenciado de
+homologação. No Supabase, configure a URL **Session pooler** como `DATABASE_URL`
+para executar a API e a URL **Direct connection** como `DIRECT_URL`. Aplique as
+migrations em um ambiente seguro usando `npm --prefix backend run db:deploy`;
+não distribua essa credencial nem a registre no Git. Não use o banco de dados
+oficial para testes.
+
+PDFs e imagens não devem ser armazenados no PostgreSQL. Para usar Cloudflare R2,
+crie um bucket e um token limitado a esse bucket e configure `R2_ACCOUNT_ID`,
+`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` e `R2_PUBLIC_URL`, conforme
+o modelo em `backend/.env.example`. Com todas definidas, o endpoint administrativo
+de upload grava no R2 e retorna a URL pública; sem elas, preserva o armazenamento
+local em `backend/uploads`. Se apenas parte delas estiver definida, o upload falha
+explicitamente para evitar gravar arquivos no destino errado.
+
 Inicie frontend e backend em modo de desenvolvimento:
 
 ```bash
