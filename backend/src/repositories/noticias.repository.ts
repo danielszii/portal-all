@@ -8,7 +8,7 @@ export interface INoticiasRepository {
   findById(id: number): Promise<Noticia | null>
   findPage(pagination: Pagination, categoria?: string, search?: string, resumo?: boolean): Promise<Page<Noticia>>
 }
-export class PrismaNoticiasRepository implements INoticiasRepository {
+class PrismaNoticiasRepository implements INoticiasRepository {
   async findAll(categoria?: string, search?: string, resumo = false): Promise<Noticia[]> {
     if (search?.trim() || categoria && categoria !== 'Todas') {
       return (await queryCatalog<Row>('Noticia', { filter: categoria, search, summary: resumo })).items.map(mapNoticia)

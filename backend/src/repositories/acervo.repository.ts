@@ -8,7 +8,7 @@ export interface IAcervoRepository {
   findPage(pagination: Pagination, tipo?: string, search?: string): Promise<Page<AcervoItem>>
   findById(id: string): Promise<AcervoItem | null>
 }
-export class PrismaAcervoRepository implements IAcervoRepository {
+class PrismaAcervoRepository implements IAcervoRepository {
   async findAll(tipo?: string, search?: string): Promise<AcervoItem[]> {
     if (search?.trim() || tipo && tipo !== 'Todos') {
       return (await queryCatalog<Row>('AcervoItem', { filter: tipo, search })).items.map(mapAcervo)

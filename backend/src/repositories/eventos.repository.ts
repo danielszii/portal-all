@@ -7,7 +7,7 @@ export interface IEventosRepository {
   findById(id: string): Promise<Evento | null>
   findGaleria(): Promise<GaleriaFoto[]>
 }
-export class PrismaEventosRepository implements IEventosRepository {
+class PrismaEventosRepository implements IEventosRepository {
   async findAll(filters?: FiltroEventosDTO): Promise<Evento[]> {
     return (await prisma.evento.findMany({ where: { status: 'PUBLICADO', ...(filters?.tipo && filters.tipo !== 'Todos' ? { tipo: { equals: filters.tipo, mode: 'insensitive' as const } } : {}) }, orderBy: { inicioEm: 'asc' } })).map(mapEvento)
   }

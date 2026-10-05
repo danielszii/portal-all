@@ -3,7 +3,7 @@ import { Cadeira } from '../types/index.js'
 import { FiltroCadeirasDTO } from '../dtos/cadeira.dto.js'
 import { NotFoundError } from '../errors/app.error.js'
 
-export class CadeirasService {
+class CadeirasService {
   constructor(private repo: ICadeirasRepository = cadeirasRepository) {}
 
   async getAll(filters?: FiltroCadeirasDTO): Promise<Cadeira[]> {

@@ -3,7 +3,7 @@ import { Noticia } from '../types/index.js'
 import { NotFoundError } from '../errors/app.error.js'
 import type { Pagination } from '../repositories/catalog-query.js'
 
-export class NoticiasService {
+class NoticiasService {
   constructor(private repo: INoticiasRepository = noticiasRepository) {}
 
   async getAll(categoria?: string, search?: string, resumo = false): Promise<Noticia[]> {

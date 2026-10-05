@@ -39,7 +39,7 @@ export function day(value: unknown, name: string): Date {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input) || !Number.isFinite(result.getTime()) || result.toISOString().slice(0, 10) !== input) throw new ValidationError(`${name}: use uma data válida YYYY-MM-DD.`)
   return result
 }
-export function url(value: unknown, name: string, required = false): string {
+function url(value: unknown, name: string, required = false): string {
   if (!required && (value === undefined || value === null || value === '')) return ''
   const input = text(value, name, 2048)
   if (/[\s\\\u0000-\u001f]/.test(input)) throw new ValidationError(`${name}: URL inválida.`)

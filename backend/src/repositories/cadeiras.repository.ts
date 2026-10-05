@@ -7,7 +7,7 @@ export interface ICadeirasRepository {
   findAll(filters?: FiltroCadeirasDTO): Promise<Cadeira[]>
   findByNumber(number: string): Promise<Cadeira | null>
 }
-export class PrismaCadeirasRepository implements ICadeirasRepository {
+class PrismaCadeirasRepository implements ICadeirasRepository {
   async findAll(filters?: FiltroCadeirasDTO): Promise<Cadeira[]> {
     const rows = await prisma.cadeira.findMany({ include: cadeiraInclude, orderBy: { numero: 'asc' } })
     return rows.map(mapCadeira).filter(c =>

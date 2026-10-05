@@ -17,7 +17,7 @@ export async function verifyPassword(password: string, hash: string) {
   return timingSafeEqual(await derive(password, salt), Buffer.from(key, 'hex'))
 }
 const dummyHash = `scrypt$${'0'.repeat(32)}$${'0'.repeat(128)}`
-export const tokenHash = (value: string) => createHash('sha256').update(value).digest('hex')
+const tokenHash = (value: string) => createHash('sha256').update(value).digest('hex')
 // Bound expensive password derivations even when requests use many IP addresses.
 let activeLogins = 0
 export async function login(email: string, password: string, remember: boolean) {

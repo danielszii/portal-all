@@ -103,7 +103,7 @@ function NoticiasConteudo() {
             {lista.slice(1).map(n => (
               <NavLink className="noticia-card" to={noticiaHref(n.id)} aria-label={`Ler notícia: ${n.titulo}`} key={n.id}>
                 <div className="noticia-card-img">
-                  <img src={n.img} alt={n.titulo} loading="lazy" />
+                  <img src={n.img} alt={n.titulo} loading="lazy" decoding="async" />
                 </div>
                 <div className="noticia-card-body">
                   <div className="noticia-card-meta">

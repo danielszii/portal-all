@@ -10,7 +10,7 @@ export function dataInstitucional(now = new Date()): Date {
   return new Date(`${part('year')}-${part('month')}-${part('day')}T00:00:00Z`)
 }
 
-export function filtroMandatosAtuais(hoje: Date): Prisma.MandatoDiretoriaWhereInput {
+function filtroMandatosAtuais(hoje: Date): Prisma.MandatoDiretoriaWhereInput {
   return { AND: [
     { OR: [{ inicioEm: null }, { inicioEm: { lte: hoje } }] },
     { OR: [{ fimEm: null }, { fimEm: { gte: hoje } }] },

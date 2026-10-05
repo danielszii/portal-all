@@ -2,7 +2,7 @@ import { IEventosRepository, eventosRepository } from '../repositories/eventos.r
 import { Evento, GaleriaFoto } from '../types/index.js'
 import { NotFoundError } from '../errors/app.error.js'
 
-export class EventosService {
+class EventosService {
   constructor(private repo: IEventosRepository = eventosRepository) {}
 
   async getAll(tipo?: string): Promise<Evento[]> {

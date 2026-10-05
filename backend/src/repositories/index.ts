@@ -1,5 +1,0 @@
-export * from './cadeiras.repository.js'
-export * from './eventos.repository.js'
-export * from './noticias.repository.js'
-export * from './acervo.repository.js'
-export * from './contato.repository.js'

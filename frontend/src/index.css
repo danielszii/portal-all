@@ -1188,12 +1188,6 @@ h2 {
   color: var(--muted);
 }
 
-.centered-link {
-  display: flex;
-  width: max-content;
-  margin: 42px auto 0;
-}
-
 /* ── Acervo ── */
 .archive-section {
   padding-block: 84px 88px;
@@ -4332,9 +4326,9 @@ body {
 }
 
 .login-input-wrap:focus-within {
-  border-color: color-mix(in srgb, var(--institutional-blue) 64%, var(--line));
+  border-color: color-mix(in srgb, var(--bronze) 58%, var(--line));
   background: var(--surface);
-  box-shadow: 0 0 0 3px rgba(3, 83, 163, .07);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bronze) 10%, transparent);
 }
 
 .login-input-wrap svg {

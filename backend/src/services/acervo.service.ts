@@ -3,7 +3,7 @@ import { AcervoItem } from '../types/index.js'
 import type { Pagination } from '../repositories/catalog-query.js'
 import { NotFoundError } from '../errors/app.error.js'
 
-export class AcervoService {
+class AcervoService {
   constructor(private repo: IAcervoRepository = acervoRepository) {}
 
   async getAll(tipo?: string, search?: string): Promise<AcervoItem[]> {

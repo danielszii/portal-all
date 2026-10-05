@@ -113,6 +113,7 @@ export default function MemberPhotoFrame({
                   src={photoSrc}
                   alt={photoVariant === 'institutional-demo' ? 'Retrato ilustrativo. Fotografia do acadêmico não disponibilizada.' : alt}
                   loading="lazy"
+                  decoding="async"
                   className="academic-photo-img"
                 />
                 {/* Subtle sheen highlight layer on hover */}
