@@ -9,14 +9,22 @@ if (!raw) {
   console.error('Defina TEST_DATABASE_URL para um PostgreSQL exclusivo de testes. Consulte o README.')
   process.exit(1)
 }
-const url = new URL(raw)
+let url
+try { url = new URL(raw) } catch {
+  console.error('TEST_DATABASE_URL deve ser uma URL PostgreSQL válida.')
+  process.exit(1)
+}
 if (!['postgres:', 'postgresql:'].includes(url.protocol) || !/test/i.test(decodeURIComponent(url.pathname))) {
   console.error('TEST_DATABASE_URL deve apontar para um banco PostgreSQL com "test" no nome.')
   process.exit(1)
 }
 const schema = `portal_test_${randomUUID().replaceAll('-', '')}`
 url.searchParams.set('schema', schema)
-const env = { ...process.env, DATABASE_URL: url.toString(), INTEGRATION_SCHEMA: schema }
+// A CLI usa DIRECT_URL nas migrations. Nunca herde a conexão da aplicação.
+const env = { ...process.env, DATABASE_URL: url.toString(), DIRECT_URL: url.toString(), INTEGRATION_SCHEMA: schema,
+  NODE_ENV: 'test', FRONTEND_URL: 'http://localhost:5173',
+  R2_ACCOUNT_ID: '', R2_ACCESS_KEY_ID: '', R2_SECRET_ACCESS_KEY: '', R2_BUCKET: '', R2_PUBLIC_URL: '',
+}
 const cwd = fileURLToPath(new URL('../', import.meta.url))
 const db = new PrismaClient({ datasources: { db: { url: url.toString() } } })
 function run(args) {
@@ -30,6 +38,8 @@ try {
   await db.$executeRawUnsafe(`CREATE SCHEMA "${schema}"`)
   try {
     run(['node_modules/prisma/build/index.js', 'migrate', 'deploy'])
+    run(['--import', 'tsx', '--test', 'tests/integration/isolation.test.ts'])
+    run(['--import', 'tsx', '--test', 'tests/integration/instituicao-admin.test.ts'])
     run(['--import', 'tsx', '--test', 'tests/integration/postgres.test.ts'])
     run(['--import', 'tsx', '--test', 'tests/integration/admin.test.ts'])
     run(['--import', 'tsx', '--test', 'tests/integration/deletions.test.ts'])

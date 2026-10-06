@@ -50,6 +50,9 @@ enum RecursoAuditoria {
   GALERIA
   UPLOAD
   SESSAO
+  INSTITUICAO
+  GESTAO
+  MANDATO
 }
 
 // Identificadores são snapshots, sem FK: exclusões não apagam o histórico.
@@ -242,6 +245,7 @@ model Instituicao {
   sedeTexto   String?
   trajetoriaTexto String?
   horarioAtendimento String?
+  atualizadoEm DateTime @default(now()) @updatedAt @db.Timestamptz(3)
 }
 
 model Gestao {
@@ -249,6 +253,7 @@ model Gestao {
   inicioAno   Int
   fimAno      Int?
   mandatos    MandatoDiretoria[]
+  atualizadoEm DateTime @default(now()) @updatedAt @db.Timestamptz(3)
 }
 
 model MandatoDiretoria {

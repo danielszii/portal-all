@@ -11,10 +11,11 @@ import { parsePagination } from '../repositories/catalog-query.js'
 import { numeroCadeira } from '../repositories/mappers.js'
 import { AppError, ValidationError } from '../errors/app.error.js'
 import * as v from '../services/admin-validation.js'
-import { deletePerson, PersonConflict } from '../services/admin-person.service.js'
+import { deletePerson, listPeople, PersonConflict } from '../services/admin-person.service.js'
 import { deleteFoto, listGaleria } from '../services/admin-galeria.service.js'
 import { maxUploadBytes, mediaMimeTypes } from '../domain/media.js'
 import { listAudit, type AuditActor } from '../services/admin-audit.service.js'
+import * as institutionAdmin from '../services/admin-instituicao.service.js'
 
 const router = Router()
 const handle = (fn: RequestHandler): RequestHandler => (req, res, next) => { Promise.resolve(fn(req, res, next)).catch(next) }
@@ -51,6 +52,31 @@ router.post('/uploads', raw({ type: [...mediaMimeTypes.pdf, ...mediaMimeTypes.im
 }))
 router.use(json({ limit: '256kb' }))
 router.get('/auditoria', handle(async (req, res) => { res.json(await listAudit(req.query)) }))
+
+router.get('/instituicao', handle(async (_req, res) => { res.json(await institutionAdmin.getInstitution()) }))
+router.put('/instituicao', handle(async (req, res) => {
+  const { info, created } = await institutionAdmin.saveInstitution(req.body, actor(res))
+  res.status(created ? 201 : 200).json({ info })
+}))
+router.get('/gestoes', handle(async (req, res) => { res.json(await institutionAdmin.listGestoes(req.query)) }))
+router.post('/gestoes', handle(async (req, res) => { res.status(201).json(await institutionAdmin.createGestao(req.body, actor(res))) }))
+router.get('/gestoes/:id', handle(async (req, res) => { res.json(await institutionAdmin.getGestao(v.text(req.params.id, 'id', 100))) }))
+router.put('/gestoes/:id', handle(async (req, res) => {
+  res.json(await institutionAdmin.editGestao(v.text(req.params.id, 'id', 100), req.body, actor(res)))
+}))
+router.delete('/gestoes/:id', handle(async (req, res) => {
+  await institutionAdmin.deleteGestao(v.text(req.params.id, 'id', 100), req.body, actor(res))
+  res.status(204).end()
+}))
+router.post('/gestoes/:id/mandatos', handle(async (req, res) => {
+  res.status(201).json(await institutionAdmin.saveMandato(v.text(req.params.id, 'id', 100), null, req.body, actor(res)))
+}))
+router.put('/gestoes/:id/mandatos/:mandatoId', handle(async (req, res) => {
+  res.json(await institutionAdmin.saveMandato(v.text(req.params.id, 'id', 100), v.text(req.params.mandatoId, 'mandatoId', 100), req.body, actor(res)))
+}))
+router.delete('/gestoes/:id/mandatos/:mandatoId', handle(async (req, res) => {
+  res.json(await institutionAdmin.deleteMandato(v.text(req.params.id, 'id', 100), v.text(req.params.mandatoId, 'mandatoId', 100), req.body, actor(res)))
+}))
 
 for (const [name, resource] of Object.entries(contentResources)) {
   router.get(`/${name}`, handle(async (req, res) => {
@@ -112,13 +138,7 @@ for (const name of ['academicos', 'patronos'] as const) {
     res.status(204).end()
   }))
   router.get(`/${name}`, handle(async (req, res) => {
-    const { page, pageSize } = parsePagination(req.query) ?? { page: 1, pageSize: 20 }
-    const where = typeof req.query.q === 'string' ? { nome: { contains: req.query.q, mode: 'insensitive' as const } } : {}
-    const args = { where, skip: (page - 1) * pageSize, take: pageSize, orderBy: { nome: 'asc' as const } }
-    const [items, total] = name === 'academicos'
-      ? await Promise.all([prisma.academico.findMany(args), prisma.academico.count({ where })])
-      : await Promise.all([prisma.patrono.findMany(args), prisma.patrono.count({ where })])
-    res.json({ items, total, page, pageSize, totalPages: Math.max(1, Math.ceil(total / pageSize)) })
+    res.json(await listPeople(name, req.query))
   }))
 }
 router.get('/galeria', handle(async (req, res) => {

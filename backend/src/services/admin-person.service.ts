@@ -1,8 +1,34 @@
-import type { Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
+import { prisma } from '../db/prisma.js'
 import { AppError, ValidationError } from '../errors/app.error.js'
-import { foldSearch } from '../repositories/catalog-query.js'
+import { foldSearch, parsePagination } from '../repositories/catalog-query.js'
 import { deleteRecord } from '../repositories/admin-delete.repository.js'
 import type { AuditActor } from './admin-audit.service.js'
+import * as v from './admin-validation.js'
+
+export async function listPeople(resource: 'academicos' | 'patronos', query: Record<string, unknown>) {
+  const { page, pageSize } = parsePagination(query, 20) ?? { page: 1, pageSize: 20 }
+  if (query.semVinculos !== undefined && query.semVinculos !== 'true' && query.semVinculos !== 'false') {
+    throw new ValidationError('semVinculos deve ser true ou false.')
+  }
+  const q = query.q === undefined ? '' : v.optionalText(query.q, 'q', 200) ?? ''
+  const nome = q ? { contains: q.replace(/[\\%_]/g, '\\$&'), mode: 'insensitive' as const } : undefined
+  const unlinked = query.semVinculos === 'true'
+  const academics: Prisma.AcademicoWhereInput = { nome, ...(unlinked ? {
+    ocupacoes: { none: {} }, obras: { none: {} }, producoes: { none: {} }, autorias: { none: {} }, mandatos: { none: {} },
+  } : {}) }
+  const patrons: Prisma.PatronoWhereInput = { nome, ...(unlinked ? { cadeiras: { none: {} } } : {}) }
+  return prisma.$transaction(async tx => {
+    const total = resource === 'academicos'
+      ? await tx.academico.count({ where: academics }) : await tx.patrono.count({ where: patrons })
+    const totalPages = Math.max(1, Math.ceil(total / pageSize))
+    const current = Math.min(page, totalPages)
+    const args = { skip: (current - 1) * pageSize, take: pageSize, orderBy: [{ nome: 'asc' as const }, { id: 'asc' as const }] }
+    const items = resource === 'academicos'
+      ? await tx.academico.findMany({ ...args, where: academics }) : await tx.patrono.findMany({ ...args, where: patrons })
+    return { items, total, page: current, pageSize, totalPages }
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead })
+}
 
 export type PersonRole = 'academico' | 'fundador' | 'patrono'
 export const normalizePersonName = (name: string) => foldSearch(name.trim().replace(/\s+/gu, ' '))

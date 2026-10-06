@@ -17,6 +17,13 @@ sessões. Não apaga ou modifica o conteúdo existente. Se o Windows bloquear a 
 do Prisma, pare o servidor de desenvolvimento antes de gerar o client e reinicie
 depois. Os testes de integração usam um schema temporário em banco exclusivo.
 
+Configure `DATABASE_URL` e `DIRECT_URL` conforme `.env.example`. No PostgreSQL
+local, ambas apontam para o mesmo banco; em instalações com pooler, `DIRECT_URL`
+precisa permitir executar migrations. A suíte `test:integration` exige
+`TEST_DATABASE_URL` e sobrescreve as duas variáveis nos subprocessos com o mesmo
+schema temporário. Ela verifica o destino das migrations antes de testar a API
+e desativa o R2 para não enviar arquivos de teste ao armazenamento da aplicação.
+
 Defina `FRONTEND_URL` em `backend/.env` com a origem exata do navegador
 (por exemplo, `http://localhost:5173` com Vite ou `http://localhost:3001` quando
 o próprio backend serve o frontend). Requisições que alteram dados precisam enviar
@@ -138,8 +145,8 @@ o histórico não é apagado. Não existe exclusão em cascata de pessoas ou cad
 
 Exclusões atuam sobre o estado atual do registro pelo ID; diferentemente do PUT,
 não recebem `atualizadoEm`. O consumidor deve apresentar o registro atual e obter
-a confirmação do administrador antes de enviar DELETE. A implementação destas
-rotas não acrescenta botões nem modifica os formulários existentes do frontend.
+a confirmação do administrador antes de enviar DELETE. O painel possui ações
+de exclusão que consomem estas rotas.
 
 PDFs e imagens físicos **não são apagados**, pois podem ser compartilhados por
 outros registros. Suas URLs diretas continuam acessíveis. O arquivamento permanece
@@ -257,6 +264,21 @@ ao administrador antes de chamar essa rota.
 - PUT `/cadeiras/:numero`: corrige dados, sem substituir titular.
 - POST `/cadeiras/:numero/encerrar`: encerra ocupação por vacância ou falecimento.
 
+As consultas de acadêmicos e patronos retornam todas as pessoas por padrão,
+inclusive as vinculadas, para permitir reutilizar cadastros. O filtro opcional
+`semVinculos=true` retorna somente pessoas que podem ser excluídas: acadêmicos
+sem ocupações (inclusive históricas), obras, produções, autorias ou mandatos;
+patronos sem cadeiras. `semVinculos=false` equivale ao comportamento padrão.
+Valores diferentes ou repetidos retornam 400. O filtro precisa ser enviado
+explicitamente pelo consumidor; o backend não o presume pelo nome da tela.
+
+Essas listas aceitam `page`, `pageSize` (padrão 20, máximo 50) e `q` (até 200
+caracteres), com retorno `{ items, total, page, pageSize, totalPages }`. A ordem
+é por nome e ID; páginas além do final são ajustadas à última, inclusive após
+uma exclusão. Lista vazia retorna página 1 e `totalPages: 1`. Contagem e itens
+são lidos na mesma transação. A busca ignora diferenças de caixa e trata `%`,
+`_` e barra invertida como caracteres literais.
+
 Cadastro de cadeira nova:
 
 ```json
@@ -333,6 +355,116 @@ Para encerrar uma ocupação sem empossar sucessor:
 duas cadeiras vigentes, e um acadêmico in memoriam não pode assumir uma cadeira.
 Não existe DELETE de cadeira ou histórico.
 
+## Informações institucionais e diretoria
+
+Base `/api/admin`. As rotas exigem sessão; escritas também exigem origem autorizada
+e `X-CSRF-Token`. A migration `20261005000100_administracao_institucional` adiciona
+controle de edição e recursos de auditoria, sem apagar os dados existentes.
+Execute `npm --prefix backend run db:generate` e `npm --prefix backend run db:deploy`.
+
+| Método | Caminho | Resultado |
+| --- | --- | --- |
+| GET | `/instituicao` | `{ info }`, com todos os dados e `atualizadoEm`; `info: null` se ainda não existe. |
+| PUT | `/instituicao` | Cria (201) ou atualiza (200) o registro institucional único, retornando `{ info }`. |
+| GET | `/gestoes?page=1&pageSize=20` | Lista paginada de gestões históricas, atuais e futuras, com `_count.mandatos` e `atualizadoEm`. |
+| GET | `/gestoes/:id` | Gestão completa com `mandatos`, cada um com ID e dados básicos do acadêmico. |
+| POST | `/gestoes` | Cria gestão e, opcionalmente, seus mandatos na mesma transação; 201. |
+| PUT | `/gestoes/:id` | Edita o período da gestão, preservando seus mandatos; 200. |
+| DELETE | `/gestoes/:id` | Remove somente gestão sem mandatos; 204. Com mandatos, retorna 409. |
+| POST | `/gestoes/:id/mandatos` | Inclui integrante; 201 com a gestão completa e a nova versão. |
+| PUT | `/gestoes/:id/mandatos/:mandatoId` | Corrige integrante/cargo/datas ou encerra mandato; 200 com a gestão atualizada. |
+| DELETE | `/gestoes/:id/mandatos/:mandatoId` | Remove cadastro incorreto de mandato; 200 com a gestão atualizada. Preserva o acadêmico. |
+
+A lista de gestões usa `{ items, total, page, pageSize, totalPages }`, máximo 50
+por página, ordem por ano inicial decrescente e ID, com páginas além do final
+ajustadas à última. Datas administrativas são ISO; datas civis dos mandatos
+devem ser enviadas como `YYYY-MM-DD`, sem conversão para o fuso do navegador.
+
+### Informações institucionais
+
+```json
+{
+  "nome": "Academia Limoeirense de Letras",
+  "historia": "História da instituição",
+  "missao": "Missão da instituição",
+  "fundacaoAno": 1964,
+  "endereco": "Endereço da sede",
+  "email": "contato@example.com",
+  "telefone": "Telefone institucional",
+  "sedeTexto": "Apresentação da sede",
+  "trajetoriaTexto": "Trajetória da instituição",
+  "horarioAtendimento": "Horário de atendimento",
+  "atualizadoEm": null
+}
+```
+
+`nome`, `historia` e `missao` são obrigatórios; limites de 300, 100.000 e 20.000
+caracteres, respectivamente. `fundacaoAno` aceita inteiro entre 1 e o ano atual
+em Fortaleza. E-mail é validado e normalizado; endereço aceita até 1.000 caracteres,
+telefone até 50, horário até 500 e sede/trajetória até 20.000 cada. Campos opcionais
+omitidos ou nulos são limpos no PUT. Campos desconhecidos, inclusive `id`, são recusados.
+
+Na primeira gravação, envie `atualizadoEm: null`. Nas edições, envie o valor do
+último GET administrativo. Não use o GET público como fonte da versão: o contrato
+público é preservado e não expõe esse metadado. Uma versão antiga retorna 409,
+e uma versão ausente/malformada retorna 400. Duas criações simultâneas também
+não podem sobrescrever uma à outra.
+
+### Gestões, cargos e sucessões da diretoria
+
+```json
+{
+  "inicioAno": 2027,
+  "fimAno": 2028,
+  "mandatos": [
+    {
+      "academicoId": "ID_DE_UM_ACADEMICO_EXISTENTE",
+      "cargo": "Presidente",
+      "inicioEm": "2027-01-01",
+      "fimEm": "2028-12-31"
+    }
+  ]
+}
+```
+
+O POST aceita até 100 mandatos iniciais; a lista é opcional. Os anos são inteiros
+de 1 a 9999, com `fimAno >= inicioAno`; `fimAno: null` representa uma gestão sem
+término definido. A seleção pública existente trabalha com anos inclusivos:
+uma gestão 2027–2028 inclui os dois anos. Novas escritas não permitem sobreposição
+com outra gestão; feche a anterior antes de cadastrar a seguinte. Duas gestões
+distintas no mesmo ano não são representadas por este modelo anual.
+
+`cargo` aceita até 100 caracteres. Mandatos devem apontar para acadêmicos existentes.
+Datas são opcionais para preservar registros históricos conhecidos apenas pelo ano;
+na verificação dos períodos, datas ausentes usam os limites da gestão. Datas explícitas
+precisam ficar dentro desses limites. Reduzir a gestão não pode deixar mandatos fora
+do período. Acadêmicos in memoriam só podem ser atribuídos a períodos já encerrados.
+
+Um cargo não pode ter dois ocupantes no mesmo intervalo, ignorando diferenças de
+caixa, acentos e espaços. As datas finais são inclusivas: se o antecessor encerrou em
+30/06, o sucessor pode começar em 01/07. Para substituição, encerre o mandato anterior
+com PUT e inclua o sucessor; isso mantém o histórico. A mesma pessoa pode exercer
+cargos diferentes. DELETE de mandato é uma correção explícita de cadastro, auditada;
+não deve ser usado para representar uma sucessão.
+
+PUT/DELETE de gestão e POST/PUT/DELETE de mandato exigem **`atualizadoEm` da gestão**
+no corpo JSON. No PUT da gestão, envie somente `inicioAno`, `fimAno` e `atualizadoEm`.
+No POST/PUT de mandato, envie seus campos e essa versão; no DELETE, apenas a versão.
+Toda alteração de integrante também avança a versão da gestão. Use a gestão retornada
+na próxima operação ou consulte-a novamente; uma versão antiga recebe 409. Não existe
+remoção implícita de integrantes ao editar os anos da gestão.
+
+As escritas e a auditoria são transacionais. Falha ao registrar o histórico reverte
+os dados, inclusive mandatos iniciais e versões. Novos recursos de auditoria:
+`INSTITUICAO`, `GESTAO` e `MANDATO`, com ações `CRIAR`, `EDITAR` e `EXCLUIR` conforme
+a operação. Textos institucionais completos não são copiados para o histórico.
+
+O endpoint público `/api/instituicao` passa a refletir as gravações, mantendo
+`{ info, gestao }` e a seleção de gestão/mandatos vigentes em Fortaleza. As rotas
+administrativas permitem consultar também os períodos passados e futuros.
+A tela administrativa atual continua somente para consulta: sua edição e os filtros
+visuais para os novos recursos da auditoria precisam ser conectados pelo frontend.
+
 ## Uploads
 
 POST `/uploads` (sob `/api/admin`) recebe **o arquivo binário**, não FormData.
@@ -345,7 +477,7 @@ Imagens passam por decodificação de pixels com `sharp`, incluindo os quadros d
 WebP animado, e têm limite de 40 milhões de pixels no total. PDFs passam por
 leitura estrutural com `pdf-lib`: precisam ter páginas, dimensões válidas e não
 podem estar criptografados/protegidos por senha. Cabeçalhos isolados, arquivos
-truncados e tipos divergentes retornam 400 antes de gravar no disco. Os arquivos
+truncados e tipos divergentes retornam 400 antes de gravar no armazenamento. Os arquivos
 aceitos são preservados byte a byte, sem recompressão ou alteração do documento.
 
 O formulário verifica o tipo de cada campo antes do envio: imagens para membros,
@@ -364,10 +496,22 @@ const response = await fetch('/api/admin/uploads', {
 // Use a URL retornada em img, foto, fotoUrl ou pdfUrl do formulário.
 ```
 
-Arquivos ficam em `backend/uploads`, ignorado pelo Git; `UPLOAD_DIR` permite
-configurar outro diretório. URLs são públicas, inclusive antes da publicação do
+Sem R2, arquivos ficam em `backend/uploads`, ignorado pelo Git; `UPLOAD_DIR`
+permite configurar outro diretório e, quando definido, tem prioridade sobre R2.
+Para usar Cloudflare R2, configure as cinco variáveis de `.env.example`:
+`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` e
+`R2_PUBLIC_URL`. O ID da conta deve ter 32 caracteres hexadecimais e a URL pública
+deve usar HTTPS, sem credenciais, query ou fragmento. Ela pode incluir um prefixo
+de caminho se o domínio servir os objetos nesse caminho. Configuração parcial
+ou inválida é recusada antes da gravação; a API não troca para disco silenciosamente.
+O backend usa nomes UUID, preserva o tipo do arquivo e retorna sua URL pública.
+Cada operação no R2 tem limite de 60 segundos e libera o cliente ao terminar.
+
+URLs são públicas, inclusive antes da publicação do
 registro: não envie documentos confidenciais. A validação estrutural não é
-antivírus nem garantia de renderização de todo PDF. Arquivos recebem nosniff e CSP sandbox.
+antivírus nem garantia de renderização de todo PDF. Arquivos servidos pelo backend
+recebem nosniff e CSP sandbox; cabeçalhos dos arquivos no R2 dependem da configuração
+do domínio/bucket.
 Uploads sem registro e arquivos de registros excluídos não são removidos
 automaticamente, evitando apagar arquivos ainda utilizados por outro conteúdo.
 O Vite encaminha `/uploads` ao backend. A prévia de foto usa uma URL temporária
@@ -384,12 +528,12 @@ O usuário é obtido da sessão; não pode ser informado no corpo da requisiçã
 
 | Ação | Operações registradas |
 | --- | --- |
-| `CRIAR` | Cadastro de notícia, acervo, evento ou cadeira. O estado editorial inicial fica nos detalhes. |
-| `EDITAR` | Edição de conteúdo ou dados de cadeira/pessoas. Inclui retorno a rascunho. |
+| `CRIAR` | Cadastro de notícia, acervo, evento, cadeira, instituição, gestão ou mandato. O estado editorial inicial, quando aplicável, fica nos detalhes. |
+| `EDITAR` | Edição de conteúdo, cadeira/pessoas, instituição, gestão ou mandato. Inclui retorno a rascunho e encerramento de mandato da diretoria. |
 | `PUBLICAR` / `ARQUIVAR` | Mudança de estado editorial em uma edição. |
 | `TROCAR_TITULAR` | Posse em cadeira já cadastrada, após confirmação. |
 | `ENCERRAR_OCUPACAO` | Encerramento por rota própria ou pelo formulário de edição. |
-| `EXCLUIR` | Exclusão de notícia, acervo, evento, acadêmico, patrono ou foto da galeria. |
+| `EXCLUIR` | Exclusão de notícia, acervo, evento, acadêmico, patrono, foto da galeria, gestão vazia ou mandato incorreto. |
 | `ENVIAR_ARQUIVO` | Upload concluído, com URL, tipo e tamanho; sem os bytes do arquivo. |
 | `LOGIN` / `LOGOUT` | Entrada e saída administrativas concluídas. |
 
@@ -409,9 +553,11 @@ na tabela. Não existem rotas para criar, editar ou apagar esses registros manua
 
 Alteração e auditoria são gravadas na mesma transação de banco. Se o registro de
 auditoria falhar, a alteração é revertida e a API não confirma sucesso. Nos uploads,
-o arquivo novo é removido se a gravação da auditoria falhar; banco e filesystem
-não formam uma transação distribuída (uma interrupção abrupta ainda pode deixar
-arquivo órfão). Validações recusadas, conflitos, falhas de login, acessos negados e
+o backend tenta remover o arquivo novo se a gravação da auditoria falhar. No R2,
+se a remoção também falhar, o erro interno preserva ambas as causas e identifica
+o objeto para manutenção. Banco e armazenamento não formam uma transação
+distribuída: falhas de remoção ou interrupção abrupta podem deixar arquivo órfão.
+Validações recusadas, conflitos, falhas de login, acessos negados e
 leituras não geram entradas de sucesso. Os logs técnicos de acesso continuam separados.
 
 ### Consultar histórico
@@ -425,7 +571,7 @@ limitadas à última. Os filtros são combinados antes da contagem e da paginaç
 | --- | --- |
 | `page`, `pageSize` | Inteiros positivos; `pageSize` até 50. |
 | `acao` | Uma das ações da tabela acima. |
-| `recurso` | `NOTICIA`, `ACERVO`, `EVENTO`, `CADEIRA`, `ACADEMICO`, `PATRONO`, `GALERIA`, `UPLOAD`, `SESSAO`. |
+| `recurso` | `NOTICIA`, `ACERVO`, `EVENTO`, `CADEIRA`, `ACADEMICO`, `PATRONO`, `GALERIA`, `UPLOAD`, `SESSAO`, `INSTITUICAO`, `GESTAO`, `MANDATO`. |
 | `registroId` | ID exato do registro; para cadeira, seu UUID (o número está em `detalhes.numero`). |
 | `administradorId` | ID exato do administrador. |
 | `inicio`, `fim` | Datas ISO com fuso; limites inclusivos. Ex.: `2026-09-28T00:00:00-03:00`. |
@@ -441,7 +587,7 @@ const pagina = await response.json()
 ```
 
 Sem sessão: 401; filtros inválidos: 400. A auditoria não é exposta pelas rotas
-públicas. Esta entrega implementa o backend e a consulta; não adiciona tela ao painel.
+públicas. O painel também oferece a consulta em `/admin/auditoria`, após o login.
 Depois de atualizar as dependências, gere o cliente e aplique a migration
 `20260928000100_auditoria_administrativa` com `npm --prefix backend run db:generate`
 e `npm --prefix backend run db:deploy`. O registro começa após a implantação:
@@ -455,6 +601,9 @@ ou comandos de manutenção de contas executados fora da API administrativa.
 429: excesso de requisições. Não use uma mensagem de sucesso antes do retorno 2xx.
 
 `npm test` inclui bloqueio de acesso, validação, hash de senha e uploads inválidos.
+O fluxo R2 é testado com o SDK simulado: imagens/PDFs, metadados, auditoria,
+configuração incompleta, falhas do provedor e compensação quando a auditoria falha.
+Esses testes não verificam credenciais, permissões nem acesso público de um bucket real.
 `npm run test:integration` inclui login, CSRF, publicação pública, exclusão de agenda,
 upload, histórico de cadeiras, confirmações antigas, concorrência e revogação.
 
