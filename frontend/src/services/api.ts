@@ -3,13 +3,39 @@ import type { Cadeira, Evento, GaleriaFoto, Noticia, AcervoItem, ContatoForm, Se
 class ApiError extends Error {
   constructor(message: string, public status: number) { super(message) }
 }
+const publicCache = new Map<string, { value: unknown; expiresAt: number }>()
+const publicRequests = new Map<string, Promise<unknown>>()
+const publicCacheMs = 60_000
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`/api${path}`, { ...init, signal: init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000) })
-  if (!res.ok) {
-    const body = await res.json().catch(() => null)
-    throw new ApiError(typeof body?.error === 'string' ? body.error : 'Não foi possível acessar o servidor. Tente novamente.', res.status)
+  const method = (init.method ?? 'GET').toUpperCase()
+  const cacheable = method === 'GET' && !path.startsWith('/admin/')
+  if (cacheable) {
+    const cached = publicCache.get(path)
+    if (cached && cached.expiresAt > Date.now()) return cached.value as T
+    if (cached) publicCache.delete(path)
   }
-  return res.json() as Promise<T>
+  if (!cacheable) publicCache.clear()
+
+  const load = async () => {
+    // GETs compartilhados continuam em segundo plano se uma tela desmontar. Isso
+    // permite que a próxima tela reutilize a mesma consulta já iniciada.
+    const signal = cacheable
+      ? AbortSignal.timeout(15000)
+      : init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000)
+    const res = await fetch(`/api${path}`, { ...init, signal })
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      throw new ApiError(typeof body?.error === 'string' ? body.error : 'Não foi possível acessar o servidor. Tente novamente.', res.status)
+    }
+    const value = await res.json() as T
+    if (cacheable) publicCache.set(path, { value, expiresAt: Date.now() + publicCacheMs })
+    return value
+  }
+  if (!cacheable) return load()
+  const pending = (publicRequests.get(path) as Promise<T> | undefined) ?? load().finally(() => publicRequests.delete(path))
+  publicRequests.set(path, pending)
+  return pending
 }
 const query = (params: Record<string, string | undefined>) => {
   const result = new URLSearchParams()
@@ -49,3 +75,14 @@ export const fetchInicioCadeiras = (signal: AbortSignal) => request<{ total: num
 export const fetchInicioAcervo = (signal: AbortSignal) => request<{ total: number; items: InicioAcervo[] }>('/inicio/acervo', { signal })
 export const fetchInicioNoticias = (signal: AbortSignal) => request<Pick<Noticia, 'id' | 'titulo' | 'data'>[]>('/inicio/noticias', { signal })
 export const fetchInicioEventos = (signal: AbortSignal) => request<InicioEvento[]>('/inicio/eventos', { signal })
+
+export function preloadPublicRoute(path: string) {
+  const loaders: Record<string, () => Promise<unknown>> = {
+    '/academia': () => fetchInstituicao(),
+    '/cadeiras': () => fetchCadeiras(),
+    '/acervo': () => fetchAcervoPage(1),
+    '/agenda': () => Promise.all([fetchEventos(), fetchGaleria()]),
+    '/noticias': () => fetchNoticiasPage(1),
+  }
+  void loaders[path]?.().catch(() => undefined)
+}

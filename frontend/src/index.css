@@ -1255,6 +1255,14 @@ h2 {
   background: var(--ink);
 }
 
+.book-cover.red {
+  background: #7b3238;
+}
+
+.book-cover.green {
+  background: #315d4b;
+}
+
 .book-cover span,
 .book-cover small {
   font: 8px 'Space Mono', monospace;
@@ -1263,7 +1271,15 @@ h2 {
 }
 
 .book-cover strong {
-  font: 600 25px/.88 'Cormorant Garamond', serif;
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  font: 600 22px/.95 'Cormorant Garamond', serif;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 .book-cover i {
@@ -1909,7 +1925,15 @@ h2 {
 }
 
 .archive-cover strong {
-  font: 600 22px/.9 'Cormorant Garamond', serif;
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  font: 600 22px/.95 'Cormorant Garamond', serif;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 .archive-cover i {

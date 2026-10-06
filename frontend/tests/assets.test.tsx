@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readdir, stat } from 'node:fs/promises'
+import { readFile, readdir, stat } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
@@ -18,4 +18,19 @@ test('retratos demonstrativos respeitam o limite individual de 1,5 MB', async ()
     const image = await stat(path.join(directory, file))
     assert.ok(image.size <= 1_500_000, `${file} possui ${image.size} bytes`)
   }
+})
+
+test('todas as cores de capa usadas pelo acervo têm fundo na home', async () => {
+  const css = await readFile(path.join(frontend, 'src/index.css'), 'utf8')
+  for (const color of ['navy', 'ochre', 'ink', 'red', 'green']) {
+    assert.match(css, new RegExp(`\\.book-cover\\.${color}\\s*\\{[^}]*background:`), `Capa ${color} sem fundo`)
+  }
+})
+
+test('títulos das capas são limitados sem ultrapassar o cartão', async () => {
+  const css = await readFile(path.join(frontend, 'src/index.css'), 'utf8')
+  const rule = css.match(/\.book-cover strong\s*\{([^}]*)\}/)?.[1] ?? ''
+  assert.match(rule, /overflow:\s*hidden/)
+  assert.match(rule, /text-overflow:\s*ellipsis/)
+  assert.match(rule, /-webkit-line-clamp:\s*3/)
 })

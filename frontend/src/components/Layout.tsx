@@ -1,5 +1,5 @@
 import { useResource } from '@/hooks/useResource'
-import { fetchInstituicao } from '@/services/api'
+import { fetchInstituicao, preloadPublicRoute } from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { useEffect, useRef, useState } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router'
@@ -139,6 +139,9 @@ export default function Layout() {
                 end={path === '/'}
                 className={({ isActive }) => isActive ? 'nav-active' : ''}
                 onClick={close}
+                onMouseEnter={() => preloadPublicRoute(path)}
+                onFocus={() => preloadPublicRoute(path)}
+                onTouchStart={() => preloadPublicRoute(path)}
               >
                 {label}
               </NavLink>
