@@ -5,6 +5,7 @@ import * as v from './admin-validation.js'
 import { deleteRecord } from '../repositories/admin-delete.repository.js'
 import { syncEventoFoto } from '../repositories/evento-galeria.repository.js'
 import { auditEditorial, type AuditActor } from './admin-audit.service.js'
+import { acervoColors } from '../domain/acervo.js'
 
 export function noticiaInput(input: unknown) {
   const b = v.object(input)
@@ -21,7 +22,7 @@ export function acervoInput(input: unknown) {
   v.keys(b, ['titulo', 'categoria', 'edicao', 'ano', 'cor', 'autoriaTexto', 'paginas', 'descricao', 'pdfUrl', 'status'])
   const status = v.status(b.status)
   const cor = b.cor === undefined ? 'navy' : v.text(b.cor, 'cor', 20)
-  if (!['navy', 'ochre', 'ink'].includes(cor)) throw new ValidationError('Cor inválida.')
+  if (!acervoColors.includes(cor)) throw new ValidationError('Cor inválida.')
   return { titulo: v.text(b.titulo, 'titulo'), categoria: v.text(b.categoria, 'categoria', 100),
     edicao: v.optionalText(b.edicao, 'edicao', 200), ano: b.ano == null ? null : v.integer(b.ano, 'ano', 1, 9999), cor,
     autoriaTexto: v.optionalText(b.autoriaTexto, 'autoriaTexto', 1000), paginas: b.paginas == null ? null : v.integer(b.paginas, 'paginas', 1, 100000),

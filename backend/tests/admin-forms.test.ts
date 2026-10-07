@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { AdminApiError, adminItem, adminPayload, adminRequest, saveAdminForm, uploadAdminFile, type CadeiraAdmin } from '../../frontend/src/services/admin.js'
 
 const chair: CadeiraAdmin = {
+  versao: 'a'.repeat(64),
   id: 'chair', numero: 12, patrono: { id: 'patron', nome: 'Patrono', biografia: 'Biografia preservada', fotoUrl: '/patrono.jpg' },
   ocupacoes: [{ id: 'occupation', academicoId: 'member', vigente: true, fundador: true, inicioEm: null, inicioAno: 1998,
     academico: { id: 'member', nome: 'Titular anterior', biografia: 'Biografia', bioExtra: 'Informações adicionais', fotoUrl: '/membro.jpg' } }],
@@ -28,6 +29,7 @@ test('edição de cadeira não inventa data de posse e preserva campos ocultos',
   assert.equal(values.posse, '')
   assert.equal(values.inicioAno, '1998')
   const payload = adminPayload('cadeiras', values, true)
+  assert.equal(payload.versao, chair.versao)
   assert.equal(payload.ocupacaoAtualId, 'occupation')
   assert.equal(payload.inicioEm, undefined)
   assert.deepEqual(payload.patrono, { nome: 'Patrono', biografia: 'Biografia preservada', fotoUrl: '/patrono.jpg' })

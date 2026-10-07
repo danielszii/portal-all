@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma.js'
+import { createHash } from 'node:crypto'
 import type { AcaoAuditoria, Prisma } from '@prisma/client'
 import { AppError, ValidationError } from '../errors/app.error.js'
 import * as v from './admin-validation.js'
@@ -11,6 +12,20 @@ export const adminCadeiraInclude = {
 } satisfies Prisma.CadeiraInclude
 
 type AuditCadeira = Prisma.CadeiraGetPayload<{ include: typeof adminCadeiraInclude }>
+export function withCadeiraVersion(cadeira: AuditCadeira) {
+  // Inclui as pessoas relacionadas: atualizadoEm da cadeira não muda quando
+  // um patrono compartilhado ou um acadêmico é editado em outro contexto.
+  const p = cadeira.patrono
+  const snapshot = [cadeira.id, cadeira.numero, cadeira.atualizadoEm,
+    [p.id, p.nome, p.biografia, p.fotoUrl],
+    [...cadeira.ocupacoes].sort((a, b) => a.id.localeCompare(b.id)).map(o => {
+      const a = o.academico
+      return [o.id, o.academicoId, o.vigente, o.fundador, o.inicioEm, o.fimEm, o.inicioAno, o.fimAno, o.periodoTexto,
+        a.nome, a.biografia, a.bioExtra, a.fotoUrl, a.inMemoriam, a.atualizadoEm]
+    }),
+  ]
+  return { ...cadeira, versao: createHash('sha256').update(JSON.stringify(snapshot)).digest('hex') }
+}
 async function auditCadeira(tx: Prisma.TransactionClient, actor: AuditActor, acao: AcaoAuditoria, after: AuditCadeira, before?: AuditCadeira | null) {
   const campos = changedFields(before ?? {}, after, ['numero', 'patronoId'])
   campos.push(...changedFields(before?.patrono ?? {}, after.patrono, ['nome', 'biografia', 'fotoUrl']).map(field => `patrono.${field}`))
@@ -127,7 +142,10 @@ export async function createOrReplaceCadeira(input: unknown, actor: AuditActor) 
 
 export async function editCadeira(numero: number, input: unknown, actor: AuditActor) {
   const b = v.object(input)
-  v.keys(b, ['patrono', 'academico', 'ocupacaoAtualId', 'encerramento'])
+  v.keys(b, ['patrono', 'academico', 'ocupacaoAtualId', 'encerramento', 'versao'])
+  if (typeof b.versao !== 'string' || !/^[a-f0-9]{64}$/.test(b.versao)) {
+    throw new ValidationError('Informe a versão recebida ao abrir a cadeira. Reabra a edição antes de salvar.')
+  }
   if (b.patrono === undefined && b.academico === undefined && b.encerramento === undefined) throw new ValidationError('Informe dados para editar.')
   const p = b.patrono === undefined ? undefined : patrono(b.patrono)
   const a = b.academico === undefined ? undefined : pessoa(b.academico)
@@ -135,10 +153,15 @@ export async function editCadeira(numero: number, input: unknown, actor: AuditAc
   if (encerramento) v.keys(encerramento, ['fimEm', 'inMemoriam'])
   const fimEm = encerramento ? v.day(encerramento.fimEm, 'fimEm') : undefined
   const inMemoriam = encerramento ? v.bool(encerramento.inMemoriam) : false
+  // Protege também pessoas compartilhadas por cadeiras diferentes. Conflitos
+  // de serialização viram 409 na rota; não repetimos um formulário desatualizado.
   return prisma.$transaction(async tx => {
     await lock(tx, numero)
     const cadeira = await tx.cadeira.findUnique({ where: { numero }, include: adminCadeiraInclude })
     if (!cadeira) throw new AppError('Cadeira não encontrada.', 404)
+    if (withCadeiraVersion(cadeira).versao !== b.versao) {
+      throw new AppError('Esta cadeira ou uma pessoa vinculada foi alterada. Reabra a edição e confira os dados antes de salvar.', 409)
+    }
     const atual = cadeira.ocupacoes.find(o => o.vigente)
     if ((a || encerramento) && (!atual || b.ocupacaoAtualId !== atual.id)) throw new CadeiraConflict(cadeira, atual?.id ?? null)
     if (fimEm) checkDate(fimEm, atual)
@@ -151,7 +174,7 @@ export async function editCadeira(numero: number, input: unknown, actor: AuditAc
     const saved = await tx.cadeira.findUniqueOrThrow({ where: { numero }, include: adminCadeiraInclude })
     await auditCadeira(tx, actor, fimEm ? 'ENCERRAR_OCUPACAO' : 'EDITAR', saved, cadeira)
     return saved
-  })
+  }, { isolationLevel: 'Serializable' })
 }
 
 export async function endOcupacao(numero: number, input: unknown, actor: AuditActor) {

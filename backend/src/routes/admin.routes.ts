@@ -5,7 +5,7 @@ import { createRequestLimit } from '../middlewares/contato-limit.middleware.js'
 import { cookieName, cookieOptions, requireAdmin, requireOrigin } from '../middlewares/admin-auth.middleware.js'
 import { login, logout } from '../services/admin-auth.service.js'
 import { contentResources } from '../services/admin-content.service.js'
-import { adminCadeiraInclude, CadeiraConflict, createOrReplaceCadeira, editCadeira, endOcupacao } from '../services/admin-cadeiras.service.js'
+import { adminCadeiraInclude, CadeiraConflict, createOrReplaceCadeira, editCadeira, endOcupacao, withCadeiraVersion } from '../services/admin-cadeiras.service.js'
 import { saveUpload } from '../services/admin-upload.service.js'
 import { parsePagination } from '../repositories/catalog-query.js'
 import { numeroCadeira } from '../repositories/mappers.js'
@@ -113,7 +113,7 @@ router.get('/cadeiras', handle(async (req, res) => {
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const current = Math.min(page, totalPages)
   const items = await prisma.cadeira.findMany({ where, skip: (current - 1) * pageSize, take: pageSize, orderBy: { numero: 'asc' }, include: adminCadeiraInclude })
-  res.json({ items, total, page: current, pageSize, totalPages })
+  res.json({ items: items.map(withCadeiraVersion), total, page: current, pageSize, totalPages })
 }))
 function chairNumber(value: unknown) {
   const numero = numeroCadeira(v.text(value, 'numero', 15))
@@ -123,14 +123,14 @@ function chairNumber(value: unknown) {
 router.get('/cadeiras/:numero', handle(async (req, res) => {
   const value = await prisma.cadeira.findUnique({ where: { numero: chairNumber(req.params.numero) }, include: adminCadeiraInclude })
   if (!value) throw new AppError('Cadeira não encontrada.', 404)
-  res.json(value)
+  res.json(withCadeiraVersion(value))
 }))
 router.post('/cadeiras', handle(async (req, res) => {
   const result = await createOrReplaceCadeira(req.body, actor(res))
-  res.status(result.created ? 201 : 200).json(result.cadeira)
+  res.status(result.created ? 201 : 200).json(withCadeiraVersion(result.cadeira))
 }))
-router.put('/cadeiras/:numero', handle(async (req, res) => { res.json(await editCadeira(chairNumber(req.params.numero), req.body, actor(res))) }))
-router.post('/cadeiras/:numero/encerrar', handle(async (req, res) => { res.json(await endOcupacao(chairNumber(req.params.numero), req.body, actor(res))) }))
+router.put('/cadeiras/:numero', handle(async (req, res) => { res.json(withCadeiraVersion(await editCadeira(chairNumber(req.params.numero), req.body, actor(res)))) }))
+router.post('/cadeiras/:numero/encerrar', handle(async (req, res) => { res.json(withCadeiraVersion(await endOcupacao(chairNumber(req.params.numero), req.body, actor(res)))) }))
 // Lookup de pessoas existentes evita duplicações durante cadastro de cadeiras.
 for (const name of ['academicos', 'patronos'] as const) {
   router.delete(`/${name}/:id`, handle(async (req, res) => {

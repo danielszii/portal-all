@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { acervoColors as colors } from '../src/domain/acervo.js'
 
 if (process.env.SEED_PRESENTATION !== 'true') {
   throw new Error('Carga de apresentação: defina SEED_PRESENTATION=true explicitamente.')
@@ -38,7 +39,6 @@ const bookTitles = [
   'A Palavra que Fica', 'Histórias de Nossa Gente', 'Versos do Vale', 'Travessias Literárias',
   'Almanaque Cultural', 'Antologia das Cadeiras', 'Escritos da Academia', 'Letras Limoeirenses',
 ]
-const colors = ['navy', 'ochre', 'ink', 'green', 'red']
 const photo = (index: number) => `/images/membros/retrato-institucional-${String(index % 11 + 1).padStart(2, '0')}.${index % 11 < 5 ? 'png' : 'jpeg'}`
 const eventPhotos = [
   '/images/eventos/sessao-solene.webp', '/images/eventos/sarau-literario.webp',

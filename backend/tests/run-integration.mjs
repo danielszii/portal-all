@@ -42,6 +42,7 @@ try {
     run(['--import', 'tsx', '--test', 'tests/integration/instituicao-admin.test.ts'])
     run(['--import', 'tsx', '--test', 'tests/integration/postgres.test.ts'])
     run(['--import', 'tsx', '--test', 'tests/integration/admin.test.ts'])
+    run(['--import', 'tsx', '--test', 'tests/integration/backend-regressions.test.ts'])
     run(['--import', 'tsx', '--test', 'tests/integration/deletions.test.ts'])
     run(['--import', 'tsx', '--test', 'tests/integration/evento-galeria.test.ts'])
     run(['--import', 'tsx', '--test', 'tests/integration/uploads.test.ts'])

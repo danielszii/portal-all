@@ -10,6 +10,14 @@ import { createRequestLimit } from './middlewares/contato-limit.middleware.js'
 import adminRouter from './routes/admin.routes.js'
 import { uploadDir } from './services/admin-upload.service.js'
 
+const notFound = (_req: Request, res: Response) => {
+  res.status(404).json({
+    status: 'error',
+    statusCode: 404,
+    error: 'Rota não encontrada na API da Academia Limoeirense de Letras.',
+  })
+}
+
 export function createApp(frontendDir = fileURLToPath(new URL('../../frontend/dist/', import.meta.url))) {
   const app = express()
   app.disable('x-powered-by')
@@ -26,11 +34,11 @@ export function createApp(frontendDir = fileURLToPath(new URL('../../frontend/di
   }, validateSearch)
   app.use('/api/admin', adminRouter)
   app.use(express.json({ limit: '32kb' }))
-  app.use('/uploads', express.static(uploadDir, { dotfiles: 'deny', index: false, setHeaders(res) {
+  app.use('/uploads', express.static(uploadDir, { dotfiles: 'deny', index: false, redirect: false, setHeaders(res) {
     res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'; frame-ancestors 'self'")
     res.setHeader('X-Frame-Options', 'SAMEORIGIN')
     res.setHeader('X-Content-Type-Options', 'nosniff')
-  } }))
+  } }), notFound)
 
   // Informações da API não interceptam a página inicial do portal.
   const apiInfo = (_req: Request, res: Response) => {
@@ -57,19 +65,14 @@ export function createApp(frontendDir = fileURLToPath(new URL('../../frontend/di
 
   if (existsSync(`${frontendDir}/index.html`)) {
     app.use(express.static(frontendDir))
+    app.use('/assets', notFound)
     app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => res.sendFile(`${frontendDir}/index.html`))
   } else {
     app.get('/', apiInfo)
   }
 
   // 404 Handler
-  app.use((_req: Request, res: Response) => {
-    res.status(404).json({
-      status: 'error',
-      statusCode: 404,
-      error: 'Rota não encontrada na API da Academia Limoeirense de Letras.',
-    })
-  })
+  app.use(notFound)
 
   // Middleware global de tratamento de erros
   app.use(errorHandler)

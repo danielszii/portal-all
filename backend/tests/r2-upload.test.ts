@@ -8,6 +8,7 @@ import { readR2Config } from '../src/config/upload.config.js'
 import { prisma } from '../src/db/prisma.js'
 import { mockMethod } from './mock-method.js'
 import { imageFixture, pdfFixture } from './upload-fixtures.js'
+import { AppError } from '../src/errors/app.error.js'
 
 const cloud = {
   R2_ACCOUNT_ID: 'a'.repeat(32), R2_ACCESS_KEY_ID: 'test-access', R2_SECRET_ACCESS_KEY: 'test-secret',
@@ -25,6 +26,25 @@ test('configuração R2 exige conjunto completo, identificador e URL HTTPS sem d
     assert.throws(() => readR2Config({ ...cloud, R2_PUBLIC_URL: url }), /R2_PUBLIC_URL/)
   }
   assert.equal(readR2Config({ ...cloud, R2_PUBLIC_URL: ' https://acervo.example.test/arquivos/ ' })?.publicUrl, 'https://acervo.example.test/arquivos')
+})
+
+test('banco compartilhado e produção exigem armazenamento configurado explicitamente', () => {
+  for (const DATABASE_URL of ['postgresql://user:secret@db.example.test/portal', 'postgresql://user:secret@db.project.supabase.co/postgres']) {
+    assert.throws(() => readR2Config({ DATABASE_URL }), error => {
+      assert.ok(error instanceof AppError)
+      assert.equal(error.statusCode, 503)
+      assert.match(error.message, /Uploads indisponíveis/)
+      assert.doesNotMatch(error.message, /user:secret/)
+      return true
+    })
+    assert.equal(readR2Config({ DATABASE_URL, UPLOAD_DIR: '/persistent/uploads' }), null)
+    assert.equal(readR2Config({ DATABASE_URL, ...cloud })?.bucket, cloud.R2_BUCKET)
+  }
+  for (const host of ['localhost', '127.0.0.1', '[::1]']) {
+    assert.equal(readR2Config({ DATABASE_URL: `postgresql://user:secret@${host}/portal` }), null)
+  }
+  assert.throws(() => readR2Config({ NODE_ENV: 'production' }), /Uploads indisponíveis/)
+  assert.throws(() => readR2Config({ DATABASE_URL: 'conexão inválida' }), /DATABASE_URL inválida/)
 })
 
 test('upload R2 preserva conteúdo, auditoria e tratamento de falhas sem acessar a nuvem', async t => {
@@ -90,6 +110,23 @@ test('upload R2 preserva conteúdo, auditoria e tratamento de falhas sem acessar
     const send = mockMethod(t, S3Client.prototype, 'send', async () => ({}))
     const audit = mockMethod(t, prisma.registroAuditoria, 'create', async () => ({}))
     await assert.rejects(saveUpload(await imageFixture(), 'image/png', actor), /R2_BUCKET/)
+    assert.equal(send.mock.callCount(), 0)
+    assert.equal(audit.mock.callCount(), 0)
+    assert.deepEqual(await readdir(directory), [])
+  })
+
+  await t.test('banco remoto sem R2 não grava arquivo local nem registra sucesso', async t => {
+    configureCloud(t)
+    for (const key of Object.keys(cloud)) delete process.env[key]
+    const previousDatabase = process.env.DATABASE_URL
+    process.env.DATABASE_URL = 'postgresql://user:secret@db.example.test/portal'
+    t.after(() => {
+      if (previousDatabase === undefined) delete process.env.DATABASE_URL
+      else process.env.DATABASE_URL = previousDatabase
+    })
+    const send = mockMethod(t, S3Client.prototype, 'send', async () => ({}))
+    const audit = mockMethod(t, prisma.registroAuditoria, 'create', async () => ({}))
+    await assert.rejects(saveUpload(await imageFixture(), 'image/png', actor), error => error instanceof AppError && error.statusCode === 503)
     assert.equal(send.mock.callCount(), 0)
     assert.equal(audit.mock.callCount(), 0)
     assert.deepEqual(await readdir(directory), [])

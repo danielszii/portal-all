@@ -113,10 +113,10 @@ test('uploads validados por HTTP e associados aos campos corretos no PostgreSQL'
       await request('/cadeiras', 'POST', { ...data, [role]: { ...data[role], fotoUrl: pdf } }, 400)
       assert.equal(await prisma.cadeira.findUnique({ where: { numero: data.numero } }), null)
     }
-    const chair = await (await request('/cadeiras', 'POST', data, 201)).json() as { ocupacoes: { id: string; vigente: boolean }[] }
+    const chair = await (await request('/cadeiras', 'POST', data, 201)).json() as { versao: string; ocupacoes: { id: string; vigente: boolean }[] }
     const ocupacaoAtualId = chair.ocupacoes.find(row => row.vigente)!.id
-    await request('/cadeiras/3650', 'PUT', { ocupacaoAtualId, academico: { ...data.academico, fotoUrl: pdf } }, 400)
-    await request('/cadeiras/3650', 'PUT', { patrono: { ...data.patrono, fotoUrl: pdf } }, 400)
+    await request('/cadeiras/3650', 'PUT', { versao: chair.versao, ocupacaoAtualId, academico: { ...data.academico, fotoUrl: pdf } }, 400)
+    await request('/cadeiras/3650', 'PUT', { versao: chair.versao, patrono: { ...data.patrono, fotoUrl: pdf } }, 400)
     const visible = await (await fetch(base + '/api/cadeiras/3650')).json() as { image: string }
     assert.equal(visible.image, photo)
   })

@@ -99,7 +99,7 @@ test('administração com sessão e PostgreSQL real', async t => {
     assert.equal(historical.fimAno, 2021)
     await request('/cadeiras', 'POST', confirmed, 409)
     const current = updated.ocupacoes.find((o: { vigente: boolean }) => o.vigente)
-    await request('/cadeiras/3001', 'PUT', { academico: { nome: 'Titular corrigido' }, ocupacaoAtualId: current.id })
+    await request('/cadeiras/3001', 'PUT', { versao: updated.versao, academico: { nome: 'Titular corrigido' }, ocupacaoAtualId: current.id })
     const publicChair = await (await fetch(base + '/api/cadeiras/3001')).json() as { holder: string; founder: string; sucessao: unknown[] }
     assert.equal(publicChair.holder, 'Titular corrigido')
     assert.equal(publicChair.founder, 'Primeiro titular')

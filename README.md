@@ -134,9 +134,12 @@ PDFs e imagens não devem ser armazenados no PostgreSQL. Para usar Cloudflare R2
 crie um bucket e um token limitado a esse bucket e configure `R2_ACCOUNT_ID`,
 `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` e `R2_PUBLIC_URL`, conforme
 o modelo em `backend/.env.example`. Com todas definidas, o endpoint administrativo
-de upload grava no R2 e retorna a URL pública; sem elas, preserva o armazenamento
-local em `backend/uploads`. Se apenas parte delas estiver definida, o upload falha
-explicitamente para evitar gravar arquivos no destino errado.
+de upload grava no R2 e retorna a URL pública. Sem elas, o armazenamento automático
+em `backend/uploads` fica restrito ao desenvolvimento com banco local. Com banco
+remoto ou em produção, novos uploads retornam 503 até configurar o armazenamento.
+Um `UPLOAD_DIR` explícito permite disco persistente em um backend central; ele não
+é compartilhado automaticamente entre máquinas. Configuração R2 parcial também
+falha explicitamente para evitar gravar arquivos no destino errado.
 
 Inicie frontend e backend em modo de desenvolvimento:
 
@@ -233,8 +236,12 @@ npm start
 
 O backend serve o frontend compilado e mantém o acesso direto às rotas da aplicação React.
 As informações da API ficam em `/api`. Sem um frontend compilado, `/` também mostra essas informações.
+Arquivos inexistentes em `/uploads` e `/assets` retornam 404, sem substituir o arquivo por HTML.
 Ao abrir essa versão localmente, ajuste `FRONTEND_URL` para `http://localhost:3001`.
 Em produção, configure a origem HTTPS real do site e `NODE_ENV=production`.
+O backend valida `PORT` (1 a 65535), `NODE_ENV` (`development`, `test` ou `production`)
+e `FRONTEND_URL` ao iniciar. A origem não aceita credenciais, caminho, consulta ou
+fragmento; em produção ela é obrigatória e deve usar HTTPS.
 
 `npm test` exercita serviços, mapeamentos e rotas HTTP com persistência simulada,
 sem acessar o banco configurado em `.env`. Inclui listas vazias, registros inexistentes,
@@ -289,7 +296,9 @@ dos arquivos de imagens e PDFs.
 
 O formulário aceita até cinco tentativas por IP a cada 15 minutos, por processo, e retorna
 HTTP 429 com `Retry-After` ao exceder o limite. O controle usa memória limitada e reinicia
-com o servidor. Em instalações com múltiplas instâncias, aplique também um limite compartilhado
+com o servidor. Endereços IPv4 equivalentes usam a mesma cota e endereços IPv6 são
+agrupados por rede /64, evitando contornar o limite com endereços temporários.
+Em instalações com múltiplas instâncias, aplique também um limite compartilhado
 na infraestrutura. Atrás de proxy, configure a confiança apenas nos proxies conhecidos;
 sem essa configuração, os clientes do mesmo proxy compartilham o limite.
 
@@ -352,6 +361,11 @@ O importador abre o SQLite somente para leitura e não sobrescreve registros exi
 
 ## Segurança e preservação dos dados
 
+- Requisições com `Origin` diferente de `FRONTEND_URL`, incluindo `null`, recebem
+  403 antes de acessar as rotas. Preflight só autoriza a origem configurada.
+  Clientes sem `Origin` continuam podendo consultar a API pública; CORS não
+  substitui autenticação nem impede bots de omitir esse cabeçalho. As escritas
+  administrativas continuam exigindo sessão, origem e token CSRF.
 - Consultas GET/HEAD em `/api` aceitam até 120 requisições por IP por minuto,
   por processo; o excesso retorna 429 com `Retry-After`. `/api/health` é isento.
   O limite de contato continua separado (5 tentativas em 15 minutos).

@@ -83,9 +83,9 @@ test('auditoria administrativa persiste autoria, ações e integridade com Postg
 
   await t.test('cadeiras registram criação, edição, sucessão e encerramento sem copiar biografias', async () => {
     const data = { numero: 3700, inicioEm: '2020-01-01', patrono: { nome: 'Patrono auditado' }, academico: { nome: 'Primeiro titular auditado' } }
-    const created = await (await request('/cadeiras', 'POST', data, 201)).json() as { id: string; ocupacoes: { id: string; vigente: boolean }[] }
+    const created = await (await request('/cadeiras', 'POST', data, 201)).json() as { id: string; versao: string; ocupacoes: { id: string; vigente: boolean }[] }
     let current = created.ocupacoes.find(row => row.vigente)!.id
-    await request('/cadeiras/3700', 'PUT', { ocupacaoAtualId: current, academico: { nome: data.academico.nome, biografia: 'Biografia extensa fora do log' } })
+    await request('/cadeiras/3700', 'PUT', { versao: created.versao, ocupacaoAtualId: current, academico: { nome: data.academico.nome, biografia: 'Biografia extensa fora do log' } })
     const successor = { ...data, inicioEm: '2021-01-01', academico: { nome: 'Sucessor auditado' } }
     await request('/cadeiras', 'POST', successor, 409)
     const updated = await (await request('/cadeiras', 'POST', { ...successor, confirmarSubstituicao: true, ocupacaoAtualId: current })).json() as typeof created

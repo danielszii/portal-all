@@ -208,9 +208,11 @@ HTTP de 256 KB por JSON. A API pública permanece inalterada.
 ```
 
 Título e categoria obrigatórios. PDF obrigatório para publicar; páginas devem ser
-positivas; ano entre 1 e 9999. Cores: `navy`, `ochre`, `ink`.
+positivas; ano entre 1 e 9999.
 O formulário envia autoria em `autoriaTexto` e tipo em `categoria`.
 Relações antigas de autoria são preservadas ao editar o formulário.
+`cor` aceita `navy` (padrão), `ochre`, `ink`, `green` e `red`, incluindo os valores
+já usados pelos registros demonstrativos. Editar uma obra não exige trocar sua cor.
 
 ### Agenda
 
@@ -335,6 +337,17 @@ Para corrigir dados do titular atual, use PUT com `academico` e `ocupacaoAtualId
 para corrigir patrono, use `patrono`. Cada objeto enviado exige nome e substitui
 seus campos opcionais; objetos omitidos não são alterados. Editar o patrono ou
 acadêmico altera a mesma pessoa nas demais relações em que ela aparece.
+
+Todo PUT também exige `versao`, exatamente como recebido ao abrir a cadeira no
+GET administrativo. Listagens, detalhes e respostas de gravação incluem esse
+campo. A versão considera cadeira, ocupações e pessoas relacionadas, inclusive
+patronos compartilhados. Ausência/formato inválido retorna 400; dados alterados
+desde a leitura ou gravações concorrentes retornam 409 sem alteração parcial ou
+registro de sucesso na auditoria. Reabra o formulário e confira os dados antes
+de tentar novamente; não busque uma versão nova apenas para reenviar dados antigos.
+Essa proteção também se aplica à edição do patrono de uma cadeira vaga. A versão
+é calculada a partir dos dados existentes, sem migration ou mudança na API pública.
+
 O PUT também aceita `encerramento: { "fimEm": "2026-09-23", "inMemoriam": false }`
 junto dos dados do formulário e de `ocupacaoAtualId`, aplicando edição e encerramento
 na mesma transação. Na tela, mudar a situação do titular exige data e confirmação.
@@ -496,8 +509,15 @@ const response = await fetch('/api/admin/uploads', {
 // Use a URL retornada em img, foto, fotoUrl ou pdfUrl do formulário.
 ```
 
-Sem R2, arquivos ficam em `backend/uploads`, ignorado pelo Git; `UPLOAD_DIR`
-permite configurar outro diretório e, quando definido, tem prioridade sobre R2.
+Com banco local em desenvolvimento, arquivos podem ficar em `backend/uploads`,
+ignorado pelo Git. Com banco remoto (inclusive Supabase) ou em produção, a ausência
+de armazenamento configurado retorna 503 no upload, sem gravar arquivo ou auditoria
+de sucesso. Isso evita registrar no banco compartilhado URLs que só funcionam na
+máquina de quem enviou. Arquivos já cadastrados permanecem acessíveis.
+
+`UPLOAD_DIR` explícito tem prioridade sobre R2 e permite armazenamento local em
+um backend central com disco persistente, ou em testes isolados. Esse diretório
+não é sincronizado pelo banco; compartilhar somente o `.env` não distribui arquivos.
 Para usar Cloudflare R2, configure as cinco variáveis de `.env.example`:
 `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` e
 `R2_PUBLIC_URL`. O ID da conta deve ter 32 caracteres hexadecimais e a URL pública
