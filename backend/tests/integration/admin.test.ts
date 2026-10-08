@@ -22,7 +22,7 @@ test('administração com sessão e PostgreSQL real', async t => {
   const base = await serve(t, createApp())
   const origin = new URL(envConfig.frontendUrl).origin
   const password = 'Senha exclusiva de teste 2026'
-  const user = await prisma.administrador.create({ data: { email: 'admin@example.test', senhaHash: await hashPassword(password) } })
+  const user = await prisma.administrador.create({ data: { email: 'admin@example.test', senhaHash: await hashPassword(password), perfis: ['ADMINISTRADOR'] } })
   let cookie = '', csrf = ''
   const request = async (path: string, method = 'GET', body?: unknown, expected = 200) => {
     const res = await fetch(base + '/api/admin' + path, { method, headers: { Cookie: cookie, Origin: origin, 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) })

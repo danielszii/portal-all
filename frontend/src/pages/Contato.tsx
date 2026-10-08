@@ -1,11 +1,10 @@
-import { useResource } from '@/hooks/useResource'
-import { fetchInstituicao } from '@/services/api'
+import { useInstituicao } from '@/hooks/useInstituicao'
 import { useState } from 'react'
 import { ArrowUpRight, MapPin, Mail, Clock } from 'lucide-react'
 import { postContato } from '@/services/api'
 
 export default function Contato() {
-  const institution = useResource(fetchInstituicao, { info: null, gestao: null })
+  const institution = useInstituicao()
   const info = institution.data.info
   const [form, setForm] = useState({ nome: '', email: '', assunto: '', mensagem: '' })
   const [enviado, setEnviado] = useState(false)

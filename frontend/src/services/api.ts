@@ -1,4 +1,4 @@
-import type { Cadeira, Evento, GaleriaFoto, Noticia, AcervoItem, ContatoForm, SearchPage } from '@/types'
+import type { Cadeira, Evento, GaleriaFoto, Noticia, AcervoItem, ContatoForm, SearchPage } from '../types/index.js'
 
 class ApiError extends Error {
   constructor(message: string, public status: number) { super(message) }
@@ -6,6 +6,7 @@ class ApiError extends Error {
 const publicCache = new Map<string, { value: unknown; expiresAt: number }>()
 const publicRequests = new Map<string, Promise<unknown>>()
 const publicCacheMs = 60_000
+const institutionListeners = new Set<() => void>()
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const method = (init.method ?? 'GET').toUpperCase()
@@ -25,15 +26,20 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       : init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000)
     const res = await fetch(`/api${path}`, { ...init, signal })
     if (!res.ok) {
-      const body = await res.json().catch(() => null)
+      const body = await res.json().catch(() => null) as { error?: unknown } | null
       throw new ApiError(typeof body?.error === 'string' ? body.error : 'Não foi possível acessar o servidor. Tente novamente.', res.status)
     }
     const value = await res.json() as T
-    if (cacheable) publicCache.set(path, { value, expiresAt: Date.now() + publicCacheMs })
     return value
   }
   if (!cacheable) return load()
-  const pending = (publicRequests.get(path) as Promise<T> | undefined) ?? load().finally(() => publicRequests.delete(path))
+  const existing = publicRequests.get(path) as Promise<T> | undefined
+  if (existing) return existing
+  const pending = load().then(value => {
+    // Uma leitura anterior à edição não pode repor dados antigos no cache.
+    if (publicRequests.get(path) === pending) publicCache.set(path, { value, expiresAt: Date.now() + publicCacheMs })
+    return value
+  }).finally(() => { if (publicRequests.get(path) === pending) publicRequests.delete(path) })
   publicRequests.set(path, pending)
   return pending
 }
@@ -62,11 +68,20 @@ export const fetchAcervoPage = (page: number, tipo?: string, q?: string, signal?
 export const fetchAcervoById = (id: string, signal?: AbortSignal) => request<AcervoItem>(`/acervo/${encodeURIComponent(id)}`, { signal })
 export const postContato = (dados: ContatoForm) => request<{ sucesso: boolean; mensagem: string; id: string }>('/contato', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) })
 
-type InstituicaoResponse = {
+export type InstituicaoResponse = {
   info: { nome: string; historia: string; missao: string; endereco: string | null; email: string | null; telefone: string | null; fundacaoAno: number | null; sedeTexto: string | null; trajetoriaTexto: string | null; horarioAtendimento: string | null } | null
   gestao: { inicioAno: number; fimAno: number | null; diretoria: { cargo: string; nome: string; posse: string }[] } | null
 }
 export const fetchInstituicao = (signal?: AbortSignal) => request<InstituicaoResponse>('/instituicao', { signal })
+export function invalidateInstituicao() {
+  publicCache.delete('/instituicao')
+  publicRequests.delete('/instituicao')
+  institutionListeners.forEach(listener => listener())
+}
+export function subscribeInstituicao(listener: () => void) {
+  institutionListeners.add(listener)
+  return () => { institutionListeners.delete(listener) }
+}
 
 type InicioCadeira = Pick<Cadeira, 'number' | 'patron' | 'holder' | 'image' | 'status'>
 type InicioAcervo = Pick<AcervoItem, 'id' | 'title' | 'tomo' | 'year' | 'color' | 'author'>

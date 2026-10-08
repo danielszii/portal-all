@@ -14,7 +14,7 @@ const headers = { Cookie: `${cookieName}=${'a'.repeat(64)}`, Origin: origin, 'X-
 function adminSession(t: TestContext) {
   mockMethod(t, prisma, '$transaction', async callback => callback(prisma))
   mockMethod(t, prisma.sessaoAdmin, 'findUnique', async () => ({
-    administrador: { id: 'admin', email: 'admin@example.test', ativo: true }, csrfToken: headers['X-CSRF-Token'], expiraEm: new Date(Date.now() + 60_000),
+    administrador: { id: 'admin', email: 'admin@example.test', ativo: true, perfis: ['ADMINISTRADOR'] }, csrfToken: headers['X-CSRF-Token'], expiraEm: new Date(Date.now() + 60_000),
   }))
 }
 

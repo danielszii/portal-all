@@ -26,7 +26,7 @@ test('exclusões administrativas com PostgreSQL real preservam relações e arqu
   const base = await serve(t, createApp())
   const origin = new URL(envConfig.frontendUrl).origin
   const password = 'Senha exclusiva para teste de exclusao'
-  const user = await prisma.administrador.create({ data: { email: 'delete@example.test', senhaHash: await hashPassword(password) } })
+  const user = await prisma.administrador.create({ data: { email: 'delete@example.test', senhaHash: await hashPassword(password), perfis: ['ADMINISTRADOR'] } })
   const login = await fetch(base + '/api/admin/auth/login', {
     method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: user.email, password }),

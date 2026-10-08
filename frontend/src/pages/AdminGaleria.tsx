@@ -10,7 +10,7 @@ import { AdminApiError, deleteGalleryRecord, loadAdminGallery, type AdminPage, t
 const empty: AdminPage<GalleryRecord> = { items: [], total: 0, page: 1, pageSize: 20, totalPages: 1 }
 
 export default function AdminGaleria() {
-  const { csrfToken, refresh } = useAuth()
+  const { csrfToken, refresh, can } = useAuth()
   const [query, setQuery] = useState('')
   const [eventoId, setEventoId] = useState('')
   const [page, setPage] = useState(1)
@@ -22,7 +22,7 @@ export default function AdminGaleria() {
   const state = useResource(load, empty)
 
   const remove = async (item: GalleryRecord) => {
-    if (!csrfToken) return
+    if (!csrfToken || !can('registros:excluir')) return
     if (!await confirmation.confirm({ title: 'Remover foto da galeria?', message: `“${item.legenda}” deixará de aparecer na galeria. O arquivo e o evento serão preservados.`, confirmLabel: 'Remover foto', tone: 'danger' })) return
     setBusyId(item.id); setFeedback(''); setError('')
     try {
@@ -59,7 +59,7 @@ export default function AdminGaleria() {
           {state.data.items.map(item => <article className="admin-gallery-card" key={item.id}>
             <img src={item.src} alt={item.textoAlternativo || item.legenda} loading="lazy" />
             <div><span>{item.automatica ? 'Automática' : 'Manual'}</span><h2>{item.legenda}</h2><p>{item.eventoId ? `Evento: ${item.eventoId}` : 'Sem evento vinculado'}</p>{item.credito && <small>Crédito: {item.credito}</small>}</div>
-            <button className="admin-delete-action" type="button" disabled={busyId === item.id} onClick={() => void remove(item)}><Trash2 size={14} /> {busyId === item.id ? 'Removendo…' : 'Remover'}</button>
+            {can('registros:excluir') && <button className="admin-delete-action" type="button" disabled={busyId === item.id} onClick={() => void remove(item)}><Trash2 size={14} /> {busyId === item.id ? 'Removendo…' : 'Remover'}</button>}
           </article>)}
         </div>}
         {!state.loading && !state.error && <Pagination page={state.data.page} totalPages={state.data.totalPages} onChange={setPage} />}

@@ -27,7 +27,7 @@ test('auditoria administrativa persiste autoria, ações e integridade com Postg
   const base = await serve(t, createApp())
   const origin = new URL(envConfig.frontendUrl).origin
   const password = 'Senha exclusiva de auditoria 2026'
-  const user = await prisma.administrador.create({ data: { email: 'audit@example.test', senhaHash: await hashPassword(password) } })
+  const user = await prisma.administrador.create({ data: { email: 'audit@example.test', senhaHash: await hashPassword(password), perfis: ['ADMINISTRADOR'] } })
   const started = Date.now()
   const login = () => fetch(base + '/api/admin/auth/login', { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: user.email, password }) })
   const signedIn = await login()
@@ -161,7 +161,7 @@ test('auditoria administrativa persiste autoria, ações e integridade com Postg
     const filtered = await (await request('/auditoria?administradorId=' + user.id + '&recurso=CADEIRA&acao=TROCAR_TITULAR')).json() as typeof first
     assert.equal(filtered.total, 1)
     assert.equal(filtered.items[0].recurso, 'CADEIRA')
-    for (const method of ['POST', 'PUT', 'DELETE']) await request('/auditoria', method, undefined, 404)
+    for (const method of ['POST', 'PUT', 'DELETE']) await request('/auditoria', method, undefined, 403)
     assert.equal((await logs()).length, first.total)
   })
 

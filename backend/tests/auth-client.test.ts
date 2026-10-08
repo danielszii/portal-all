@@ -1,8 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { adminDestination, AuthError, fetchAdminSession, loginAdmin, logoutAdmin } from '../../frontend/src/services/auth.js'
+import { publicAdmin } from '../src/domain/admin-permissions.js'
 
-const session = { user: { id: 'admin-id', email: 'admin@example.test' }, csrfToken: 'a'.repeat(64), expiraEm: '2099-01-01T00:00:00.000Z' }
+const session = { user: publicAdmin({ id: 'admin-id', email: 'admin@example.test', perfis: ['ADMINISTRADOR'] }), csrfToken: 'a'.repeat(64), expiraEm: '2099-01-01T00:00:00.000Z' }
 
 test('login do frontend envia a senha ao backend e usa o cookie de sessão', async t => {
   t.mock.method(globalThis, 'fetch', async (path: string, init: RequestInit & { cache?: string }) => {
@@ -60,4 +61,11 @@ test('login aceita apenas destinos internos do administrativo', () => {
 test('frontend informa o tempo de espera quando o login é limitado', async t => {
   t.mock.method(globalThis, 'fetch', async () => Response.json({ error: 'Muitas requisições.' }, { status: 429, headers: { 'Retry-After': '360' } }))
   await assert.rejects(loginAdmin('admin@example.test', 'senha', false), error => error instanceof AuthError && error.status === 429 && error.message.includes('6 minuto(s)'))
+})
+
+test('frontend recusa sessões sem perfis ou com permissões incompatíveis', async t => {
+  const fetch = t.mock.method(globalThis, 'fetch', async () => Response.json({ ...session, user: { id: 'old', email: 'old@example.test' } }))
+  await assert.rejects(fetchAdminSession(), /Resposta de autenticação inválida/)
+  fetch.mock.mockImplementation(async () => Response.json({ ...session, user: { ...session.user, perfis: ['CONSULTA'] } }))
+  await assert.rejects(fetchAdminSession(), /Resposta de autenticação inválida/)
 })

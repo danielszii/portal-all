@@ -1,5 +1,5 @@
-import { useResource } from '@/hooks/useResource'
-import { fetchInstituicao, preloadPublicRoute } from '@/services/api'
+import { useInstituicao } from '@/hooks/useInstituicao'
+import { preloadPublicRoute } from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { useEffect, useRef, useState } from 'react'
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router'
@@ -8,7 +8,7 @@ import logoSrc from '@/imports/Logo_Vetorizada_A.L.L_sem_fundo.svg'
 import PageMetadata from './PageMetadata'
 
 export default function Layout() {
-  const institution = useResource(fetchInstituicao, { info: null, gestao: null })
+  const institution = useInstituicao()
   const { isAuthenticated, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')

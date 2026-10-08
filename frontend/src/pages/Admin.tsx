@@ -1,6 +1,7 @@
-import { ArrowUpRight, BookOpen, Building2, CalendarDays, History, LayoutDashboard, Newspaper, Users } from 'lucide-react'
+import { ArrowUpRight, BookOpen, Building2, CalendarDays, History, LayoutDashboard, Newspaper, Users, UserCog } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { NavLink } from 'react-router'
+import { canOpenAdminPage } from '@/services/admin-permissions'
 
 const modules = [
   { title: 'Acervo', description: 'Cadastre livros, edições e arquivos digitais.', action: 'Gerenciar acervo', to: '/admin/acervo', icon: BookOpen },
@@ -9,10 +10,11 @@ const modules = [
   { title: 'Membros', description: 'Atualize informações das cadeiras e seus titulares.', action: 'Gerenciar membros', to: '/admin/membros', icon: Users },
   { title: 'Histórico', description: 'Acompanhe publicações, edições, exclusões e acessos.', action: 'Consultar histórico', to: '/admin/auditoria', icon: History },
   { title: 'Instituição', description: 'Consulte os dados institucionais e a diretoria publicados.', action: 'Consultar instituição', to: '/admin/instituicao', icon: Building2 },
+  { title: 'Contas', description: 'Defina os perfis e o acesso de cada pessoa.', action: 'Gerenciar contas', to: '/admin/contas', icon: UserCog },
 ]
 
 export default function Admin() {
-  const { user } = useAuth()
+  const { user, can } = useAuth()
 
   return (
     <main className="admin-page">
@@ -29,7 +31,7 @@ export default function Admin() {
         </div>
 
         <nav className="admin-module-grid" aria-label="Módulos administrativos">
-          {modules.map(({ title, description, action, to, icon: Icon }, index) => (
+          {modules.filter(module => canOpenAdminPage(module.to, can)).map(({ title, description, action, to, icon: Icon }, index) => (
             <NavLink className="admin-module-card" to={to} key={title}>
               <div className="admin-module-card-top">
                 <div className="admin-module-icon"><Icon size={23} strokeWidth={1.5} /></div>

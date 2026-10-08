@@ -8,13 +8,22 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum PerfilAdministrador {
+  ADMINISTRADOR
+  EDITOR
+  SECRETARIA
+  CONSULTA
+}
+
 model Administrador {
   id String @id @default(uuid())
   email String @unique
   senhaHash String
   ativo Boolean @default(true)
+  perfis PerfilAdministrador[] @default([CONSULTA])
   sessoes SessaoAdmin[]
   criadoEm DateTime @default(now())
+  atualizadoEm DateTime @default(now()) @updatedAt @db.Timestamptz(3)
 }
 
 model SessaoAdmin {
@@ -41,6 +50,7 @@ enum AcaoAuditoria {
 }
 
 enum RecursoAuditoria {
+  ADMINISTRADOR
   NOTICIA
   ACERVO
   EVENTO

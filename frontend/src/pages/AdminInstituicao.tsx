@@ -1,10 +1,16 @@
-import { ArrowLeft, Building2, CalendarDays, Check, Clock3, ExternalLink, FileText, Mail, MapPin, Phone, RefreshCw, ShieldCheck, Users } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowLeft, Building2, CalendarDays, Check, Clock3, ExternalLink, FileText, Mail, MapPin, Pencil, Phone, RefreshCw, ShieldCheck, Users } from 'lucide-react'
 import { NavLink } from 'react-router'
-import { useResource } from '@/hooks/useResource'
-import { fetchInstituicao } from '@/services/api'
+import { useInstituicao } from '@/hooks/useInstituicao'
+import { useAuth } from '@/contexts/AuthContext'
+import AdminInstitutionEditor from '@/components/admin/AdminInstitutionEditor'
 
 export default function AdminInstituicao() {
-  const state = useResource(fetchInstituicao, { info: null, gestao: null })
+  const state = useInstituicao()
+  const { can } = useAuth()
+  const [editing, setEditing] = useState(false)
+  const [feedback, setFeedback] = useState('')
+  const canEdit = can('instituicao:editar')
   const info = state.data.info
   const gestao = state.data.gestao
   const fields = [info?.nome, info?.fundacaoAno, info?.email, info?.telefone, info?.endereco, info?.horarioAtendimento, info?.historia, info?.missao]
@@ -33,10 +39,12 @@ export default function AdminInstituicao() {
         </div>
         <div className="admin-header-actions">
           <NavLink className="admin-secondary-action" to="/admin"><ArrowLeft size={15} /> Painel</NavLink>
+          {canEdit && <button className="admin-secondary-action" type="button" onClick={() => { setFeedback(''); setEditing(true) }}><Pencil size={15} /> Editar dados</button>}
           <NavLink className="admin-primary-action" to="/academia" target="_blank">Ver página pública <ExternalLink size={14} /></NavLink>
         </div>
       </div>
 
+      {feedback && <p className="admin-feedback" role="status">{feedback}</p>}
       {state.loading && <div className="admin-institution-loading" role="status"><RefreshCw size={20} className="is-spinning" /><span>Carregando informações institucionais…</span></div>}
       {state.error && <div className="admin-state admin-state-error" role="alert"><p>{state.error}</p><button className="filtro-btn" type="button" onClick={state.retry}>Tentar novamente</button></div>}
       {!state.loading && !state.error && <>
@@ -50,7 +58,7 @@ export default function AdminInstituicao() {
           <div className="admin-institution-stat"><ShieldCheck size={19} /><span>Publicação</span><strong>{info ? 'Ativa' : 'Sem dados'}</strong></div>
         </section>
 
-        <div className="admin-institution-notice" role="note"><ShieldCheck size={18} aria-hidden="true" /><div><strong>Visualização segura</strong><p>A edição permanece bloqueada até existir gravação administrativa auditada na API. Nenhuma alteração pode ser perdida ou publicada sem confirmação.</p></div></div>
+        <div className="admin-institution-notice" role="note"><ShieldCheck size={18} aria-hidden="true" /><div><strong>{canEdit ? 'Dados institucionais' : 'Consulta institucional'}</strong><p>{canEdit ? 'Use “Editar dados” para atualizar as informações da Academia. As alterações são publicadas ao salvar e registradas no histórico.' : 'Seu perfil permite consultar os dados publicados da instituição.'}</p></div></div>
 
         <div className="admin-institution-layout">
           <div className="admin-institution-main">
@@ -74,5 +82,6 @@ export default function AdminInstituicao() {
         </div>
       </>}
     </section>
+    {editing && canEdit && <AdminInstitutionEditor onClose={() => setEditing(false)} onSaved={() => { setEditing(false); setFeedback('Dados institucionais salvos e publicados com sucesso.') }} />}
   </main>
 }

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { fetchAdminSession, loginAdmin, logoutAdmin, type AdminSession } from '@/services/auth'
+import type { AdminPermission } from '@/services/admin-permissions'
 
 type AuthContextValue = {
   user: AdminSession['user'] | null
@@ -7,6 +8,7 @@ type AuthContextValue = {
   loading: boolean
   error: string | null
   csrfToken: string | null
+  can: (permission: AdminPermission) => boolean
   refresh: () => Promise<void>
   login: (email: string, password: string, remember: boolean) => Promise<void>
   logout: () => Promise<void>
@@ -71,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: session?.user ?? null,
     isAuthenticated: session !== null,
     csrfToken: session?.csrfToken ?? null,
+    can: permission => session?.user.permissoes.includes(permission) ?? false,
     loading, error, refresh,
     async login(email, password, remember) {
       busy.current = true

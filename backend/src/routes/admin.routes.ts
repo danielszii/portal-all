@@ -16,6 +16,9 @@ import { deleteFoto, listGaleria } from '../services/admin-galeria.service.js'
 import { maxUploadBytes, mediaMimeTypes } from '../domain/media.js'
 import { listAudit, type AuditActor } from '../services/admin-audit.service.js'
 import * as institutionAdmin from '../services/admin-instituicao.service.js'
+import { requireAdminPermission } from '../middlewares/admin-permissions.middleware.js'
+import { publicAdmin } from '../domain/admin-permissions.js'
+import { listAccounts, createAccount, editAccount } from '../services/admin-accounts.service.js'
 
 const router = Router()
 const handle = (fn: RequestHandler): RequestHandler => (req, res, next) => { Promise.resolve(fn(req, res, next)).catch(next) }
@@ -37,7 +40,7 @@ router.post('/auth/login', createRequestLimit({ limit: 5, windowMs: 15 * 60_000,
 router.use(requireAdmin)
 router.get('/auth/me', (_req, res) => {
   const current = res.locals.adminSession
-  res.json({ user: { id: current.administrador.id, email: current.administrador.email }, csrfToken: current.csrfToken, expiraEm: current.expiraEm })
+  res.json({ user: publicAdmin(current.administrador), csrfToken: current.csrfToken, expiraEm: current.expiraEm })
 })
 router.post('/auth/logout', handle(async (_req, res) => {
   await logout(res.locals.adminSession.tokenHash, actor(res))
@@ -45,12 +48,16 @@ router.post('/auth/logout', handle(async (_req, res) => {
   res.status(204).end()
 }))
 // Auth/CSRF and the limit run before reading uploaded files or larger JSON bodies.
+router.use(requireAdminPermission)
 const writeLimit = createRequestLimit({ limit: 60, windowMs: 60_000 })
 router.use((req, res, next) => ['GET', 'HEAD'].includes(req.method) ? next() : writeLimit(req, res, next))
 router.post('/uploads', raw({ type: [...mediaMimeTypes.pdf, ...mediaMimeTypes.image], limit: maxUploadBytes }), handle(async (req, res) => {
   res.status(201).json(await saveUpload(req.body, (req.get('content-type') ?? '').split(';')[0].toLowerCase(), actor(res)))
 }))
 router.use(json({ limit: '256kb' }))
+router.get('/contas', handle(async (req, res) => { res.json(await listAccounts(req.query)) }))
+router.post('/contas', handle(async (req, res) => { res.status(201).json(await createAccount(req.body, actor(res))) }))
+router.put('/contas/:id', handle(async (req, res) => { res.json(await editAccount(v.text(req.params.id, 'id', 100), req.body, actor(res))) }))
 router.get('/auditoria', handle(async (req, res) => { res.json(await listAudit(req.query)) }))
 
 router.get('/instituicao', handle(async (_req, res) => { res.json(await institutionAdmin.getInstitution()) }))

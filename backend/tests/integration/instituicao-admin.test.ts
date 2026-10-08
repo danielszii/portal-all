@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { serve } from '../serve.js'
+import { institutionValues, loadAdminInstitution, saveAdminInstitution } from '../../../frontend/src/services/admin-instituicao.js'
 
 const schema = process.env.INTEGRATION_SCHEMA ?? ''
 assert.match(schema, /^portal_test_[a-f0-9]{32}$/)
@@ -17,7 +18,7 @@ test('administração institucional persiste dados, diretoria, versões e audito
   assert.equal(await prisma.gestao.count(), 0)
   const people = await Promise.all(['Ana', 'Bruno', 'Carla', 'Histórico'].map((nome, index) => prisma.academico.create({ data: { nome: 'Diretoria teste ' + nome, inMemoriam: index === 3 } })))
   const password = 'Senha exclusiva da instituicao 2026'
-  const user = await prisma.administrador.create({ data: { email: 'institution@example.test', senhaHash: await hashPassword(password) } })
+  const user = await prisma.administrador.create({ data: { email: 'institution@example.test', senhaHash: await hashPassword(password), perfis: ['ADMINISTRADOR'] } })
   const boards: string[] = []
   t.after(async () => {
     await prisma.mandatoDiretoria.deleteMany({ where: { gestaoId: { in: boards } } })
@@ -66,6 +67,31 @@ test('administração institucional persiste dados, diretoria, versões e audito
     assert.ok(history[1].criadoEm instanceof Date)
     assert.ok(JSON.stringify(history[1].detalhes).includes('endereco'))
     assert.equal(JSON.stringify(history).includes(institution.historia), false)
+  })
+
+  await t.test('cliente do formulário salva campos opcionais, preserva textos e registra auditoria', async form => {
+    const nativeFetch = globalThis.fetch
+    form.mock.method(globalThis, 'fetch', async (input: string | URL | Request, options: RequestInit = {}) => {
+      const requestHeaders = new Headers(options.headers)
+      requestHeaders.set('Cookie', headers.Cookie)
+      requestHeaders.set('Origin', origin)
+      return nativeFetch(new URL(String(input), base), { ...options, headers: requestHeaders })
+    })
+    const current = (await loadAdminInstitution()).info
+    assert.ok(current)
+    const values = institutionValues(current)
+    const beforeLogs = (await logs('INSTITUICAO')).length
+    const saved = await saveAdminInstitution({ ...values, email: ' NOVO@EXAMPLE.TEST ', sedeTexto: '', fundacaoAno: '' }, current.atualizadoEm, csrfToken)
+    info = saved.info
+    assert.equal(info.email, 'novo@example.test')
+    assert.equal(info.fundacaoAno, null)
+    assert.equal(info.sedeTexto, null)
+    assert.equal(info.historia, current.historia)
+    assert.equal(info.trajetoriaTexto, current.trajetoriaTexto)
+    assert.equal((await publicInfo()).info.email, 'novo@example.test')
+    assert.equal((await logs('INSTITUICAO')).length, beforeLogs + 1)
+    await assert.rejects(saveAdminInstitution({ ...values, nome: 'Edição desatualizada' }, current.atualizadoEm, csrfToken), /foi alterado/)
+    assert.equal((await loadAdminInstitution()).info?.nome, info.nome)
   })
 
   await t.test('duas edições institucionais concorrentes não se sobrescrevem', async () => {

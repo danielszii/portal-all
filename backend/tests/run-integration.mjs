@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { PrismaClient } from '@prisma/client'
+import { verifyProfilesMigration } from './verify-profiles-migration.mjs'
 
 // Não carrega .env nem usa DATABASE_URL como alternativa.
 const raw = process.env.TEST_DATABASE_URL
@@ -37,8 +38,9 @@ try {
   // CREATE sem IF NOT EXISTS: nunca reutiliza um schema já existente.
   await db.$executeRawUnsafe(`CREATE SCHEMA "${schema}"`)
   try {
-    run(['node_modules/prisma/build/index.js', 'migrate', 'deploy'])
+    await verifyProfilesMigration(db, cwd, run)
     run(['--import', 'tsx', '--test', 'tests/integration/isolation.test.ts'])
+    run(['--import', 'tsx', '--test', 'tests/integration/admin-profiles.test.ts'])
     run(['--import', 'tsx', '--test', 'tests/integration/instituicao-admin.test.ts'])
     run(['--import', 'tsx', '--test', 'tests/integration/postgres.test.ts'])
     run(['--import', 'tsx', '--test', 'tests/integration/admin.test.ts'])

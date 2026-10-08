@@ -31,20 +31,22 @@ esse `Origin`. `NODE_ENV=production` ativa cookie Secure, exigindo HTTPS.
 
 ### Contas predefinidas
 
-Não existe cadastro público. Todos os administradores ativos têm as mesmas
-permissões. Por padrão, a senha tem 15 a 128 caracteres e é armazenada com scrypt e salt
+Não existe cadastro público. Um administrador geral pode criar contas pelo painel
+em `/admin/contas`; a CLI permite provisionar a primeira conta ou recuperar acesso.
+Por padrão, a senha tem 15 a 128 caracteres e é armazenada com scrypt e salt
 individual; sessões guardam apenas o hash do identificador.
 
 Para criar uma conta sem colocar a senha no histórico do PowerShell:
 
 ```powershell
 $env:ADMIN_EMAIL = Read-Host 'E-mail do administrador'
+$env:ADMIN_PERFIS = 'ADMINISTRADOR'
 $adminSecret = Read-Host 'Senha (15 a 128 caracteres)' -AsSecureString
 try {
   $env:ADMIN_PASSWORD = [System.Net.NetworkCredential]::new('', $adminSecret).Password
   npm --prefix backend run admin:account -- create
 } finally {
-  Remove-Item Env:ADMIN_EMAIL, Env:ADMIN_PASSWORD -ErrorAction SilentlyContinue
+  Remove-Item Env:ADMIN_EMAIL, Env:ADMIN_PASSWORD, Env:ADMIN_PERFIS -ErrorAction SilentlyContinue
   $adminSecret.Dispose()
 }
 ```
@@ -55,10 +57,67 @@ isso revoga suas sessões. Para desativar, defina somente `ADMIN_EMAIL` e execut
 `npm --prefix backend run admin:account -- disable` (também revoga sessões).
 Nenhuma conta ou senha padrão é criada pelas migrations ou pelo seed.
 
+Na CLI, `ADMIN_PERFIS` aceita `ADMINISTRADOR`, `EDITOR`, `SECRETARIA` e `CONSULTA`,
+separados por vírgula para combinar funções. Sem essa variável, `create` usa
+`CONSULTA`. Para trocar perfis, defina `ADMIN_EMAIL` e `ADMIN_PERFIS` e execute
+`npm --prefix backend run admin:account -- profiles`. Alterações pela CLI também
+respeitam a proteção do último administrador e registram `operador-cli` na auditoria.
+
 O operador local pode autorizar uma senha menor com `--allow-short-password`
 após `create` ou `password`. É uma exceção explícita de provisionamento; não há
 endpoint público para habilitá-la. Prefira manter o mínimo padrão de 15 caracteres.
 Não grave senhas reais neste documento nem no código do frontend.
+
+## Perfis e gerenciamento de contas
+
+| Perfil | Acesso |
+| --- | --- |
+| `ADMINISTRADOR` | Todas as áreas, contas e exclusões definitivas permitidas pelas regras de vínculo |
+| `EDITOR` | Notícias, agenda, acervo e galeria; criar, editar, publicar, arquivar; enviar imagens e PDFs |
+| `SECRETARIA` | Cadeiras, acadêmicos, patronos, sucessões, instituição e diretoria; enviar imagens |
+| `CONSULTA` | Leitura do conteúdo e dos dados institucionais, incluindo histórico de auditoria; sem uploads ou alterações |
+
+Os perfis podem ser combinados. Exclusões definitivas e gerenciamento de contas são
+exclusivos de `ADMINISTRADOR`. A galeria continua recebendo imagens dos eventos;
+remover uma referência é uma exclusão e exige administrador geral. Nenhum perfil
+edita ou apaga a auditoria. Contato permanece sem endpoint de leitura de mensagens.
+
+Todas as rotas de conteúdo, instituição, upload, auditoria e contas conferem as
+permissões no backend antes de ler o corpo. O painel oculta ações não permitidas,
+oferece visualização sem edição para consulta e bloqueia URLs administrativas sem
+permissão. Em `/admin/instituicao`, administrador geral e secretaria podem cadastrar
+e editar os dados da instituição; consulta permanece sem ações de escrita.
+O gerenciamento dos mandatos da diretoria continua disponível pela API.
+
+| Método | Caminho | Corpo / retorno |
+| --- | --- | --- |
+| GET | `/contas?page=1&pageSize=20` | Página com `id`, `email`, `perfis`, `ativo`, `criadoEm`, `atualizadoEm` |
+| POST | `/contas` | `{ email, password, perfis }`; cria conta ativa e retorna 201 |
+| PUT | `/contas/:id` | `{ perfis, ativo, atualizadoEm, password? }`; preserva e-mail, retorna conta atualizada |
+
+O prefixo dessas rotas é `/api/admin`. Não existe exclusão de contas: desative-as
+para preservar a identificação no histórico. O e-mail é fixo após o cadastro.
+Listagens e respostas nunca incluem hash de senha, cookie ou token de sessão.
+A versão `atualizadoEm` vem da listagem; salvar uma versão antiga retorna 409.
+Não é permitido desativar ou rebaixar o último administrador geral ativo, inclusive
+em alterações simultâneas. Mudanças de perfil, ativação ou senha revogam as sessões
+da conta afetada. Se alterar a própria conta, será necessário entrar novamente.
+Senhas e hashes nunca entram nos detalhes de auditoria; ficam registrados o ator,
+a data/hora, os campos alterados, os perfis e a ativação anteriores e atuais.
+
+### Atualização de instalações existentes
+
+A migration `20261008000100_perfis_administrativos` preserva todas as contas
+existentes como `ADMINISTRADOR`, pois elas já tinham acesso completo. Contas novas
+sem atribuição explícita no banco recebem `CONSULTA`. A migration não cria contas,
+não muda senhas e não remove dados.
+
+Antes de atribuir perfis limitados, atualize e reinicie **todas** as cópias do backend
+que usam o banco compartilhado, incluindo a máquina do parceiro. Uma versão antiga
+não verifica os novos perfis. Use `db:deploy` para aplicar as migrations, gere o
+Prisma Client e publique/reinicie backend e frontend da mesma revisão. Evite gerar
+o client com o servidor rodando no Windows. A suíte de integração verifica a
+atualização a partir do schema anterior em um PostgreSQL exclusivo de testes.
 
 ## Autenticação e CSRF
 
@@ -66,7 +125,7 @@ Base: `/api/admin`. Respostas administrativas usam `Cache-Control: no-store`.
 
 | Método | Caminho | Corpo / retorno |
 | --- | --- | --- |
-| POST | `/auth/login` | `{ "email": "…", "password": "…", "remember": false }` → `{ user: { id, email }, csrfToken, expiraEm }` |
+| POST | `/auth/login` | `{ "email": "…", "password": "…", "remember": false }` → `{ user: { id, email, perfis, permissoes }, csrfToken, expiraEm }` |
 | GET | `/auth/me` | Retorna usuário, token CSRF e expiração da sessão |
 | POST | `/auth/logout` | Revoga a sessão e apaga o cookie; 204 |
 
@@ -75,6 +134,8 @@ o identificador de sessão no JSON. Sem `remember`, o cookie dura a sessão do
 navegador e o servidor aceita até 8 horas; com `remember`, dura até 7 dias.
 Novo login invalida as sessões anteriores da conta (não há renovação automática).
 Contas desativadas e sessões expiradas recebem 401.
+Contas autenticadas sem permissão para a operação recebem 403. `/auth/me` e
+`/auth/logout` continuam disponíveis para qualquer perfil ativo.
 
 Após login, guarde `csrfToken` em memória; ao recarregar, recupere com `/auth/me`.
 Envie `X-CSRF-Token` em POST/PUT/DELETE autenticados, inclusive logout e upload.
@@ -394,6 +455,14 @@ ajustadas à última. Datas administrativas são ISO; datas civis dos mandatos
 devem ser enviadas como `YYYY-MM-DD`, sem conversão para o fuso do navegador.
 
 ### Informações institucionais
+
+No painel, use **Instituição → Editar dados**. O formulário consulta a versão
+administrativa atual ao abrir e envia todos os dez campos, preservando os opcionais
+que não foram alterados. Campos opcionais esvaziados são limpos; sem cadastro prévio,
+a primeira gravação usa `atualizadoEm: null`. A confirmação aparece após a API salvar.
+Falhas e conflitos mantêm o formulário preenchido; em caso de 409, feche e reabra
+para revisar a versão atual antes de reaplicar seus ajustes. O painel, as páginas
+institucionais e o rodapé atualizam os dados após salvar, sem reutilizar o cache antigo.
 
 ```json
 {

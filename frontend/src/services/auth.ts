@@ -1,5 +1,7 @@
+import { permissionsFor, validProfiles, type AdminProfile, type AdminPermission } from './admin-permissions.js'
+
 export type AdminSession = {
-  user: { id: string; email: string }
+  user: { id: string; email: string; perfis: AdminProfile[]; permissoes: AdminPermission[] }
   csrfToken: string
   expiraEm: string
 }
@@ -22,7 +24,7 @@ async function authRequest(path: string, init: RequestInit = {}): Promise<AdminS
   }
   if (response.status === 204) return null
   const body = await response.json().catch(() => null) as {
-    error?: unknown; user?: { id?: unknown; email?: unknown }; csrfToken?: unknown; expiraEm?: unknown
+    error?: unknown; user?: { id?: unknown; email?: unknown; perfis?: unknown; permissoes?: unknown }; csrfToken?: unknown; expiraEm?: unknown
   } | null
   if (!response.ok) {
     if (response.status === 429) {
@@ -33,6 +35,8 @@ async function authRequest(path: string, init: RequestInit = {}): Promise<AdminS
     throw new AuthError(typeof body?.error === 'string' ? body.error : 'Não foi possível verificar seu acesso.', response.status)
   }
   if (!body || typeof body.user?.id !== 'string' || typeof body.user?.email !== 'string'
+    || !validProfiles(body.user.perfis) || !Array.isArray(body.user.permissoes)
+    || JSON.stringify(body.user.permissoes) !== JSON.stringify(permissionsFor(body.user.perfis))
     || typeof body.csrfToken !== 'string' || !/^[a-f0-9]{64}$/.test(body.csrfToken)
     || typeof body.expiraEm !== 'string' || !Number.isFinite(Date.parse(body.expiraEm)) || Date.parse(body.expiraEm) <= Date.now()) {
     throw new AuthError('Resposta de autenticação inválida. Tente novamente.', 0)
@@ -61,5 +65,5 @@ export async function logoutAdmin(csrfToken: string) {
 
 export function adminDestination(value: unknown): string {
   // Apenas destinos administrativos conhecidos; não aceita redirecionamentos externos.
-  return typeof value === 'string' && /^\/admin(?:\/(?:acervo|noticias|agenda|membros|galeria|auditoria|pessoas|instituicao))?$/.test(value) ? value : '/admin'
+  return typeof value === 'string' && /^\/admin(?:\/(?:acervo|noticias|agenda|membros|galeria|auditoria|pessoas|instituicao|contas))?$/.test(value) ? value : '/admin'
 }

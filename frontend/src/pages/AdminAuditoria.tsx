@@ -14,10 +14,12 @@ const actionLabels: Record<string, string> = {
 const resourceLabels: Record<string, string> = {
   NOTICIA: 'Notícia', ACERVO: 'Acervo', EVENTO: 'Evento', CADEIRA: 'Cadeira', ACADEMICO: 'Acadêmico',
   PATRONO: 'Patrono', GALERIA: 'Galeria', UPLOAD: 'Upload', SESSAO: 'Sessão',
+  INSTITUICAO: 'Instituição', GESTAO: 'Gestão', MANDATO: 'Mandato', ADMINISTRADOR: 'Conta administrativa',
 }
 const detailLabels: Record<string, string> = {
   camposAlterados: 'Campos alterados', statusAnterior: 'Status anterior', statusAtual: 'Status atual',
   numero: 'Cadeira', url: 'Arquivo', tipo: 'Tipo', tamanho: 'Tamanho',
+  perfisAnteriores: 'Perfis anteriores', perfisAtuais: 'Perfis atuais', ativoAnterior: 'Ativa antes', ativoAtual: 'Ativa agora',
 }
 
 function detailValue(value: unknown) {

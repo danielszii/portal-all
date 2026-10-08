@@ -26,7 +26,7 @@ test('uploads validados por HTTP e associados aos campos corretos no PostgreSQL'
   const base = await serve(t, createApp())
   const origin = new URL(envConfig.frontendUrl).origin
   const password = 'Senha exclusiva para uploads 2026'
-  const user = await prisma.administrador.create({ data: { email: 'upload@example.test', senhaHash: await hashPassword(password) } })
+  const user = await prisma.administrador.create({ data: { email: 'upload@example.test', senhaHash: await hashPassword(password), perfis: ['ADMINISTRADOR'] } })
   const login = await fetch(base + '/api/admin/auth/login', {
     method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: user.email, password }),
   })

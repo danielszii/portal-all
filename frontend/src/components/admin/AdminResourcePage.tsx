@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, Monitor, Pencil, Plus, Search, Smartphone, Tablet, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Eye, Monitor, Pencil, Plus, Search, Smartphone, Tablet, Trash2, X } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
 import { useResource } from '@/hooks/useResource'
 import { useDialog } from '@/hooks/useDialog'
 import Pagination from '@/components/Pagination'
 import { useAdminConfirm } from '@/components/admin/AdminConfirmDialog'
+import { canOpenAdminPage } from '@/services/admin-permissions'
 import { adminItem, deleteAdminRecord, loadAdminPage, loadAdminRecord, saveAdminForm, uploadAdminFile, AdminApiError,
   type AdminResource, type FormValues, type AdminListItem, type AdminPage, type AdminRecord } from '@/services/admin'
 
@@ -24,7 +25,8 @@ const empty: AdminPage<AdminRecord> = { items: [], page: 1, pageSize: 20, total:
 
 export default function AdminResourcePage(props: Props) {
   const { resource, title, emphasis, description, singular } = props
-  const { csrfToken, refresh } = useAuth()
+  const { csrfToken, refresh, can } = useAuth()
+  const canEdit = can(resource === 'cadeiras' ? 'instituicao:editar' : 'conteudo:editar')
   const [query, setQuery] = useState('')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -50,7 +52,7 @@ export default function AdminResourcePage(props: Props) {
     finally { setBusy(false) }
   }
   const remove = async (item: AdminListItem) => {
-    if (!csrfToken || resource === 'cadeiras') return
+    if (!csrfToken || resource === 'cadeiras' || !can('registros:excluir')) return
     const consequence = resource === 'agenda' ? ' e suas referências na galeria' : ''
     const accepted = await confirmation.confirm({
       title: `Excluir ${singular.toLocaleLowerCase('pt-BR')}?`,
@@ -72,10 +74,10 @@ export default function AdminResourcePage(props: Props) {
         <div><h1>{title} <em>{emphasis}</em></h1><p>{description}</p></div>
         <div className="admin-header-actions">
           <NavLink className="admin-secondary-action" to="/admin"><ArrowLeft size={15} /> Voltar ao painel</NavLink>
-          {props.relatedActions?.map(action => <NavLink className="admin-secondary-action" to={action.to} key={action.to}>{action.label}</NavLink>)}
-          <button className="admin-primary-action" type="button" disabled={busy} onClick={() => {
+          {props.relatedActions?.filter(action => canOpenAdminPage(action.to, can)).map(action => <NavLink className="admin-secondary-action" to={action.to} key={action.to}>{action.label}</NavLink>)}
+          {canEdit && <button className="admin-primary-action" type="button" disabled={busy} onClick={() => {
             setError(''); setFeedback(''); setEditor({ id: null, values: { ...props.defaults } })
-          }}><Plus size={16} /> Novo {singular.toLocaleLowerCase('pt-BR')}</button>
+          }}><Plus size={16} /> Novo {singular.toLocaleLowerCase('pt-BR')}</button>}
         </div>
       </header>
       {feedback && <p className="admin-feedback" role="status">{feedback}</p>}
@@ -97,8 +99,8 @@ export default function AdminResourcePage(props: Props) {
             <div><h2>{item.title}</h2><p>{item.meta}</p></div>
             {item.status !== 'Publicado' && <span className={item.status === 'Rascunho' ? 'draft' : ''}>{item.status}</span>}
             <div className="admin-record-actions">
-              <button className="admin-edit-action" type="button" disabled={busy} onClick={() => void edit(item)}><Pencil size={14} /> Editar</button>
-              {resource !== 'cadeiras' && <button className="admin-delete-action" type="button" disabled={busy} title="Excluir definitivamente" onClick={() => void remove(item)}><Trash2 size={14} /> Excluir</button>}
+              <button className="admin-edit-action" type="button" disabled={busy} onClick={() => void edit(item)}>{canEdit ? <Pencil size={14} /> : <Eye size={14} />} {canEdit ? 'Editar' : 'Visualizar'}</button>
+              {resource !== 'cadeiras' && can('registros:excluir') && <button className="admin-delete-action" type="button" disabled={busy} title="Excluir definitivamente" onClick={() => void remove(item)}><Trash2 size={14} /> Excluir</button>}
             </div>
           </article>)}
         </div>}
@@ -114,7 +116,8 @@ export default function AdminResourcePage(props: Props) {
 function AdminEditor({ resource, fields, singular, renderPreview, editor, onClose, onSaved }: Props & {
   editor: { id: string | null; values: FormValues }; onClose: () => void; onSaved: () => void
 }) {
-  const { csrfToken, refresh } = useAuth()
+  const { csrfToken, refresh, can } = useAuth()
+  const readOnly = !can(resource === 'cadeiras' ? 'instituicao:editar' : 'conteudo:editar')
   const [values, setValues] = useState(editor.values)
   const [files, setFiles] = useState<Record<string, File>>({})
   const [saving, setSaving] = useState(false)
@@ -128,7 +131,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
   const update = (name: string, value: string) => setValues(current => ({ ...current, [name]: value }))
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (lock.current) return
+    if (lock.current || readOnly) return
     if (!csrfToken) { setError('Entre novamente para salvar.'); return }
     lock.current = true; setSaving(true); setError('')
     try {
@@ -153,14 +156,14 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
   return <><div className="admin-form-overlay" onMouseDown={event => { if (event.target === event.currentTarget && !saving) onClose() }}>
     <div ref={dialog} tabIndex={-1} className={renderPreview ? 'admin-form-panel has-preview' : 'admin-form-panel'} role="dialog" aria-modal="true" aria-labelledby="admin-form-title">
       <header>
-        <div><span>{editing ? 'Editar registro' : 'Novo registro'}</span><h2 id="admin-form-title">{editing ? 'Editar' : 'Cadastrar'} {singular.toLocaleLowerCase('pt-BR')}</h2></div>
+        <div><span>{readOnly ? 'Consulta' : editing ? 'Editar registro' : 'Novo registro'}</span><h2 id="admin-form-title">{readOnly ? 'Visualizar' : editing ? 'Editar' : 'Cadastrar'} {singular.toLocaleLowerCase('pt-BR')}</h2></div>
         <button type="button" disabled={saving} onClick={onClose} aria-label="Fechar formulário"><X size={19} /></button>
       </header>
       <div className="admin-form-content">
         <form onSubmit={submit} aria-busy={saving}>
           <span className="visually-hidden" role="status" aria-live="polite">{saving ? 'Salvando dados, aguarde.' : ''}</span>
           {fields.filter(field => !(field.onlyEnd && (!editing || !values.ocupacaoAtualId || values.status === 'Titular em exercício'))).map(field => {
-            const disabled = saving || (editing && field.readOnlyOnEdit) || (resource === 'cadeiras' && field.name === 'status' && (!editing || !values.ocupacaoAtualId))
+            const disabled = readOnly || saving || (editing && field.readOnlyOnEdit) || (resource === 'cadeiras' && field.name === 'status' && (!editing || !values.ocupacaoAtualId))
               || (resource === 'cadeiras' && editing && !values.ocupacaoAtualId && ['nome', 'biografia', 'bioExtra', 'foto'].includes(field.name))
             const required = field.required || (field.publishedRequired && values.status === 'PUBLICADO') || field.onlyEnd
             const options = field.options?.map(option => typeof option === 'string' ? { value: option, label: option } : option)
@@ -187,11 +190,11 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
               {field.name === 'posse' && editing && !values.posse && values.inicioAno && <small>Registro histórico informa somente o ano {values.inicioAno}; nenhuma data foi inventada.</small>}
             </label>
           })}
-          {resource === 'cadeiras' && <p className="admin-field-wide">Para trocar o titular, use “Novo membro” e informe o número da cadeira. A confirmação preservará o anterior no histórico.</p>}
+          {!readOnly && resource === 'cadeiras' && <p className="admin-field-wide">Para trocar o titular, use “Novo membro” e informe o número da cadeira. A confirmação preservará o anterior no histórico.</p>}
           {error && <p className="admin-field-wide admin-state-error" role="alert">{error}</p>}
           <div className="admin-form-actions">
-            <button type="button" disabled={saving} onClick={onClose}>Cancelar</button>
-            <button type="submit" disabled={saving}>{saving ? 'Salvando…' : 'Salvar'}</button>
+            <button type="button" disabled={saving} onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</button>
+            {!readOnly && <button type="submit" disabled={saving}>{saving ? 'Salvando…' : 'Salvar'}</button>}
           </div>
         </form>
         {renderPreview && <aside className={`admin-live-preview preview-${previewViewport}`} aria-label="Pré-visualização do conteúdo">

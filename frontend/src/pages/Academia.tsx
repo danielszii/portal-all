@@ -1,14 +1,11 @@
-import { useCallback } from 'react'
-import { fetchInstituicao } from '@/services/api'
-import { useResource } from '@/hooks/useResource'
+import { useInstituicao } from '@/hooks/useInstituicao'
 import LoadState from '@/components/LoadState'
 import { NavLink } from 'react-router'
 import { ArrowUpRight } from 'lucide-react'
 
 
 export default function Academia() {
-  const load = useCallback((signal: AbortSignal) => fetchInstituicao(signal), [])
-  const state = useResource(load, { info: null, gestao: null })
+  const state = useInstituicao()
   if (state.loading || state.error) return <main><LoadState {...state} /></main>
   const info = state.data.info
   const gestao = state.data.gestao

@@ -2,6 +2,7 @@ import { randomBytes, createHash, scrypt, timingSafeEqual } from 'node:crypto'
 import { prisma } from '../db/prisma.js'
 import { AppError, ValidationError } from '../errors/app.error.js'
 import { recordAudit, type AuditActor } from './admin-audit.service.js'
+import { publicAdmin } from '../domain/admin-permissions.js'
 
 const derive = (password: string, salt: string) => new Promise<Buffer>((resolve, reject) => {
   scrypt(password, salt, 64, { N: 131072, r: 8, p: 1, maxmem: 160 * 1024 * 1024 }, (err, key) => err ? reject(err) : resolve(key))
@@ -30,15 +31,16 @@ export async function login(email: string, password: string, remember: boolean) 
     const token = randomBytes(32).toString('hex')
     const csrfToken = randomBytes(32).toString('hex')
     const maxAge = (remember ? 7 * 24 : 8) * 60 * 60 * 1000
-    await prisma.$transaction(async tx => {
+    const authenticated = await prisma.$transaction(async tx => {
       await tx.$queryRaw`SELECT "id" FROM "Administrador" WHERE "id" = ${user.id} FOR UPDATE`
       const current = await tx.administrador.findUnique({ where: { id: user.id } })
       if (!current?.ativo || current.senhaHash !== user.senhaHash) throw new AppError('E-mail ou senha inválidos.', 401)
       await tx.sessaoAdmin.deleteMany({ where: { OR: [{ expiraEm: { lte: new Date() } }, { administradorId: user.id }] } })
       await tx.sessaoAdmin.create({ data: { tokenHash: tokenHash(token), administradorId: user.id, csrfToken, expiraEm: new Date(Date.now() + maxAge) } })
       await recordAudit(tx, user, { acao: 'LOGIN', recurso: 'SESSAO', registroId: user.id, resumo: 'Entrada no painel administrativo.' })
+      return publicAdmin(current)
     })
-    return { token, csrfToken, maxAge, user: { id: user.id, email: user.email } }
+    return { token, csrfToken, maxAge, user: authenticated }
   } finally { activeLogins-- }
 }
 export async function logout(hash: string, actor: AuditActor) {

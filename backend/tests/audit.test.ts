@@ -8,7 +8,7 @@ import { mockMethod } from './mock-method.js'
 import { cookieName } from '../src/middlewares/admin-auth.middleware.js'
 
 test('auditoria exige sessão e valida filtros antes de consultar o histórico', async t => {
-  mockMethod(t, prisma.sessaoAdmin, 'findUnique', async () => ({ administrador: { id: 'admin', email: 'admin@example.test', ativo: true }, expiraEm: new Date(Date.now() + 60000) }))
+  mockMethod(t, prisma.sessaoAdmin, 'findUnique', async () => ({ administrador: { id: 'admin', email: 'admin@example.test', ativo: true, perfis: ['ADMINISTRADOR'] }, expiraEm: new Date(Date.now() + 60000) }))
   const query = mockMethod(t, prisma, '$transaction', () => { throw new Error('Não consultar') })
   const base = await serve(t, createApp())
   assert.equal((await fetch(base + '/api/admin/auditoria')).status, 401)

@@ -62,7 +62,7 @@ test('todas as rotas institucionais exigem sessão e protegem suas escritas com 
     assert.equal((await fetch(base + '/api/admin' + path, { method })).status, 401, path)
   }
   mockMethod(t, prisma.sessaoAdmin, 'findUnique', async () => ({
-    administrador: { id: 'admin', email: 'admin@example.test', ativo: true },
+    administrador: { id: 'admin', email: 'admin@example.test', ativo: true, perfis: ['ADMINISTRADOR'] },
     expiraEm: new Date(Date.now() + 60000), csrfToken: 'csrf',
   }))
   for (const [method, path] of paths.filter(([method]) => method !== 'GET')) {

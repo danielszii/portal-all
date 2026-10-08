@@ -2,6 +2,7 @@ import test, { after, type TestContext } from 'node:test'
 import assert from 'node:assert/strict'
 import { JSDOM } from 'jsdom'
 import { act } from 'react'
+import { publicAdmin } from '../../backend/src/domain/admin-permissions.js'
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost/admin/noticias' })
 Object.assign(globalThis, { window: dom.window, document: dom.window.document, HTMLElement: dom.window.HTMLElement, IS_REACT_ACT_ENVIRONMENT: true })
@@ -14,7 +15,7 @@ const { default: Busca } = await import('../src/pages/Busca')
 after(() => dom.window.close())
 
 const record = { id: 1, titulo: 'Título original', categoria: 'Institucional', lede: 'Resumo', conteudo: 'Texto', status: 'RASCUNHO', atualizadoEm: '2020-01-01T00:00:00.000Z' }
-const session = { user: { id: 'admin', email: 'admin@example.test' }, csrfToken: 'a'.repeat(64), expiraEm: new Date(Date.now() + 3600000).toISOString() }
+const session = { user: publicAdmin({ id: 'admin', email: 'admin@example.test', perfis: ['ADMINISTRADOR'] }), csrfToken: 'a'.repeat(64), expiraEm: new Date(Date.now() + 3600000).toISOString() }
 
 async function editor(t: TestContext) {
   let status = 200

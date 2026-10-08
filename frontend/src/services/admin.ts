@@ -10,7 +10,7 @@ export type GalleryRecord = {
 export type PersonResource = 'academicos' | 'patronos'
 export type PersonRecord = { id: string; nome: string; biografia?: string | null; fotoUrl?: string | null; bioExtra?: string | null; inMemoriam?: boolean }
 export type AuditAction = 'CRIAR' | 'EDITAR' | 'PUBLICAR' | 'ARQUIVAR' | 'EXCLUIR' | 'TROCAR_TITULAR' | 'ENCERRAR_OCUPACAO' | 'ENVIAR_ARQUIVO' | 'LOGIN' | 'LOGOUT'
-export type AuditResource = 'NOTICIA' | 'ACERVO' | 'EVENTO' | 'CADEIRA' | 'ACADEMICO' | 'PATRONO' | 'GALERIA' | 'UPLOAD' | 'SESSAO'
+export type AuditResource = 'NOTICIA' | 'ACERVO' | 'EVENTO' | 'CADEIRA' | 'ACADEMICO' | 'PATRONO' | 'GALERIA' | 'UPLOAD' | 'SESSAO' | 'INSTITUICAO' | 'GESTAO' | 'MANDATO' | 'ADMINISTRADOR'
 export type AuditRecord = {
   id: string; administradorId: string; administradorEmail: string; acao: AuditAction
   recurso: AuditResource; registroId: string; resumo: string; detalhes: Record<string, unknown>; criadoEm: string

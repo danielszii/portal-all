@@ -18,7 +18,7 @@ test('regressões administrativas com PostgreSQL e dois administradores', async 
   const password = 'Senha exclusiva das regressões 2026'
   const senhaHash = await hashPassword(password)
   const connect = async (email: string) => {
-    await prisma.administrador.create({ data: { email, senhaHash } })
+    await prisma.administrador.create({ data: { email, senhaHash, perfis: ['ADMINISTRADOR'] } })
     const login = await fetch(base + '/api/admin/auth/login', {
       method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }),
     })

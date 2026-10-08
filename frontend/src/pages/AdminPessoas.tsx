@@ -10,7 +10,7 @@ import { AdminApiError, deleteAdminPerson, loadAdminPeople, type AdminPage, type
 const empty: AdminPage<PersonRecord> = { items: [], total: 0, page: 1, pageSize: 20, totalPages: 1 }
 
 export default function AdminPessoas() {
-  const { csrfToken, refresh } = useAuth()
+  const { csrfToken, refresh, can } = useAuth()
   const [resource, setResource] = useState<PersonResource>('academicos')
   const [query, setQuery] = useState('')
   const [search, setSearch] = useState('')
@@ -25,7 +25,7 @@ export default function AdminPessoas() {
 
   const remove = async (person: PersonRecord) => {
     const role = resource === 'academicos' ? 'acadêmico' : 'patrono'
-    if (!csrfToken) return
+    if (!csrfToken || !can('registros:excluir')) return
     if (!await confirmation.confirm({ title: 'Excluir cadastro?', message: `${person.nome} será excluído definitivamente. A operação só será permitida se este ${role} não possuir nenhum vínculo histórico.`, confirmLabel: 'Excluir cadastro', tone: 'danger' })) return
     setBusyId(person.id); setError(''); setFeedback('')
     try {
@@ -63,7 +63,7 @@ export default function AdminPessoas() {
         {!state.loading && !state.error && <div className="admin-record-list">{state.data.items.map(person => <article className="admin-record" key={person.id}>
           <div><h2>{person.nome}</h2><p>{person.biografia || 'Sem biografia cadastrada.'}</p></div>
           <span>{resource === 'academicos' ? 'Acadêmico' : 'Patrono'}</span>
-          <div className="admin-record-actions"><button className="admin-delete-action" type="button" disabled={busyId === person.id} onClick={() => void remove(person)}><Trash2 size={14} /> {busyId === person.id ? 'Excluindo…' : 'Excluir'}</button></div>
+          {can('registros:excluir') && <div className="admin-record-actions"><button className="admin-delete-action" type="button" disabled={busyId === person.id} onClick={() => void remove(person)}><Trash2 size={14} /> {busyId === person.id ? 'Excluindo…' : 'Excluir'}</button></div>}
         </article>)}</div>}
         {!state.loading && !state.error && <Pagination page={state.data.page} totalPages={state.data.totalPages} onChange={setPage} />}
       </section>
