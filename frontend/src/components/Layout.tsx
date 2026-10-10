@@ -16,6 +16,8 @@ export default function Layout() {
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const mainRef = useRef<HTMLDivElement>(null)
+  const firstRoute = useRef(true)
   const location = useLocation()
   const navigate = useNavigate()
   const close = () => setMenuOpen(false)
@@ -24,6 +26,8 @@ export default function Layout() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    if (firstRoute.current) firstRoute.current = false
+    else mainRef.current?.focus({ preventScroll: true })
   }, [location.pathname, location.search])
 
   useEffect(() => {
@@ -81,7 +85,7 @@ export default function Layout() {
 
           <div className="header-actions">
             <form className="header-search search-control" role="search" onSubmit={handleSearch} onClick={() => searchInputRef.current?.focus()}>
-              <Search size={14} strokeWidth={1.5} />
+              <Search size={14} strokeWidth={1.5} aria-hidden="true" />
               <input
                 type="search"
                 ref={searchInputRef}
@@ -96,7 +100,7 @@ export default function Layout() {
             </form>
             {isAuthenticated ? (
               <button className="header-login" type="button" onClick={handleLogout} disabled={logoutPending} aria-label="Encerrar sessão administrativa">
-                <LogOut size={14} strokeWidth={1.7} />
+                <LogOut size={14} strokeWidth={1.7} aria-hidden="true" />
                 <span>{logoutPending ? 'Saindo…' : 'Sair'}</span>
               </button>
             ) : (
@@ -105,7 +109,7 @@ export default function Layout() {
                 to="/login"
                 aria-label="Entrar na área restrita"
               >
-                <LockKeyhole size={14} strokeWidth={1.7} />
+                <LockKeyhole size={14} strokeWidth={1.7} aria-hidden="true" />
                 <span>Login</span>
               </NavLink>
             )}
@@ -120,7 +124,7 @@ export default function Layout() {
             aria-controls="navegacao-principal"
             onClick={() => setMenuOpen(!menuOpen)}
           >
-            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+            {menuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
           </button>
         </div>
 
@@ -154,12 +158,12 @@ export default function Layout() {
             )}
             {isAuthenticated ? (
               <button className="mobile-login mobile-logout" type="button" onClick={handleLogout} disabled={logoutPending}>
-                <LogOut size={14} strokeWidth={1.7} />
+                <LogOut size={14} strokeWidth={1.7} aria-hidden="true" />
                 {logoutPending ? 'Saindo…' : 'Sair'}
               </button>
             ) : (
               <NavLink className="mobile-login" to="/login" onClick={close}>
-                <LockKeyhole size={14} strokeWidth={1.7} />
+                <LockKeyhole size={14} strokeWidth={1.7} aria-hidden="true" />
                 Login
               </NavLink>
             )}
@@ -167,7 +171,7 @@ export default function Layout() {
         </nav>
       </header>
 
-      <div className="page-shell" id="conteudo-principal" tabIndex={-1}>
+      <div ref={mainRef} className="page-shell" id="conteudo-principal" tabIndex={-1}>
         <span className="visually-hidden" role="status" aria-live="polite">{logoutPending ? 'Encerrando sessão administrativa.' : ''}</span>
         {logoutError && <p className="wrap login-notice" role="alert">{logoutError}</p>}
         <Outlet />

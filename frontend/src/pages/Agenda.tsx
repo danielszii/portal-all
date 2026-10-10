@@ -26,7 +26,7 @@ export default function Agenda() {
   return (
     <main>
       <section className="page-hero wrap">
-        <h1 className="page-title">Agenda <em>& Eventos</em></h1>
+        <h1 className="page-title">Agenda</h1>
         <p className="page-lede">
           Sessões solenes, posses, palestras e lançamentos de livros da Academia
           Limoeirense de Letras. Todos os eventos são abertos ao público.
@@ -103,6 +103,7 @@ export default function Agenda() {
           <div className="galeria-grid">
             {fotos.map((foto, i) => (
               <button
+                type="button"
                 key={i}
                 className="galeria-item"
                 onClick={() => setGaleriaModal(i)}
@@ -124,8 +125,8 @@ export default function Agenda() {
           <h2>Quer participar<br /><em>de nossos eventos?</em></h2>
           <div className="agenda-cta-copy">
             <p>Todos os eventos da Academia são abertos ao público e de entrada franca. Para informações sobre datas e programação, entre em contato com nossa secretaria.</p>
-            <NavLink className="text-link" to="/contato">
-              Fale com a secretaria <ArrowUpRight size={15} />
+            <NavLink className="action-pill" to="/contato">
+              Fale com a secretaria <ArrowUpRight size={15} aria-hidden="true" />
             </NavLink>
           </div>
         </div>

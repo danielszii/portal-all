@@ -17,7 +17,7 @@ export default function Academia() {
 
       {/* ── Hero da página ── */}
       <section className="page-hero wrap">
-        <h1 className="page-title">A <em>Academia</em></h1>
+        <h1 className="page-title">Academia</h1>
         <p className="page-lede">
           A Academia Limoeirense de Letras existe para valorizar a língua portuguesa, celebrar
           a literatura nacional e preservar a cultura — especialmente a do Vale do Jaguaribe.
@@ -109,11 +109,11 @@ export default function Academia() {
             ))}
           </div>
           <div className="section-actions">
-            <NavLink className="text-link" to="/contato">
-              Fale com a Academia <ArrowUpRight size={15} />
+            <NavLink className="action-pill" to="/contato">
+              Fale com a Academia <ArrowUpRight size={15} aria-hidden="true" />
             </NavLink>
-            <NavLink className="text-link" to="/acervo">
-              Ver publicações <ArrowUpRight size={15} />
+            <NavLink className="action-pill" to="/acervo">
+              Ver publicações <ArrowUpRight size={15} aria-hidden="true" />
             </NavLink>
           </div>
         </div>

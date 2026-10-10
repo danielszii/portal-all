@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { ArrowLeft, Building2, CalendarDays, Check, Clock3, ExternalLink, FileText, Mail, MapPin, Pencil, Phone, RefreshCw, ShieldCheck, Users } from 'lucide-react'
+import { ArrowLeft, Building2, CalendarDays, Check, Clock3, ExternalLink, FileText, Mail, MapPin, Pencil, Phone, RefreshCw, Settings2, ShieldCheck, Users } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { useInstituicao } from '@/hooks/useInstituicao'
 import { useAuth } from '@/contexts/AuthContext'
 import AdminInstitutionEditor from '@/components/admin/AdminInstitutionEditor'
+import AdminBoardManager from '@/components/admin/AdminBoardManager'
 
 export default function AdminInstituicao() {
   const state = useInstituicao()
   const { can } = useAuth()
   const [editing, setEditing] = useState(false)
+  const [managingBoard, setManagingBoard] = useState(false)
   const [feedback, setFeedback] = useState('')
   const canEdit = can('instituicao:editar')
   const info = state.data.info
@@ -40,6 +42,7 @@ export default function AdminInstituicao() {
         <div className="admin-header-actions">
           <NavLink className="admin-secondary-action" to="/admin"><ArrowLeft size={15} /> Painel</NavLink>
           {canEdit && <button className="admin-secondary-action" type="button" onClick={() => { setFeedback(''); setEditing(true) }}><Pencil size={15} /> Editar dados</button>}
+          {canEdit && <button className="admin-secondary-action" type="button" onClick={() => { setFeedback(''); setManagingBoard(true) }}><Settings2 size={15} /> Gerenciar diretoria</button>}
           <NavLink className="admin-primary-action" to="/academia" target="_blank">Ver página pública <ExternalLink size={14} /></NavLink>
         </div>
       </div>
@@ -83,5 +86,6 @@ export default function AdminInstituicao() {
       </>}
     </section>
     {editing && canEdit && <AdminInstitutionEditor onClose={() => setEditing(false)} onSaved={() => { setEditing(false); setFeedback('Dados institucionais salvos e publicados com sucesso.') }} />}
+    {managingBoard && canEdit && <AdminBoardManager onClose={() => setManagingBoard(false)} onChanged={message => setFeedback(message)} />}
   </main>
 }

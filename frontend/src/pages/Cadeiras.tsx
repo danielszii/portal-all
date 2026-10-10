@@ -22,7 +22,7 @@ export default function Cadeiras() {
   return (
     <main>
       <section className="page-hero wrap">
-        <h1 className="page-title">Quadro de <em>cadeiras</em></h1>
+        <h1 className="page-title">Cadeiras</h1>
         <p className="page-lede">
           A Academia Limoeirense de Letras possui 40 cadeiras acadêmicas, cada uma com um patrono
           da literatura nacional ou regional, um fundador e um titular em exercício.
@@ -30,7 +30,7 @@ export default function Cadeiras() {
       </section>
 
       {/* Grade */}
-      <section className="chairs-section chairs-catalog-section">
+      <section className="chairs-section chairs-catalog-section" data-pagination-start>
         <div className="wrap">
           <div className="chair-grid chair-grid-catalog">
             {lista.length === 0 && <p role="status">Nenhuma cadeira encontrada para este filtro.</p>}

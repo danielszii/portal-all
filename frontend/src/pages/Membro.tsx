@@ -1,6 +1,6 @@
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useId } from 'react'
 import { useParams, NavLink } from 'react-router'
 import { ArrowLeft, ArrowUpRight } from 'lucide-react'
 import type { Cadeira } from '@/types'
@@ -11,17 +11,18 @@ import { formatNumeroCadeira } from '@/utils/formatters'
 
 function TextoLiterario({ item }: { item: ProducaoLiteraria }) {
   const [aberto, setAberto] = useState(false)
+  const panelId = useId()
   return (
     <div className="producao-item">
-      <div className="producao-header" onClick={() => setAberto(o => !o)} role="button" aria-expanded={aberto} tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAberto(o => !o) } }}>
+      <button type="button" className="producao-header" onClick={() => setAberto(o => !o)} aria-expanded={aberto} aria-controls={panelId}>
         <div>
           <span className="producao-tipo">{item.tipo}</span>
           <h4 className="producao-titulo">{item.titulo}</h4>
         </div>
-        <span className="producao-toggle">{aberto ? '−' : '+'}</span>
-      </div>
+        <span className="producao-toggle" aria-hidden="true">{aberto ? '−' : '+'}</span>
+      </button>
       {aberto && (
-        <div className="producao-texto">
+        <div className="producao-texto" id={panelId}>
           {item.texto.split('\n\n').map((par, i) => (
             <p key={i}>{par}</p>
           ))}

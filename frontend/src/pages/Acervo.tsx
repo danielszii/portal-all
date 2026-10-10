@@ -15,19 +15,19 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
   const dialog = useDialog(onClose)
   const viewerUrl = pdfViewerUrl(pub.pdf, window.location.origin)
   return (
-    <div ref={dialog} tabIndex={-1} className="pdf-overlay" role="dialog" aria-modal="true" aria-label={`Visualizar: ${pub.title}`} onClick={onClose}>
+    <div ref={dialog} tabIndex={-1} className="pdf-overlay" role="dialog" aria-modal="true" aria-labelledby="pdf-modal-title" onClick={onClose}>
       <div className="pdf-modal" onClick={e => e.stopPropagation()}>
         <div className="pdf-modal-header">
           <div>
             <p className="eyebrow modal-eyebrow">{pub.type} · {pub.year}</p>
-            <h2 className="pdf-modal-title">{pub.title} <em>{pub.tomo}</em></h2>
+            <h2 className="pdf-modal-title" id="pdf-modal-title">{pub.title} <em>{pub.tomo}</em></h2>
           </div>
           <div className="pdf-modal-actions">
             <a className="pdf-download-btn" href={pub.pdf} download target="_blank" rel="noopener noreferrer">
-              <Download size={13} /> Baixar PDF
+              <Download size={13} aria-hidden="true" /> Baixar PDF <span className="visually-hidden">(abre em nova aba)</span>
             </a>
-            <button className="pdf-close" onClick={onClose} aria-label="Fechar visualizador">
-              <X size={18} />
+            <button type="button" className="pdf-close" onClick={onClose} aria-label="Fechar visualizador">
+              <X size={18} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -94,17 +94,17 @@ function AcervoConteudo() {
       {pdfAberto && <PdfModal pub={pdfAberto} onClose={closePdf} />}
 
       <section className="archive-hero wrap">
-        <h1 className="page-title">O <em>acervo</em></h1>
+        <h1 className="page-title">Acervo</h1>
         <p className="page-lede">
           Edições, cadernos, antologias, revistas, discursos e estatutos publicados pela
           Academia Limoeirense de Letras desde 1998. Acesso gratuito e irrestrito — sem cadastro.
         </p>
       </section>
 
-      <section className="archive-catalog wrap">
+      <section className="archive-catalog wrap" data-pagination-start>
         {lista.length === 0 ? (
-          <div className="empty-search">
-            <Search size={32} color="var(--line)" />
+          <div className="empty-search" role="status">
+            <Search size={32} color="var(--line)" aria-hidden="true" />
             <h3>Nenhum resultado</h3>
             <p>Tente outros termos ou remova o filtro de tipo.</p>
           </div>
@@ -127,8 +127,8 @@ function AcervoConteudo() {
                   <p>{book.desc}</p>
                   <p className="archive-book-pages">{book.pages} páginas · {book.author}</p>
                   <div className="archive-book-actions">
-                    <button className="archive-book-link archive-book-link-primary" onClick={() => setPdfAberto(book)}>
-                      Ler / visualizar <ArrowUpRight size={14} />
+                    <button type="button" className="archive-book-link archive-book-link-primary" onClick={() => setPdfAberto(book)}>
+                      Ler / visualizar <ArrowUpRight size={14} aria-hidden="true" />
                     </button>
                   </div>
                 </div>

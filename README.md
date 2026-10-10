@@ -184,6 +184,14 @@ O [guia administrativo](backend/ADMIN_API.md) descreve acesso, cadastro de pesso
 edição concorrente e uploads. Os tipos públicos são definidos uma única vez em
 `backend/src/types/index.ts` e importados pelo frontend somente como tipos.
 
+Para a operação cotidiana do painel, consulte o
+[Manual completo do administrador](docs/MANUAL-ADMINISTRADOR.md). A revisão técnica
+da Sprint 6 está registrada em
+[Acessibilidade](docs/ACESSIBILIDADE-SPRINT-6.md).
+
+O processo de hospedagem, variáveis, migrations, domínio, HTTPS e validação está no
+[Tutorial de configuração do ambiente de produção](docs/CONFIGURACAO-PRODUCAO.md).
+
 ## Dados fictícios
 
 O projeto inclui um seed demonstrativo para desenvolvimento. Ele é aditivo: registros existentes não são apagados nem sobrescritos.

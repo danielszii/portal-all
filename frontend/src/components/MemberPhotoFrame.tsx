@@ -13,17 +13,17 @@ interface MemberPhotoFrameProps {
 }
 
 const institutionalDemoPortraits = [
-  '/images/membros/retrato-institucional-01.png',
-  '/images/membros/retrato-institucional-02.png',
-  '/images/membros/retrato-institucional-03.png',
-  '/images/membros/retrato-institucional-04.png',
-  '/images/membros/retrato-institucional-05.png',
-  '/images/membros/retrato-institucional-06.jpeg',
-  '/images/membros/retrato-institucional-07.jpeg',
-  '/images/membros/retrato-institucional-08.jpeg',
-  '/images/membros/retrato-institucional-09.jpeg',
-  '/images/membros/retrato-institucional-10.jpeg',
-  '/images/membros/retrato-institucional-11.jpeg',
+  '/images/membros/retrato-institucional-beca-01.webp',
+  '/images/membros/retrato-institucional-beca-02.webp',
+  '/images/membros/retrato-institucional-beca-03.webp',
+  '/images/membros/retrato-institucional-beca-04.webp',
+  '/images/membros/retrato-institucional-beca-05.webp',
+  '/images/membros/retrato-institucional-beca-06.webp',
+  '/images/membros/retrato-institucional-beca-07.webp',
+  '/images/membros/retrato-institucional-beca-08.webp',
+  '/images/membros/retrato-institucional-beca-09.webp',
+  '/images/membros/retrato-institucional-beca-10.webp',
+  '/images/membros/retrato-institucional-beca-11.webp',
 ]
 
 function getInstitutionalDemoPortrait(chairNumber?: string) {

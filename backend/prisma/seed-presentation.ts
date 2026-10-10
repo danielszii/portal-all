@@ -39,7 +39,7 @@ const bookTitles = [
   'A Palavra que Fica', 'Histórias de Nossa Gente', 'Versos do Vale', 'Travessias Literárias',
   'Almanaque Cultural', 'Antologia das Cadeiras', 'Escritos da Academia', 'Letras Limoeirenses',
 ]
-const photo = (index: number) => `/images/membros/retrato-institucional-${String(index % 11 + 1).padStart(2, '0')}.${index % 11 < 5 ? 'png' : 'jpeg'}`
+const photo = (index: number) => `/images/membros/retrato-institucional-beca-${String(index % 11 + 1).padStart(2, '0')}.webp`
 const eventPhotos = [
   '/images/eventos/sessao-solene.webp', '/images/eventos/sarau-literario.webp',
   '/images/eventos/lancamento-livro.webp', '/images/eventos/roda-leitura.webp',

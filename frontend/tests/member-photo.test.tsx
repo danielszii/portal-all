@@ -14,7 +14,7 @@ test('cartão e perfil priorizam a foto cadastrada mesmo com retrato demonstrati
 
 test('membro sem foto mantém o retrato demonstrativo e cadeira vaga mantém a apresentação existente', () => {
   const missing = renderToStaticMarkup(<MemberPhotoFrame alt="Titular" chairNumber="1" photoVariant="institutional-demo" />)
-  assert.match(missing, /src="\/images\/membros\/retrato-institucional-01.png"/)
+  assert.match(missing, /src="\/images\/membros\/retrato-institucional-beca-01.webp"/)
   assert.match(missing, /Fotografia do acadêmico não disponibilizada/)
   const vacant = renderToStaticMarkup(<MemberPhotoFrame src="/uploads/anterior.png" alt="Anterior" chairNumber="1" status="Vaga" photoVariant="institutional-demo" />)
   assert.match(vacant, /Cadeira Vaga/)

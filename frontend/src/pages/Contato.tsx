@@ -1,5 +1,5 @@
 import { useInstituicao } from '@/hooks/useInstituicao'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, MapPin, Mail, Clock } from 'lucide-react'
 import { postContato } from '@/services/api'
 
@@ -10,6 +10,9 @@ export default function Contato() {
   const [enviado, setEnviado] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
+  const successRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { if (enviado) successRef.current?.focus() }, [enviado])
 
   const handle = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }))
@@ -34,7 +37,7 @@ export default function Contato() {
   return (
     <main>
       <section className="page-hero wrap">
-        <h1 className="page-title"><em>Contato</em></h1>
+        <h1 className="page-title">Contato</h1>
         <p className="page-lede">
           A Academia Limoeirense de Letras está aberta a pesquisadores, escritores,
           estudantes e à comunidade em geral.
@@ -46,18 +49,18 @@ export default function Contato() {
         <div className="contact-grid">
           {/* Endereço */}
           <article>
-            <MapPin size={24} strokeWidth={1.5} />
+            <MapPin size={24} strokeWidth={1.5} aria-hidden="true" />
             <h2>Visite-nos</h2>
             <p className="eyebrow">Endereço</p>
             <p>{info?.endereco ?? 'Endereço ainda não disponibilizado.'}</p>
-            <a className="text-link contact-map-link" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(info?.endereco ?? 'Academia Limoeirense de Letras')}`} target="_blank" rel="noopener noreferrer">
-              Ver no mapa <ArrowUpRight size={14} />
+            <a className="action-pill contact-map-link" href="https://www.google.com/maps/search/?api=1&query=-5.143925725893628%2C-38.095030768627986" target="_blank" rel="noopener noreferrer">
+              Ver no mapa <ArrowUpRight size={14} aria-hidden="true" /><span className="visually-hidden"> (abre em nova aba)</span>
             </a>
           </article>
 
           {/* Email */}
           <article>
-            <Mail size={24} strokeWidth={1.5} />
+            <Mail size={24} strokeWidth={1.5} aria-hidden="true" />
             <h2>Escreva</h2>
             <p className="eyebrow">E-mail institucional</p>
             <p>{info?.email ?? 'E-mail ainda não disponibilizado.'}</p>
@@ -67,7 +70,7 @@ export default function Contato() {
 
           {/* Horário */}
           <article>
-            <Clock size={24} strokeWidth={1.5} />
+            <Clock size={24} strokeWidth={1.5} aria-hidden="true" />
             <h2>Horários</h2>
             <p className="eyebrow">Atendimento</p>
             <p>{info?.horarioAtendimento ?? 'Consulte a secretaria.'}</p>
@@ -83,17 +86,17 @@ export default function Contato() {
           </div>
 
           {enviado ? (
-            <div className="form-sucesso">
+            <div className="form-sucesso" ref={successRef} tabIndex={-1} role="status" aria-live="polite">
               <p className="eyebrow">Mensagem enviada</p>
               <h2>Recebemos sua <em>mensagem</em></h2>
               <p>Sua mensagem foi registrada para a secretaria. Obrigado pelo contato.</p>
-              <button className="text-link text-link-button" onClick={() => setEnviado(false)}>
-                Enviar outra mensagem <ArrowUpRight size={15} />
+              <button type="button" className="text-link text-link-button" onClick={() => setEnviado(false)}>
+                Enviar outra mensagem <ArrowUpRight size={15} aria-hidden="true" />
               </button>
             </div>
           ) : (
-            <form className="contato-form" onSubmit={submit}>
-              {erro && <p role="alert">{erro}</p>}
+            <form className="contato-form" onSubmit={submit} aria-busy={enviando} aria-describedby={erro ? 'contato-form-error' : undefined}>
+              {erro && <p id="contato-form-error" role="alert">{erro}</p>}
               <div className="form-row">
                 <div className="form-field">
                   <label htmlFor="nome">Nome completo</label>
@@ -120,7 +123,7 @@ export default function Contato() {
                 <textarea id="mensagem" name="mensagem" maxLength={5000} required rows={6} value={form.mensagem} onChange={handle} placeholder="Escreva sua mensagem…" />
               </div>
               <button type="submit" className="form-submit" disabled={enviando}>
-                {enviando ? 'Enviando mensagem...' : <>Enviar mensagem <ArrowUpRight size={15} /></>}
+                {enviando ? 'Enviando mensagem…' : <>Enviar mensagem <ArrowUpRight size={15} aria-hidden="true" /></>}
               </button>
             </form>
           )}

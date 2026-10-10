@@ -28,10 +28,12 @@ const heroSlides = [
 
 export default function Home() {
   const [currentHero, setCurrentHero] = useState(0)
+  const [heroPaused, setHeroPaused] = useState(false)
   useEffect(() => {
+    if (heroPaused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const timer = window.setInterval(() => setCurrentHero(current => (current + 1) % heroSlides.length), 6500)
     return () => window.clearInterval(timer)
-  }, [])
+  }, [heroPaused])
 
   const cadeiras = useResource(fetchInicioCadeiras, { total: 0, items: [] })
   const acervo = useResource(fetchInicioAcervo, { total: 0, items: [] })
@@ -45,18 +47,27 @@ export default function Home() {
   return (
     <main className="home-page">
       {/* Hero */}
-      <section id="inicio" className="hero">
+      <section
+        id="inicio"
+        className="hero"
+        aria-roledescription="carrossel"
+        aria-label="Destaques da Academia"
+        onMouseEnter={() => setHeroPaused(true)}
+        onMouseLeave={() => setHeroPaused(false)}
+        onFocusCapture={() => setHeroPaused(true)}
+        onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setHeroPaused(false) }}
+      >
         <div className="hero-bg">
           <img src={heroImg} alt="Fachada da Academia Limoeirense de Letras, Limoeiro do Norte — CE" width="1920" height="1080" fetchPriority="high" />
           <div className="hero-overlay" />
         </div>
         <div className="hero-copy">
-          <div className="hero-message" key={currentHero}>
+          <div className="hero-message" key={currentHero} aria-live={heroPaused ? 'polite' : 'off'} aria-atomic="true">
             <h1>{heroSlides[currentHero].title}<br /><em>{heroSlides[currentHero].emphasis}</em></h1>
             <p className="hero-intro">{heroSlides[currentHero].description}</p>
           </div>
         </div>
-        <div className="hero-index" aria-label="Selecionar mensagem em destaque">
+        <div className="hero-index" role="group" aria-label="Selecionar mensagem em destaque">
           {heroSlides.map((slide, index) => (
             <button
               type="button"
@@ -107,7 +118,7 @@ export default function Home() {
             <div>
               <h2>Quadro de <em>cadeiras</em></h2>
             </div>
-            <NavLink className="text-link home-section-action" to="/cadeiras">Ver quadro completo <ArrowUpRight size={15} /></NavLink>
+            <NavLink className="action-pill home-section-action" to="/cadeiras">Ver quadro completo <ArrowUpRight size={15} aria-hidden="true" /></NavLink>
           </div>
           <div className="chair-grid">
             <LoadState {...cadeiras} />
@@ -140,7 +151,7 @@ export default function Home() {
             <div>
               <h2>O <em>acervo</em></h2>
             </div>
-            <NavLink className="text-link home-section-action" to="/acervo">Ver acervo completo <ArrowUpRight size={15} /></NavLink>
+            <NavLink className="action-pill home-section-action" to="/acervo">Ver acervo completo <ArrowUpRight size={15} aria-hidden="true" /></NavLink>
           </div>
           <div className="bookshelf">
             <LoadState {...acervo} />
@@ -168,7 +179,7 @@ export default function Home() {
         <div className="wrap">
           <div className="section-heading home-event-heading">
             <h2>Próximo <em>evento</em></h2>
-            <NavLink className="text-link" to="/agenda">Ver agenda completa <ArrowUpRight size={15} /></NavLink>
+            <NavLink className="action-pill" to="/agenda">Ver agenda completa <ArrowUpRight size={15} aria-hidden="true" /></NavLink>
           </div>
           <article className="home-event-card">
             <div className="home-event-date" aria-label={formatData(nextEvent.data)}>
@@ -182,7 +193,7 @@ export default function Home() {
                 <span><Clock3 size={14} aria-hidden="true" />{formatData(nextEvent.data)} · {nextEvent.hora}</span>
                 <span><MapPin size={14} aria-hidden="true" />{nextEvent.local}</span>
               </div>
-              <NavLink className="text-link" to="/agenda">Ver detalhes <ArrowUpRight size={14} /></NavLink>
+              <NavLink className="action-pill" to="/agenda">Ver detalhes <ArrowUpRight size={14} aria-hidden="true" /></NavLink>
             </div>
             {nextEvent.foto && <div className="home-event-image"><img src={nextEvent.foto} alt={`Imagem do evento ${nextEvent.titulo}`} loading="lazy" /></div>}
           </article>
@@ -194,13 +205,14 @@ export default function Home() {
         <div className="wrap">
           <div className="section-heading news-section-heading">
             <h2>Últimas <em>notícias</em></h2>
-            <NavLink className="text-link home-section-action" to="/noticias">Ver todas as notícias <ArrowUpRight size={15} /></NavLink>
+            <NavLink className="action-pill home-section-action" to="/noticias">Ver todas as notícias <ArrowUpRight size={15} aria-hidden="true" /></NavLink>
           </div>
           <div className="news-list">
             <LoadState {...noticias} />
             {!noticias.error && noticias.data.map(n => <article key={n.id}>
-              <time>{n.data}</time><h3>{n.titulo}</h3>
-              <NavLink to={`/noticias?id=${n.id}`}>Ler notícia <ArrowUpRight size={14} /></NavLink>
+              <NavLink className="home-news-link" to={`/noticias?id=${n.id}`} aria-label={`Abrir notícia: ${n.titulo}`}>
+                <time>{n.data}</time><h3>{n.titulo}</h3>
+              </NavLink>
             </article>)}
             {!noticias.loading && !noticias.error && noticias.data.length === 0 && <p>Nenhuma notícia publicada.</p>}
           </div>
