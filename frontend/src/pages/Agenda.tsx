@@ -114,6 +114,12 @@ export default function Agenda() {
               </button>
             ))}
           </div>
+          {fotos.length === 0 && (
+            <div className="empty-search" role="status">
+              <h3>Nenhum registro fotográfico</h3>
+              <p>As fotografias dos eventos serão publicadas aqui.</p>
+            </div>
+          )}
         </div>
       </section>
 

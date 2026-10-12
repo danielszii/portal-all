@@ -15,15 +15,17 @@ const { default: AdminNoticias } = await import('../src/pages/AdminNoticias')
 const { default: AdminContas } = await import('../src/pages/AdminContas')
 after(() => dom.window.close())
 const record = { id: 1, titulo: 'Teste de acesso', categoria: 'Institucional', lede: 'Resumo', conteudo: 'Texto', status: 'RASCUNHO', atualizadoEm: '2020-01-01T00:00:00.000Z' }
+const account = { id: 'other-admin', email: 'outra@example.test', perfis: ['CONSULTA'] as AdminProfile[], ativo: true, atualizadoEm: '2026-10-01T12:00:00.000Z' }
 
-async function mount(t: TestContext, profiles: AdminProfile[], path = '/admin') {
+async function mount(t: TestContext, profiles: AdminProfile[], path = '/admin', accounts = [] as typeof account[]) {
   const session = { user: publicAdmin({ id: 'admin', email: 'admin@example.test', perfis: profiles }), csrfToken: 'a'.repeat(64), expiraEm: new Date(Date.now() + 3600000).toISOString() }
   const writes: { path: string; options?: RequestInit }[] = []
   const fetch = t.mock.method(globalThis, 'fetch', async (url: string, options?: RequestInit) => {
     if (options?.method && options.method !== 'GET') { writes.push({ path: url, options }); return Response.json({ id: 'new' }, { status: 201 }) }
     if (url.endsWith('/auth/me')) return Response.json(session)
     if (url.endsWith('/noticias/1')) return Response.json(record)
-    return Response.json({ items: url.includes('/contas') ? [] : [record], page: 1, pageSize: 20, total: 1, totalPages: 1 })
+    const items = url.includes('/contas') ? accounts : [record]
+    return Response.json({ items, page: 1, pageSize: 20, total: items.length, totalPages: 1 })
   })
   const container = document.createElement('div'); document.body.append(container)
   const root = createRoot(container)
@@ -97,4 +99,20 @@ test('administrador cria conta com perfis combinados e CSRF', async t => {
   assert.deepEqual(JSON.parse(String(writes[0].options!.body)), { email: 'nova@example.test', password: 'Senha nova de teste 2026', perfis: ['EDITOR', 'SECRETARIA'] })
   assert.equal(new Headers(writes[0].options!.headers).get('X-CSRF-Token'), 'a'.repeat(64))
   assert.equal(container.querySelector('[role="dialog"]'), null)
+})
+
+test('administrador edita conta pelo controle padronizado e envia a versão atual', async t => {
+  const { container, writes } = await mount(t, ['ADMINISTRADOR'], '/admin/contas', [account])
+  const edit = container.querySelector<HTMLButtonElement>('.admin-record-actions .admin-edit-action')
+  assert.ok(edit)
+  await act(async () => edit.click())
+  const active = container.querySelector<HTMLInputElement>('input[type="checkbox"]:not([aria-describedby])')!
+  await act(async () => active.click())
+  const form = container.querySelector<HTMLFormElement>('[role="dialog"] form')!
+  await act(async () => form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })))
+  assert.equal(writes.length, 1)
+  assert.equal(writes[0].path, '/api/admin/contas/other-admin')
+  assert.deepEqual(JSON.parse(String(writes[0].options!.body)), {
+    perfis: ['CONSULTA'], ativo: false, atualizadoEm: account.atualizadoEm,
+  })
 })

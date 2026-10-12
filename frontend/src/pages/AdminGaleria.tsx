@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react'
-import { ArrowLeft, ImageIcon, Search, Trash2 } from 'lucide-react'
-import { NavLink } from 'react-router'
+import { ImageIcon, Search, Trash2, X } from 'lucide-react'
 import Pagination from '@/components/Pagination'
 import { useAdminConfirm } from '@/components/admin/AdminConfirmDialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { useResource } from '@/hooks/useResource'
 import { AdminApiError, deleteGalleryRecord, loadAdminGallery, type AdminPage, type GalleryRecord } from '@/services/admin'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
 
 const empty: AdminPage<GalleryRecord> = { items: [], total: 0, page: 1, pageSize: 20, totalPages: 1 }
 
@@ -36,10 +36,7 @@ export default function AdminGaleria() {
 
   return <><main className="admin-page admin-workspace-page">
     <div className="wrap admin-workspace">
-      <header className="admin-workspace-header">
-        <div><h1>Gerenciar <em>galeria</em></h1><p>Consulte as imagens vinculadas aos eventos e remova referências que não devem aparecer na galeria pública.</p></div>
-        <div className="admin-header-actions"><NavLink className="admin-secondary-action" to="/admin/agenda"><ArrowLeft size={15} /> Voltar à agenda</NavLink></div>
-      </header>
+      <AdminPageHeader title="Gerenciar" emphasis="galeria" description="Consulte as imagens vinculadas aos eventos e remova referências que não devem aparecer na galeria pública." backTo="/admin/agenda" backLabel="Voltar à agenda" />
       <p className="admin-context-note"><ImageIcon size={17} /> Ao publicar um evento com imagem, a referência é criada automaticamente. Excluir aqui não apaga o arquivo nem altera o evento.</p>
       {feedback && <p className="admin-feedback" role="status">{feedback}</p>}
       {error && <p className="admin-state admin-state-error" role="alert">{error}</p>}
@@ -49,6 +46,7 @@ export default function AdminGaleria() {
             <Search size={15} aria-hidden="true" />
             <input aria-label="Filtrar pelo ID do evento" value={query} maxLength={100} onChange={event => setQuery(event.target.value)} placeholder="Filtrar pelo ID do evento…" />
             <button className="filtro-btn" type="submit">Buscar</button>
+            {eventoId && <button className="admin-search-reset" type="button" aria-label="Limpar filtro" title="Limpar filtro" onClick={() => { setQuery(''); setEventoId(''); setPage(1) }}><X size={14} aria-hidden="true" /></button>}
           </form>
           <span>{state.data.total} foto{state.data.total !== 1 ? 's' : ''}</span>
         </div>

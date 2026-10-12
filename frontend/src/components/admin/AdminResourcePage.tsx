@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, Eye, Monitor, Pencil, Plus, Search, Smartphone, Tablet, Trash2, X } from 'lucide-react'
+import { Eye, Monitor, Pencil, Plus, Search, Smartphone, Tablet, Trash2, X } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
 import { useResource } from '@/hooks/useResource'
 import { useDialog } from '@/hooks/useDialog'
 import Pagination from '@/components/Pagination'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import { useAdminConfirm } from '@/components/admin/AdminConfirmDialog'
 import { canOpenAdminPage } from '@/services/admin-permissions'
 import { adminItem, deleteAdminRecord, loadAdminPage, loadAdminRecord, saveAdminForm, uploadAdminFile, AdminApiError,
@@ -70,16 +71,12 @@ export default function AdminResourcePage(props: Props) {
   }
   return <><main className="admin-page admin-workspace-page">
     <div className="wrap admin-workspace">
-      <header className="admin-workspace-header">
-        <div><h1>{title} <em>{emphasis}</em></h1><p>{description}</p></div>
-        <div className="admin-header-actions">
-          <NavLink className="admin-secondary-action" to="/admin"><ArrowLeft size={15} /> Voltar ao painel</NavLink>
-          {props.relatedActions?.filter(action => canOpenAdminPage(action.to, can)).map(action => <NavLink className="admin-secondary-action" to={action.to} key={action.to}>{action.label}</NavLink>)}
-          {canEdit && <button className="admin-primary-action" type="button" disabled={busy} onClick={() => {
-            setError(''); setFeedback(''); setEditor({ id: null, values: { ...props.defaults } })
-          }}><Plus size={16} /> Novo {singular.toLocaleLowerCase('pt-BR')}</button>}
-        </div>
-      </header>
+      <AdminPageHeader title={title} emphasis={emphasis} description={description}>
+        {props.relatedActions?.filter(action => canOpenAdminPage(action.to, can)).map(action => <NavLink className="admin-secondary-action" to={action.to} key={action.to}>{action.label}</NavLink>)}
+        {canEdit && <button className="admin-primary-action" type="button" disabled={busy} onClick={() => {
+          setError(''); setFeedback(''); setEditor({ id: null, values: { ...props.defaults } })
+        }}><Plus size={16} aria-hidden="true" /> Novo {singular.toLocaleLowerCase('pt-BR')}</button>}
+      </AdminPageHeader>
       {feedback && <p className="admin-feedback" role="status">{feedback}</p>}
       {error && <p className="admin-state admin-state-error" role="alert">{error}</p>}
       <section className="admin-management" aria-label={`Gerenciamento de ${emphasis}`}>
@@ -88,6 +85,7 @@ export default function AdminResourcePage(props: Props) {
             <Search size={15} aria-hidden="true" />
             <input aria-label={`Buscar em ${emphasis}`} value={query} maxLength={200} onChange={event => setQuery(event.target.value)} placeholder={`Buscar em ${emphasis}…`} />
             <button className="filtro-btn" type="submit">Buscar</button>
+            {search && <button className="admin-search-reset" type="button" aria-label="Limpar busca" title="Limpar busca" onClick={() => { setQuery(''); setSearch(''); setPage(1) }}><X size={14} aria-hidden="true" /></button>}
           </form>
           <span>{state.data.total} registro{state.data.total !== 1 ? 's' : ''}</span>
         </div>
@@ -97,10 +95,10 @@ export default function AdminResourcePage(props: Props) {
         {!state.loading && !state.error && <div className="admin-record-list">
           {items.map(item => <article className="admin-record" key={item.id}>
             <div><h2>{item.title}</h2><p>{item.meta}</p></div>
-            {item.status !== 'Publicado' && <span className={item.status === 'Rascunho' ? 'draft' : ''}>{item.status}</span>}
+            <span className={item.status === 'Rascunho' ? 'draft' : item.status === 'Publicado' ? 'is-published' : ''}>{item.status}</span>
             <div className="admin-record-actions">
-              <button className="admin-edit-action" type="button" disabled={busy} onClick={() => void edit(item)}>{canEdit ? <Pencil size={14} /> : <Eye size={14} />} {canEdit ? 'Editar' : 'Visualizar'}</button>
-              {resource !== 'cadeiras' && can('registros:excluir') && <button className="admin-delete-action" type="button" disabled={busy} title="Excluir definitivamente" onClick={() => void remove(item)}><Trash2 size={14} /> Excluir</button>}
+              <button className="admin-edit-action" type="button" disabled={busy} onClick={() => void edit(item)}>{canEdit ? <Pencil size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />} {canEdit ? 'Editar' : 'Visualizar'}</button>
+              {resource !== 'cadeiras' && can('registros:excluir') && <button className="admin-delete-action" type="button" disabled={busy} title="Excluir definitivamente" onClick={() => void remove(item)}><Trash2 size={14} aria-hidden="true" /> Excluir</button>}
             </div>
           </article>)}
         </div>}
@@ -162,6 +160,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
       <div className="admin-form-content">
         <form onSubmit={submit} aria-busy={saving}>
           <span className="visually-hidden" role="status" aria-live="polite">{saving ? 'Salvando dados, aguarde.' : ''}</span>
+          <p className="admin-form-guidance admin-field-wide">{readOnly ? 'Visualização somente para consulta.' : 'Preencha os campos marcados com * antes de salvar.'}</p>
           {fields.filter(field => !(field.onlyEnd && (!editing || !values.ocupacaoAtualId || values.status === 'Titular em exercício'))).map(field => {
             const disabled = readOnly || saving || (editing && field.readOnlyOnEdit) || (resource === 'cadeiras' && field.name === 'status' && (!editing || !values.ocupacaoAtualId))
               || (resource === 'cadeiras' && editing && !values.ocupacaoAtualId && ['nome', 'biografia', 'bioExtra', 'foto'].includes(field.name))
@@ -169,7 +168,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
             const options = field.options?.map(option => typeof option === 'string' ? { value: option, label: option } : option)
             const stored = field.urlField ? values[field.urlField] : ''
             return <label className={field.type === 'textarea' ? 'admin-field admin-field-wide' : 'admin-field'} key={field.name}>
-              <span>{field.label}</span>
+              <span>{field.label}{required ? ' *' : ''}</span>
               {field.type === 'textarea' ? <textarea name={field.name} rows={5} disabled={disabled} required={required} maxLength={field.maxLength} value={values[field.name] ?? ''} onChange={event => update(field.name, event.target.value)} />
                 : field.type === 'select' ? <select name={field.name} disabled={disabled} required={required} value={values[field.name] ?? ''} onChange={event => update(field.name, event.target.value)}>
                   <option value="" disabled>Selecione</option>

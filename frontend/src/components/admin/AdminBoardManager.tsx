@@ -49,7 +49,7 @@ export default function AdminBoardManager({ onClose, onChanged }: { onClose: () 
   return <><div className="admin-form-overlay">
     <div ref={dialog} tabIndex={-1} className="admin-form-panel admin-board-manager" role="dialog" aria-modal="true" aria-labelledby="board-manager-title">
       <header>
-        <div><span>Conteúdo institucional</span><h2 id="board-manager-title">Gestões e diretoria</h2></div>
+        <div><span>Diretoria da Academia</span><h2 id="board-manager-title">Gestões e integrantes</h2></div>
         <button type="button" disabled={busy} onClick={onClose} aria-label="Fechar gestão da diretoria"><X size={19} /></button>
       </header>
       <div className="admin-board-manager-body">

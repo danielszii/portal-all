@@ -49,7 +49,7 @@ function BuscaConteudo({ q }: { q: string }) {
       {results.cadeiras.map(c => <article className="search-result" key={c.number}><span className="meta">Cadeira</span><NavLink to={`/cadeiras/${c.number.toLowerCase()}`}>Cadeira {formatNumeroCadeira(c.number)} — {c.holder} · {c.patron}</NavLink></article>)}
       {results.noticias.map(n => <article className="search-result" key={n.id}><span className="meta">Notícia</span><NavLink to={`/noticias?id=${n.id}`}>{n.titulo}</NavLink></article>)}
       {results.acervo.map(a => <article className="search-result" key={a.id}><span className="meta">Acervo</span><NavLink to={`/acervo?q=${encodeURIComponent(a.title)}`}>{a.title} — {a.author}</NavLink></article>)}
-      <LoadState loading={false} error={state.error} retry={state.retry} />
+      <LoadState loading={state.loading && page > 1} error={state.error} retry={state.retry} />
       <div ref={sentinel} aria-hidden="true" />
     </section>}
   </main>

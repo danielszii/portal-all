@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { ArrowLeft, Building2, CalendarDays, Check, Clock3, ExternalLink, FileText, Mail, MapPin, Pencil, Phone, RefreshCw, Settings2, ShieldCheck, Users } from 'lucide-react'
+import { Building2, CalendarDays, Check, Clock3, ExternalLink, FileText, Mail, MapPin, Pencil, Phone, RefreshCw, Settings2, ShieldCheck, Users } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { useInstituicao } from '@/hooks/useInstituicao'
 import { useAuth } from '@/contexts/AuthContext'
 import AdminInstitutionEditor from '@/components/admin/AdminInstitutionEditor'
 import AdminBoardManager from '@/components/admin/AdminBoardManager'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
 
 export default function AdminInstituicao() {
   const state = useInstituicao()
@@ -32,20 +33,12 @@ export default function AdminInstituicao() {
   ]
 
   return <main className="admin-page admin-institution-page">
-    <section className="wrap admin-content">
-      <div className="admin-page-header admin-institution-header">
-        <div>
-          <span className="admin-kicker"><Building2 size={15} aria-hidden="true" /> Conteúdo institucional</span>
-          <h1>Diretoria e <em>instituição</em></h1>
-          <p>Confira os dados apresentados nas páginas públicas do portal.</p>
-        </div>
-        <div className="admin-header-actions">
-          <NavLink className="admin-secondary-action" to="/admin"><ArrowLeft size={15} /> Painel</NavLink>
-          {canEdit && <button className="admin-secondary-action" type="button" onClick={() => { setFeedback(''); setEditing(true) }}><Pencil size={15} /> Editar dados</button>}
-          {canEdit && <button className="admin-secondary-action" type="button" onClick={() => { setFeedback(''); setManagingBoard(true) }}><Settings2 size={15} /> Gerenciar diretoria</button>}
-          <NavLink className="admin-primary-action" to="/academia" target="_blank">Ver página pública <ExternalLink size={14} /></NavLink>
-        </div>
-      </div>
+    <section className="wrap admin-workspace">
+      <AdminPageHeader title="Diretoria e" emphasis="instituição" description="Atualize os dados públicos da Academia e organize as gestões e os integrantes da diretoria.">
+        <NavLink className="admin-secondary-action" to="/academia" target="_blank" rel="noopener noreferrer">Ver página pública <ExternalLink size={14} aria-hidden="true" /></NavLink>
+        {canEdit && <button className="admin-secondary-action" type="button" onClick={() => { setFeedback(''); setManagingBoard(true) }}><Settings2 size={15} aria-hidden="true" /> Gerenciar diretoria</button>}
+        {canEdit && <button className="admin-primary-action" type="button" onClick={() => { setFeedback(''); setEditing(true) }}><Pencil size={15} aria-hidden="true" /> Editar dados</button>}
+      </AdminPageHeader>
 
       {feedback && <p className="admin-feedback" role="status">{feedback}</p>}
       {state.loading && <div className="admin-institution-loading" role="status"><RefreshCw size={20} className="is-spinning" /><span>Carregando informações institucionais…</span></div>}
@@ -56,9 +49,9 @@ export default function AdminInstituicao() {
             <div className="admin-score-ring" style={{ '--score': `${progress * 3.6}deg` } as React.CSSProperties}><strong>{progress}%</strong></div>
             <div><span>Completude dos dados</span><p>{completed} de {fields.length} informações essenciais preenchidas</p></div>
           </div>
-          <div className="admin-institution-stat"><CalendarDays size={19} /><span>Fundação</span><strong>{info?.fundacaoAno || 'Pendente'}</strong></div>
-          <div className="admin-institution-stat"><Users size={19} /><span>Diretoria</span><strong>{gestao?.diretoria.length ?? 0} integrantes</strong></div>
-          <div className="admin-institution-stat"><ShieldCheck size={19} /><span>Publicação</span><strong>{info ? 'Ativa' : 'Sem dados'}</strong></div>
+          <div className="admin-institution-stat"><CalendarDays size={19} aria-hidden="true" /><span>Fundação</span><strong>{info?.fundacaoAno || 'Pendente'}</strong></div>
+          <div className="admin-institution-stat"><Users size={19} aria-hidden="true" /><span>Diretoria vigente</span><strong>{gestao?.diretoria.length ?? 0} integrantes</strong></div>
+          <div className="admin-institution-stat"><ShieldCheck size={19} aria-hidden="true" /><span>Dados essenciais</span><strong>{completed === fields.length ? 'Completos' : `${fields.length - completed} pendente${fields.length - completed !== 1 ? 's' : ''}`}</strong></div>
         </section>
 
         <div className="admin-institution-notice" role="note"><ShieldCheck size={18} aria-hidden="true" /><div><strong>{canEdit ? 'Dados institucionais' : 'Consulta institucional'}</strong><p>{canEdit ? 'Use “Editar dados” para atualizar as informações da Academia. As alterações são publicadas ao salvar e registradas no histórico.' : 'Seu perfil permite consultar os dados publicados da instituição.'}</p></div></div>
@@ -72,7 +65,7 @@ export default function AdminInstituicao() {
             </section>
 
             <section className="admin-institution-panel" aria-labelledby="institution-text-title">
-              <header><div><span>Apresentação pública</span><h2 id="institution-text-title">Conteúdo institucional</h2></div><FileText size={20} aria-hidden="true" /></header>
+              <header><div><span>Textos exibidos no portal</span><h2 id="institution-text-title">História e apresentação</h2></div><FileText size={20} aria-hidden="true" /></header>
               <div className="admin-institution-texts">{texts.map(item => <article className={item.value ? '' : 'is-missing'} key={item.label}><div><span>{item.label}</span><small>{item.value ? `${item.value.length} caracteres` : 'Pendente'}</small></div><p>{item.value || 'Este conteúdo ainda não foi informado.'}</p></article>)}</div>
             </section>
           </div>

@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react'
-import { ArrowLeft, Search, Trash2 } from 'lucide-react'
-import { NavLink } from 'react-router'
+import { Search, Trash2, X } from 'lucide-react'
 import Pagination from '@/components/Pagination'
 import { useAdminConfirm } from '@/components/admin/AdminConfirmDialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { useResource } from '@/hooks/useResource'
 import { AdminApiError, deleteAdminPerson, loadAdminPeople, type AdminPage, type PersonRecord, type PersonResource } from '@/services/admin'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
 
 const empty: AdminPage<PersonRecord> = { items: [], total: 0, page: 1, pageSize: 20, totalPages: 1 }
 
@@ -39,10 +39,7 @@ export default function AdminPessoas() {
 
   return <><main className="admin-page admin-workspace-page">
     <div className="wrap admin-workspace">
-      <header className="admin-workspace-header">
-        <div><h1>Cadastros sem <em>vínculo</em></h1><p>Remova somente pessoas cadastradas por engano e que não fazem parte do histórico da Academia.</p></div>
-        <div className="admin-header-actions"><NavLink className="admin-secondary-action" to="/admin/membros"><ArrowLeft size={15} /> Voltar aos membros</NavLink></div>
-      </header>
+      <AdminPageHeader title="Cadastros sem" emphasis="vínculo" description="Remova somente pessoas cadastradas por engano e que não fazem parte do histórico da Academia." backTo="/admin/membros" backLabel="Voltar aos membros" />
       <p className="admin-context-note">Pessoas ligadas a cadeiras, obras ou sucessões ficam protegidas e não podem ser excluídas.</p>
       {feedback && <p className="admin-feedback" role="status">{feedback}</p>}
       {error && <p className="admin-state admin-state-error" role="alert">{error}</p>}
@@ -54,6 +51,7 @@ export default function AdminPessoas() {
         <div className="admin-management-toolbar">
           <form className="admin-search" role="search" onSubmit={event => { event.preventDefault(); setPage(1); setSearch(query.trim()) }}>
             <Search size={15} aria-hidden="true" /><input aria-label="Buscar pessoa" value={query} maxLength={200} onChange={event => setQuery(event.target.value)} placeholder="Buscar por nome…" /><button className="filtro-btn" type="submit">Buscar</button>
+            {search && <button className="admin-search-reset" type="button" aria-label="Limpar busca" title="Limpar busca" onClick={() => { setQuery(''); setSearch(''); setPage(1) }}><X size={14} aria-hidden="true" /></button>}
           </form>
           <span>{state.data.total} cadastro{state.data.total !== 1 ? 's' : ''}</span>
         </div>

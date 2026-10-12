@@ -63,6 +63,16 @@ test('modais possuem nome acessível, descrição e foco contido', async () => {
   assert.match(dialog, /event\.key === 'Escape'/)
   assert.match(dialog, /event\.key !== 'Tab'/)
   assert.match(dialog, /previous\?\.focus\(\)/)
+  assert.match(gallery, /event\.key !== 'ArrowLeft' && event\.key !== 'ArrowRight'/)
+  assert.match(gallery, /onKeyDown=\{changeWithKeyboard\}/)
+})
+
+test('carregamentos são anunciados e permanecem visíveis', async () => {
+  const loadState = await source('components/LoadState.tsx')
+  const search = await source('pages/Busca.tsx')
+  assert.match(loadState, /role="status" aria-live="polite"/)
+  assert.match(loadState, /Carregando conteúdo…/)
+  assert.match(search, /loading=\{state\.loading && page > 1\}/)
 })
 
 test('estilos mantêm foco visível, alto contraste e movimento reduzido', async () => {
@@ -72,4 +82,19 @@ test('estilos mantêm foco visível, alto contraste e movimento reduzido', async
   assert.match(css, /@media \(forced-colors: active\)/)
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/)
   assert.match(css, /animation-duration:\s*\.01ms/)
+})
+
+test('área administrativa compartilha cabeçalho, estados e buscas reversíveis', async () => {
+  const header = await source('components/admin/AdminPageHeader.tsx')
+  const resource = await source('components/admin/AdminResourcePage.tsx')
+  const pages = await Promise.all([
+    'pages/AdminContas.tsx', 'pages/AdminInstituicao.tsx', 'pages/AdminGaleria.tsx',
+    'pages/AdminPessoas.tsx', 'pages/AdminAuditoria.tsx',
+  ].map(source))
+  assert.match(header, /className="admin-workspace-header"/)
+  assert.match(header, /Voltar ao painel/)
+  pages.forEach(page => assert.match(page, /AdminPageHeader/))
+  assert.match(resource, /aria-label="Limpar busca"/)
+  assert.match(resource, /item\.status === 'Publicado' \? 'is-published'/)
+  assert.match(resource, /Preencha os campos marcados com \*/)
 })

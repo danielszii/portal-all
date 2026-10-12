@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react'
-import { ArrowLeft, CalendarDays, Filter, FilterX, UserRound } from 'lucide-react'
-import { NavLink } from 'react-router'
+import { CalendarDays, Filter, FilterX, UserRound } from 'lucide-react'
 import Pagination from '@/components/Pagination'
 import { useResource } from '@/hooks/useResource'
 import { loadAdminAudit, type AdminPage, type AuditRecord, type AuditFilters } from '@/services/admin'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
 
 const empty: AdminPage<AuditRecord> = { items: [], total: 0, page: 1, pageSize: 20, totalPages: 1 }
 const initialFilters: AuditFilters = { acao: '', recurso: '', registroId: '', inicio: '', fim: '' }
@@ -40,10 +40,7 @@ export default function AdminAuditoria() {
 
   return <main className="admin-page admin-workspace-page">
     <div className="wrap admin-workspace">
-      <header className="admin-workspace-header">
-        <div><h1>Histórico de <em>alterações</em></h1><p>Consulte as operações realizadas na área administrativa.</p></div>
-        <div className="admin-header-actions"><NavLink className="admin-secondary-action" to="/admin"><ArrowLeft size={15} /> Voltar ao painel</NavLink></div>
-      </header>
+      <AdminPageHeader title="Histórico de" emphasis="alterações" description="Consulte as operações realizadas na área administrativa." />
       <section className="admin-management admin-audit-management" aria-label="Histórico de alterações">
         <div className="admin-audit-filter-panel">
           <div className="admin-audit-filter-heading"><span><Filter size={16} /></span><div><h2>Filtrar histórico</h2><p>Combine os campos para localizar uma operação.</p></div></div>

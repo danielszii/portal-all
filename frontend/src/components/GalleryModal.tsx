@@ -5,7 +5,13 @@ export default function GalleryModal({ fotos, index, onIndex, onClose }: { fotos
   const dialog = useDialog(onClose)
   const foto = fotos[index]
   if (!foto) return null
-  return <div ref={dialog} tabIndex={-1} className="lightbox" role="dialog" aria-modal="true" aria-labelledby="gallery-modal-title" aria-describedby="gallery-modal-position" onClick={onClose}>
+  const changeWithKeyboard = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+    event.preventDefault()
+    const direction = event.key === 'ArrowLeft' ? -1 : 1
+    onIndex((index + fotos.length + direction) % fotos.length)
+  }
+  return <div ref={dialog} tabIndex={-1} className="lightbox" role="dialog" aria-modal="true" aria-labelledby="gallery-modal-title" aria-describedby="gallery-modal-position" onClick={onClose} onKeyDown={changeWithKeyboard}>
     <button type="button" className="lightbox-close" onClick={onClose} aria-label="Fechar galeria"><X size={20} aria-hidden="true" /></button>
     <div className="lightbox-inner" onClick={e => e.stopPropagation()}>
       <img src={foto.src.replace('w=800', 'w=1400')} alt={foto.legenda} decoding="async" />

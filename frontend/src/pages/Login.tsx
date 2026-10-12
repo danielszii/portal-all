@@ -4,6 +4,7 @@ import { ArrowLeft, LockKeyhole, Mail } from 'lucide-react'
 import logoSrc from '@/imports/Logo_Vetorizada_A.L.L_sem_fundo.svg'
 import { useAuth } from '@/contexts/AuthContext'
 import { adminDestination } from '@/services/auth'
+import PageMetadata from '@/components/PageMetadata'
 
 export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -38,6 +39,7 @@ export default function Login() {
 
   return (
     <main className="login-page">
+      <PageMetadata />
       <section className="wrap login-shell" aria-labelledby="login-title">
         <header className="login-page-heading">
           <h1 id="login-title">Acesso <em>administrativo</em></h1>
@@ -71,13 +73,13 @@ export default function Login() {
             {error && <p className="login-notice" role="alert">{error}</p>}
             <button className="login-submit" type="submit" disabled={isSubmitting || loading}>
               {isSubmitting ? 'Entrando…' : loading ? 'Verificando acesso…' : 'Entrar'}
-              <LockKeyhole size={15} strokeWidth={1.7} />
+              <LockKeyhole size={15} strokeWidth={1.7} aria-hidden="true" />
             </button>
             </form>
           </div>
 
           <NavLink className="login-return" to="/">
-            <ArrowLeft size={14} strokeWidth={1.7} />
+            <ArrowLeft size={14} strokeWidth={1.7} aria-hidden="true" />
             Voltar para o portal
           </NavLink>
         </div>
