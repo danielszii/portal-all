@@ -38,7 +38,6 @@ export default function Admin() {
                 <div className="admin-module-icon"><Icon size={23} strokeWidth={1.5} aria-hidden="true" /></div>
                 <span className="admin-module-number">0{index + 1}</span>
               </div>
-              <span className="admin-module-status">Módulo administrativo</span>
               <h3>{title}</h3>
               <p>{description}</p>
               <span className="admin-module-action">{action}<ArrowUpRight size={15} aria-hidden="true" /></span>

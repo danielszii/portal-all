@@ -16,7 +16,7 @@
     "test:integration": "npm --prefix backend run test:integration"
   },
   "devDependencies": {
-    "concurrently": "^10.0.5"
+    "concurrently": "^10.0.6"
   },
   "engines": {
     "node": ">=22.18.0 <23"

@@ -11,10 +11,13 @@ export default function Layout() {
   const institution = useInstituicao()
   const { isAuthenticated, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [logoutPending, setLogoutPending] = useState(false)
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const searchFormRef = useRef<HTMLFormElement>(null)
+  const searchButtonRef = useRef<HTMLButtonElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const mainRef = useRef<HTMLDivElement>(null)
   const firstRoute = useRef(true)
@@ -41,9 +44,35 @@ export default function Layout() {
     return () => document.removeEventListener('keydown', closeWithKeyboard)
   }, [menuOpen])
 
+  useEffect(() => {
+    if (!mobileSearchOpen) return
+    const closeMobileSearch = (event: PointerEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent && event.key !== 'Escape') return
+      if (event instanceof PointerEvent) {
+        const target = event.target as Node
+        if (searchFormRef.current?.contains(target) || searchButtonRef.current?.contains(target)) return
+      }
+      setMobileSearchOpen(false)
+      if (event instanceof KeyboardEvent) searchButtonRef.current?.focus()
+    }
+    document.addEventListener('pointerdown', closeMobileSearch)
+    document.addEventListener('keydown', closeMobileSearch)
+    return () => {
+      document.removeEventListener('pointerdown', closeMobileSearch)
+      document.removeEventListener('keydown', closeMobileSearch)
+    }
+  }, [mobileSearchOpen])
+
+  const openMobileSearch = () => {
+    setMenuOpen(false)
+    setMobileSearchOpen(true)
+    window.requestAnimationFrame(() => searchInputRef.current?.focus())
+  }
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     navigate(`/busca?q=${encodeURIComponent(query.trim())}`)
+    setMobileSearchOpen(false)
     close()
   }
 
@@ -76,7 +105,7 @@ export default function Layout() {
       <a className="skip-link" href="#conteudo-principal">Ir para o conteúdo principal</a>
       <header className="site-header">
         {/* ── Barra superior ── */}
-        <div className="header-top wrap">
+        <div className={`header-top wrap ${mobileSearchOpen ? 'mobile-search-open' : ''}`}>
           <div className="header-brand">
             <NavLink to="/" className="brand-mark" onClick={close} aria-label="A.L.L. — página inicial">
               <img src={logoSrc} alt="" className="brand-logo" aria-hidden="true" />
@@ -84,7 +113,18 @@ export default function Layout() {
           </div>
 
           <div className="header-actions">
-            <form className="header-search search-control" role="search" onSubmit={handleSearch} onClick={() => searchInputRef.current?.focus()}>
+            <button
+              ref={searchButtonRef}
+              type="button"
+              className="mobile-search-trigger"
+              aria-label="Abrir busca no portal"
+              aria-expanded={mobileSearchOpen}
+              aria-controls="busca-geral-portal"
+              onClick={openMobileSearch}
+            >
+              <Search size={18} strokeWidth={1.7} aria-hidden="true" />
+            </button>
+            <form id="busca-geral-portal" ref={searchFormRef} className="header-search search-control" role="search" onSubmit={handleSearch} onClick={() => searchInputRef.current?.focus()}>
               <Search size={14} strokeWidth={1.5} aria-hidden="true" />
               <input
                 type="search"
@@ -122,7 +162,10 @@ export default function Layout() {
             aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
             aria-expanded={menuOpen}
             aria-controls="navegacao-principal"
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={() => {
+              setMobileSearchOpen(false)
+              setMenuOpen(!menuOpen)
+            }}
           >
             {menuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
           </button>
@@ -130,11 +173,6 @@ export default function Layout() {
 
         {/* ── Barra de navegação ── */}
         <nav id="navegacao-principal" className={`main-nav-bar ${menuOpen ? 'is-open' : ''}`} aria-label="Navegação principal">
-          <form className="mobile-search search-control wrap" role="search" onSubmit={handleSearch}>
-            <Search size={14} strokeWidth={1.5} aria-hidden="true" />
-            <input type="search" aria-label="Buscar no portal" placeholder="Buscar no portal…" value={query} onChange={e => setQuery(e.target.value)} />
-            <button type="submit" aria-label="Pesquisar"><span>Buscar</span></button>
-          </form>
           <div className="main-nav-inner wrap">
             {navLinks.map(([label, path]) => (
               <NavLink

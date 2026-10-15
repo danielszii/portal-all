@@ -58,7 +58,7 @@ body,
   --graphite: #6b6b6b;
   --navy: var(--institutional-blue);
   --bronze: var(--institutional-accent);
-  --focus-ring: #9a5b00;
+  --focus-ring: var(--institutional-blue);
   --gold-on-dark: var(--soft-blue);
   --line: color-mix(in srgb, var(--soft-blue) 48%, var(--paper));
   --muted: #6b6b6b;
@@ -96,8 +96,8 @@ select:focus-visible,
 textarea:focus-visible,
 [tabindex]:focus-visible {
   outline: 2px solid var(--focus-ring);
-  outline-offset: 4px;
-  box-shadow: 0 0 0 2px var(--paper);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 .page-shell:focus-visible,
@@ -320,6 +320,10 @@ textarea:focus-visible,
   outline-offset: 3px;
   border-color: transparent;
   box-shadow: 0 0 0 2px var(--paper), 0 10px 28px rgba(3, 83, 163, .1);
+}
+
+.mobile-search-trigger {
+  display: none;
 }
 
 .header-login.nav-active {
@@ -1348,7 +1352,7 @@ h2 {
 .home-page .home-event-card {
   display: grid;
   grid-template-columns: 120px minmax(0, 1fr) minmax(260px, 38%);
-  min-height: 290px;
+  min-height: 270px;
   overflow: hidden;
   border-radius: 6px;
   background: #fff;
@@ -4331,8 +4335,8 @@ body {
 /* Acessibilidade: foco consistente sem reintroduzir o contorno azul nativo. */
 .search-control:focus-within,
 .admin-search:focus-within {
-  border-color: var(--focus-ring);
-  box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--focus-ring);
+  border-color: color-mix(in srgb, var(--institutional-blue) 55%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--institutional-blue) 14%, transparent);
 }
 
 .search-control input:focus-visible,
@@ -4348,9 +4352,9 @@ body {
 .admin-field select:focus-visible,
 .admin-field textarea:focus-visible,
 .login-input-wrap input:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 3px;
-  box-shadow: 0 0 0 2px var(--paper);
+  outline: 1px solid var(--focus-ring);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 @media (forced-colors: active) {
@@ -4495,9 +4499,9 @@ body {
 }
 
 .login-input-wrap:focus-within {
-  border-color: color-mix(in srgb, var(--bronze) 58%, var(--line));
+  border-color: color-mix(in srgb, var(--institutional-blue) 52%, var(--line));
   background: var(--surface);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bronze) 10%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--institutional-blue) 12%, transparent);
 }
 
 .login-input-wrap svg {
@@ -4813,10 +4817,10 @@ body {
   transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 
-.admin-module-card:nth-child(n+4) { grid-column: span 3; min-height: 250px; }
+.admin-module-card:nth-child(n+4) { grid-column: span 3; min-height: 235px; }
 .admin-module-card:hover { border-color: color-mix(in srgb, var(--institutional-blue) 38%, var(--line)); box-shadow: 0 16px 34px rgba(2, 62, 125, .09); transform: translateY(-3px); }
 .admin-module-card:focus-visible { outline: 2px solid var(--institutional-blue); outline-offset: 3px; }
-.admin-module-card-top { display: flex; width: 100%; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+.admin-module-card-top { display: flex; width: 100%; align-items: flex-start; justify-content: space-between; margin-bottom: 26px; }
 .admin-module-number { color: color-mix(in srgb, var(--institutional-blue) 45%, transparent); font: 600 .67rem var(--font-mono); letter-spacing: .1em; }
 
 .admin-module-icon {
@@ -4830,15 +4834,8 @@ body {
   background: var(--surface-soft);
 }
 
-.admin-module-status {
-  color: var(--muted);
-  font: 700 7px/1 'Space Mono', monospace;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
-
 .admin-module-card h3 {
-  margin-top: 13px;
+  margin-top: 0;
   color: var(--heading-dark);
   font-size: 34px;
 }
@@ -4899,7 +4896,7 @@ body {
   }
 
   .admin-module-card {
-    min-height: 245px;
+    min-height: 225px;
   }
   .admin-module-card,
   .admin-module-card:nth-child(n+4),
@@ -7236,7 +7233,7 @@ summary { cursor: pointer; }
   .admin-module-card,
   .admin-module-card:nth-child(n+4),
   .admin-module-card:last-child {
-    min-height: 224px;
+    min-height: 210px;
     grid-column: span 1;
     border-radius: 10px;
     padding: 16px 14px;
@@ -7261,12 +7258,8 @@ summary { cursor: pointer; }
     font-size: 9px;
   }
 
-  .admin-module-status {
-    display: none;
-  }
-
   .admin-module-card h3 {
-    margin-top: 2px;
+    margin-top: 0;
     font-size: clamp(25px, 7.5vw, 31px);
     line-height: 1;
     overflow-wrap: anywhere;
@@ -7372,7 +7365,7 @@ summary { cursor: pointer; }
   .admin-module-card,
   .admin-module-card:nth-child(n+4),
   .admin-module-card:last-child {
-    min-height: 210px;
+    min-height: 198px;
     padding: 14px 11px;
   }
 
@@ -8000,5 +7993,179 @@ summary { cursor: pointer; }
 
   .chairs-catalog-section .chair {
     padding: 6px 6px 11px;
+  }
+}
+
+/* A busca permanece no cabecalho, ao lado do menu, em telas compactas. */
+@media (max-width: 800px) {
+  .site-header .header-top {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .site-header .header-actions {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .site-header .mobile-search-trigger {
+    display: inline-grid;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--institutional-blue) 26%, var(--line));
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--institutional-blue);
+    box-shadow: 0 4px 14px rgba(3, 83, 163, .06);
+    cursor: pointer;
+  }
+
+  .site-header .header-actions .header-search {
+    display: none;
+  }
+
+  .site-header .header-top.mobile-search-open {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .site-header .header-top.mobile-search-open .header-brand,
+  .site-header .header-top.mobile-search-open .mobile-search-trigger {
+    display: none;
+  }
+
+  .site-header .header-top.mobile-search-open .header-actions .header-search {
+    display: flex;
+  }
+
+  .site-header .header-actions .header-search {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    gap: 9px;
+    padding: 4px 5px 4px 13px;
+  }
+
+  .site-header .header-actions .header-login {
+    display: none;
+  }
+
+  .site-header .header-search button {
+    flex: 0 0 auto;
+    padding-inline: 13px;
+  }
+
+  .site-header .menu-toggle {
+    justify-self: end;
+  }
+}
+
+@media (max-width: 420px) {
+  .site-header .header-top {
+    gap: 8px;
+  }
+
+  .site-header .header-actions .header-search {
+    gap: 7px;
+    padding-left: 11px;
+  }
+
+  .site-header .header-search button {
+    padding-inline: 10px;
+  }
+}
+
+@media (max-width: 340px) {
+  .site-header .header-search button {
+    padding-inline: 8px;
+  }
+
+  .site-header .header-search button span {
+    letter-spacing: .08em;
+  }
+}
+
+/* Escala compacta do conjunto de busca no cabecalho mobile. */
+@media (max-width: 640px) {
+  .site-header .header-top {
+    min-height: 68px;
+    gap: 9px;
+    padding-block: 9px;
+  }
+
+  .site-header .brand-logo {
+    height: 50px;
+  }
+
+  .site-header .header-actions .header-search {
+    min-height: 40px;
+    gap: 7px;
+    padding: 3px 4px 3px 11px;
+  }
+
+  .site-header .header-search>svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .site-header .header-search input {
+    font-size: 16px;
+  }
+
+  .site-header .header-search input::placeholder {
+    font-size: 12px;
+    letter-spacing: .015em;
+  }
+
+  .site-header .header-search button {
+    min-height: 32px;
+    padding: 8px 10px;
+  }
+
+  .site-header .header-search button span {
+    font-size: 6px;
+    letter-spacing: .09em;
+  }
+
+  .site-header .menu-toggle {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .site-header .menu-toggle svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 420px) {
+  .site-header .header-top {
+    min-height: 62px;
+    gap: 7px;
+    padding-block: 7px;
+  }
+
+  .site-header .brand-logo {
+    height: 44px;
+  }
+
+  .site-header .header-actions .header-search {
+    min-height: 38px;
+    padding-left: 10px;
+  }
+
+  .site-header .header-search button {
+    min-height: 30px;
+    padding-inline: 8px;
+  }
+
+  .site-header .menu-toggle {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
   }
 }
