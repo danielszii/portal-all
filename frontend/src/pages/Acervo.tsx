@@ -128,7 +128,9 @@ function AcervoConteudo() {
                   <p className="archive-book-pages">{book.pages} páginas · {book.author}</p>
                   <div className="archive-book-actions">
                     <button type="button" className="archive-book-link archive-book-link-primary" onClick={() => setPdfAberto(book)}>
-                      Ler / visualizar <ArrowUpRight size={14} aria-hidden="true" />
+                      <span className="archive-action-long">Ler / visualizar</span>
+                      <span className="archive-action-short">Visualizar</span>
+                      <ArrowUpRight size={14} aria-hidden="true" />
                     </button>
                   </div>
                 </div>

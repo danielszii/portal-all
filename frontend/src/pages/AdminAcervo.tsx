@@ -32,7 +32,11 @@ export default function AdminAcervo() {
         <h3>{values.titulo || 'Título da publicação'}</h3>
         <p>{values.descricao || 'A descrição da publicação aparecerá aqui.'}</p>
         <small>{values.paginas || '—'} páginas · {values.autoriaTexto || 'Autoria'}</small>
-        <span className="admin-preview-link">Ler / visualizar <ArrowUpRight size={13} /></span>
+        <span className="admin-preview-link">
+          <span className="admin-preview-action-long">Ler / visualizar</span>
+          <span className="admin-preview-action-short">Visualizar</span>
+          <ArrowUpRight size={13} />
+        </span>
       </div>
     </article>}
   />

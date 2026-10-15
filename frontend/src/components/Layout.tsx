@@ -191,7 +191,7 @@ export default function Layout() {
             {isAuthenticated && (
               <NavLink className={({ isActive }) => `admin-nav-link ${isActive ? 'nav-active' : ''}`} to="/admin" onClick={close}>
                 <LayoutDashboard size={14} strokeWidth={1.7} aria-hidden="true" />
-                <span>Administração</span>
+                <span>Admin</span>
               </NavLink>
             )}
             {isAuthenticated ? (

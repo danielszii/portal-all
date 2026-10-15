@@ -1,6 +1,6 @@
 import AdminResourcePage from '@/components/admin/AdminResourcePage'
 import { editorialStatus, imageAccept } from '@/components/admin/fields'
-import { ArrowUpRight, ImageIcon } from 'lucide-react'
+import { ImageIcon } from 'lucide-react'
 
 export default function AdminNoticias() {
   return <AdminResourcePage
@@ -26,7 +26,6 @@ export default function AdminNoticias() {
           <div className="admin-preview-meta"><span>{values.categoria || 'Categoria'}</span><time>{date}</time></div>
           <h3>{values.titulo || 'Título da notícia'}</h3>
           <p>{values.lede || 'O resumo da notícia aparecerá aqui conforme você digitar.'}</p>
-          <span className="admin-preview-link">Ler notícia <ArrowUpRight size={13} /></span>
         </div>
       </article>
     }}
