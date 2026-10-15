@@ -169,13 +169,14 @@ fornecer essa variável.
 ### 5.2 Supabase
 
 ```env
-DATABASE_URL=URL_SESSION_POOLER_DO_SUPABASE
+DATABASE_URL=URL_SESSION_POOLER_DO_SUPABASE_COM_CONNECTION_LIMIT_3
 DIRECT_URL=URL_DIRECT_CONNECTION_DO_SUPABASE
 ```
 
 Use:
 
-- **Session Pooler** em `DATABASE_URL`, para a aplicação;
+- **Session Pooler** em `DATABASE_URL`, para a aplicação, acrescentando
+  `connection_limit=3` à query string para não esgotar o limite do pool;
 - **Direct Connection** em `DIRECT_URL`, para migrations e ferramentas Prisma.
 
 As duas conexões utilizam a senha do banco. Preserve os parâmetros entregues pelo
@@ -564,4 +565,3 @@ Documentos relacionados:
 - [Revisão de acessibilidade](./ACESSIBILIDADE-SPRINT-6.md)
 - [API administrativa](../backend/ADMIN_API.md)
 - [API pública](../backend/PUBLIC_API.md)
-

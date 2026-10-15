@@ -31,8 +31,9 @@ export default function Pagination({ page, totalPages, onChange }: {
 
   return (
     <nav ref={navigationRef} aria-label="Paginação" className="catalog-pagination">
-      <button type="button" className="pagination-arrow" disabled={currentPage <= 1} onClick={() => changePage(currentPage - 1)} aria-label="Página anterior">
+      <button type="button" className="pagination-arrow pagination-previous" disabled={currentPage <= 1} onClick={() => changePage(currentPage - 1)} aria-label="Página anterior">
         <ChevronLeft size={16} aria-hidden="true" />
+        <span>Anterior</span>
       </button>
 
       <div className="pagination-pages">
@@ -52,7 +53,10 @@ export default function Pagination({ page, totalPages, onChange }: {
         ))}
       </div>
 
-      <button type="button" className="pagination-arrow" disabled={currentPage >= totalPages} onClick={() => changePage(currentPage + 1)} aria-label="Próxima página">
+      <span className="pagination-status" aria-hidden="true">Página {currentPage} de {totalPages}</span>
+
+      <button type="button" className="pagination-arrow pagination-next" disabled={currentPage >= totalPages} onClick={() => changePage(currentPage + 1)} aria-label="Próxima página">
+        <span>Próxima</span>
         <ChevronRight size={16} aria-hidden="true" />
       </button>
       <span className="visually-hidden" aria-live="polite">Página {currentPage} de {totalPages}</span>

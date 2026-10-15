@@ -10,7 +10,7 @@
     "build:backend": "npm --prefix backend run build",
     "build": "npm run build:backend && npm run build:frontend",
     "start": "npm --prefix backend run start",
-    "install:all": "npm ci && npm --prefix backend ci && npm --prefix frontend ci",
+    "install:all": "npm ci --include=dev && npm --prefix backend ci --include=dev && npm --prefix frontend ci --include=dev",
     "check": "npm --prefix backend run check && npm --prefix frontend run check",
     "test": "npm --prefix backend test && npm --prefix frontend test",
     "test:integration": "npm --prefix backend run test:integration"
@@ -19,6 +19,6 @@
     "concurrently": "^10.0.5"
   },
   "engines": {
-    "node": ">=22.18.0"
+    "node": ">=22.18.0 <23"
   }
 }
