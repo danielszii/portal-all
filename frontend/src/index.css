@@ -5393,6 +5393,45 @@ span {
   box-shadow: 0 8px 22px rgba(2, 62, 125, .045);
 }
 
+/* Editor do conteúdo público */
+.admin-portal-editor { display: grid; gap: 24px; }
+.admin-portal-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.admin-portal-steps button { min-width: 0; min-height: 82px; padding: 16px 18px; display: grid; grid-template-columns: 28px 20px 1fr; align-items: center; gap: 10px; color: var(--institutional-blue); text-align: left; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; transition: border-color .2s, background .2s, transform .2s; }
+.admin-portal-steps button:hover { border-color: var(--institutional-blue); transform: translateY(-2px); }
+.admin-portal-steps button>span { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; font: 700 .68rem var(--font-mono); }
+.admin-portal-steps button strong { font: 600 .78rem var(--font-mono); letter-spacing: .04em; text-transform: uppercase; }
+.admin-portal-steps button.is-active { color: white; background: var(--institutional-blue); border-color: var(--institutional-blue); box-shadow: 0 12px 30px rgba(0, 86, 179, .16); }
+.admin-portal-steps button.is-active>span { border-color: rgba(255,255,255,.45); }
+.admin-portal-steps button.is-complete>span { color: white; background: var(--institutional-blue); border-color: var(--institutional-blue); }
+.admin-portal-card { overflow: hidden; background: var(--paper); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 18px 45px rgba(2, 62, 125, .06); }
+.admin-portal-card>header { display: flex; align-items: flex-start; gap: 18px; padding: 26px 30px; border-bottom: 1px solid var(--line); background: linear-gradient(135deg, rgba(0, 91, 187, .045), transparent 65%); }
+.admin-portal-card>header span { color: var(--institutional-blue); font: 700 .65rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+.admin-portal-card>header h2 { margin: 5px 0 4px; color: var(--ink); font: 400 clamp(1.55rem, 2.5vw, 2.25rem) var(--font-serif); }
+.admin-portal-card>header p { margin: 0; color: var(--muted); }
+.admin-portal-card-icon { flex: 0 0 48px; width: 48px; height: 48px; display: grid; place-items: center; color: var(--institutional-blue); border: 1px solid var(--line); border-radius: 50%; background: white; }
+.admin-portal-fields { padding: 30px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.admin-portal-fields fieldset { margin: 0; padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: color-mix(in srgb, var(--paper) 96%, var(--institutional-blue)); }
+.admin-portal-fields fieldset label { display: grid; gap: 7px; margin-top: 14px; }
+.admin-portal-fields fieldset legend { padding: 0 8px; color: var(--institutional-blue); font: 700 .7rem var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+.admin-portal-fields small { color: var(--muted); line-height: 1.5; }
+.admin-portal-footer { padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); }
+.admin-portal-footer>span { color: var(--muted); font: .72rem var(--font-mono); text-transform: uppercase; }
+.admin-portal-footer>span strong { color: var(--institutional-blue); }
+@media (max-width: 760px) {
+  .admin-portal-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .admin-portal-steps button { min-height: 58px; padding: 10px; display: flex; justify-content: center; border-radius: 16px; }
+  .admin-portal-steps button>svg, .admin-portal-steps button strong { display: none; }
+  .admin-portal-steps button>span { width: 34px; height: 34px; }
+  .admin-portal-card { border-radius: 20px; }
+  .admin-portal-card>header { padding: 20px; gap: 13px; }
+  .admin-portal-card-icon { flex-basis: 42px; width: 42px; height: 42px; }
+  .admin-portal-fields { grid-template-columns: 1fr; padding: 20px; gap: 18px; }
+  .admin-portal-fields fieldset { padding: 16px; }
+  .admin-portal-footer { padding: 16px 20px; flex-wrap: wrap; }
+  .admin-portal-footer>span { order: -1; width: 100%; text-align: center; }
+  .admin-portal-footer button { flex: 1; justify-content: center; min-height: 46px; border-radius: 999px; }
+}
+
 .home-page .news-list .home-news-link {
   display: flex;
   width: 100%;

@@ -4,7 +4,6 @@ import { NavLink } from 'react-router'
 import { canOpenAdminPage } from '@/services/admin-permissions'
 
 const modules = [
-  { title: 'Portal', description: 'Edite os destaques e textos apresentados nas páginas públicas.', action: 'Editar portal', to: '/admin/portal', icon: PanelsTopLeft },
   { title: 'Acervo', description: 'Cadastre livros, edições e arquivos digitais.', action: 'Gerenciar acervo', to: '/admin/acervo', icon: BookOpen },
   { title: 'Notícias', description: 'Prepare e publique novidades da Academia.', action: 'Gerenciar notícias', to: '/admin/noticias', icon: Newspaper },
   { title: 'Agenda', description: 'Organize eventos, solenidades e encontros.', action: 'Gerenciar agenda', to: '/admin/agenda', icon: CalendarDays },
@@ -12,6 +11,7 @@ const modules = [
   { title: 'Histórico', description: 'Acompanhe publicações, edições, exclusões e acessos.', action: 'Consultar histórico', to: '/admin/auditoria', icon: History },
   { title: 'Instituição', description: 'Consulte os dados institucionais e a diretoria publicados.', action: 'Consultar instituição', to: '/admin/instituicao', icon: Building2 },
   { title: 'Contas', description: 'Defina os perfis e o acesso de cada pessoa.', action: 'Gerenciar contas', to: '/admin/contas', icon: UserCog },
+  { title: 'Portal', description: 'Personalize os destaques e textos exibidos em todas as páginas públicas.', action: 'Personalizar portal', to: '/admin/portal', icon: PanelsTopLeft },
 ]
 
 export default function Admin() {
