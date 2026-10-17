@@ -63,6 +63,11 @@ enum RecursoAuditoria {
   INSTITUICAO
   GESTAO
   MANDATO
+  OBRA
+  PRODUCAO_LITERARIA
+  AUTORIA_ACERVO
+  CONTATO
+  PORTAL
 }
 
 // Identificadores são snapshots, sem FK: exclusões não apagam o histórico.
@@ -156,6 +161,8 @@ model Obra {
   ano         String?
   tipo        String?
   academico   Academico @relation(fields: [academicoId], references: [id], onDelete: Restrict)
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @default(now()) @updatedAt @db.Timestamptz(3)
   @@index([academicoId])
 }
 
@@ -168,6 +175,8 @@ model ProducaoLiteraria {
   status      StatusEditorial @default(RASCUNHO)
   publicadoEm DateTime?
   academico   Academico       @relation(fields: [academicoId], references: [id], onDelete: Restrict)
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @default(now()) @updatedAt @db.Timestamptz(3)
   @@index([academicoId, status])
 }
 
@@ -196,6 +205,8 @@ model GaleriaFoto {
   credito     String?
   ordem       Int     @default(0)
   automatica  Boolean @default(false)
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @default(now()) @updatedAt @db.Timestamptz(3)
   evento      Evento? @relation(fields: [eventoId], references: [id], onDelete: Restrict)
   @@index([eventoId, ordem])
   // A migration limita a uma foto automática por evento com índice único parcial.
@@ -255,6 +266,26 @@ model Instituicao {
   sedeTexto   String?
   trajetoriaTexto String?
   horarioAtendimento String?
+  emailImprensa String?
+  mapaUrl String?
+  redesSociais Json @default("[]")
+  atualizadoEm DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+}
+
+model ConfiguracaoPortal {
+  id String @id @default("portal")
+  heroSlides Json @default("[]")
+  heroImagem String?
+  inicioTitulo String
+  inicioTexto String
+  academiaIntroducao String
+  cadeirasIntroducao String
+  acervoIntroducao String
+  agendaIntroducao String
+  agendaAviso String
+  noticiasIntroducao String
+  contatoIntroducao String
+  contatoAssuntos Json @default("[]")
   atualizadoEm DateTime @default(now()) @updatedAt @db.Timestamptz(3)
 }
 
@@ -286,5 +317,6 @@ model ContatoMensagem {
   mensagem    String
   status      String   @default("NOVA")
   dataEnvio   DateTime @default(now())
+  atualizadoEm DateTime @default(now()) @updatedAt @db.Timestamptz(3)
   @@index([dataEnvio])
 }

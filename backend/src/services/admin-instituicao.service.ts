@@ -6,7 +6,7 @@ import { dataInstitucional } from '../repositories/instituicao.repository.js'
 import { changedFields, recordAudit, type AuditActor } from './admin-audit.service.js'
 import * as v from './admin-validation.js'
 
-const institutionFields = ['nome', 'historia', 'missao', 'endereco', 'email', 'telefone', 'fundacaoAno', 'sedeTexto', 'trajetoriaTexto', 'horarioAtendimento']
+const institutionFields = ['nome', 'historia', 'missao', 'endereco', 'email', 'telefone', 'fundacaoAno', 'sedeTexto', 'trajetoriaTexto', 'horarioAtendimento', 'emailImprensa', 'mapaUrl', 'redesSociais']
 const mandateFields = ['academicoId', 'cargo', 'inicioEm', 'fimEm']
 const boardInclude = {
   mandatos: { orderBy: [{ cargo: 'asc' }, { inicioEm: 'asc' }, { id: 'asc' }],
@@ -17,6 +17,13 @@ export function institutionInput(input: unknown) {
   const b = v.object(input)
   v.keys(b, [...institutionFields, 'atualizadoEm'])
   const email = v.optionalText(b.email, 'email', 254)
+  const redesSociais = b.redesSociais === undefined ? [] : (() => {
+    if (!Array.isArray(b.redesSociais) || b.redesSociais.length > 10) throw new ValidationError('redesSociais deve ser uma lista de até 10 links.')
+    return b.redesSociais.map((item, index) => {
+      const link = v.object(item); v.keys(link, ['nome', 'url'])
+      return { nome: v.text(link.nome, `redesSociais[${index}].nome`, 50), url: v.webUrl(link.url, `redesSociais[${index}].url`) }
+    })
+  })()
   return {
     nome: v.text(b.nome, 'nome'), historia: v.text(b.historia, 'historia', 100000), missao: v.text(b.missao, 'missao', 20000),
     endereco: v.optionalText(b.endereco, 'endereco', 1000), email: email ? v.email(email) : null,
@@ -24,6 +31,9 @@ export function institutionInput(input: unknown) {
     fundacaoAno: b.fundacaoAno == null ? null : v.integer(b.fundacaoAno, 'fundacaoAno', 1, dataInstitucional().getUTCFullYear()),
     sedeTexto: v.optionalText(b.sedeTexto, 'sedeTexto'), trajetoriaTexto: v.optionalText(b.trajetoriaTexto, 'trajetoriaTexto'),
     horarioAtendimento: v.optionalText(b.horarioAtendimento, 'horarioAtendimento', 500),
+    emailImprensa: b.emailImprensa ? v.email(b.emailImprensa) : null,
+    mapaUrl: b.mapaUrl ? v.webUrl(b.mapaUrl, 'mapaUrl') : null,
+    redesSociais,
   }
 }
 

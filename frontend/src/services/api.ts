@@ -69,10 +69,17 @@ export const fetchAcervoById = (id: string, signal?: AbortSignal) => request<Ace
 export const postContato = (dados: ContatoForm) => request<{ sucesso: boolean; mensagem: string; id: string }>('/contato', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) })
 
 export type InstituicaoResponse = {
-  info: { nome: string; historia: string; missao: string; endereco: string | null; email: string | null; telefone: string | null; fundacaoAno: number | null; sedeTexto: string | null; trajetoriaTexto: string | null; horarioAtendimento: string | null } | null
+  info: { nome: string; historia: string; missao: string; endereco: string | null; email: string | null; telefone: string | null; fundacaoAno: number | null; sedeTexto: string | null; trajetoriaTexto: string | null; horarioAtendimento: string | null; emailImprensa?: string | null; mapaUrl?: string | null; redesSociais?: { nome: string; url: string }[] } | null
   gestao: { inicioAno: number; fimAno: number | null; diretoria: { cargo: string; nome: string; posse: string }[] } | null
 }
 export const fetchInstituicao = (signal?: AbortSignal) => request<InstituicaoResponse>('/instituicao', { signal })
+export type PortalContent = {
+  id: string; heroSlides: { title: string; emphasis: string; description: string }[]; heroImagem: string | null
+  inicioTitulo: string; inicioTexto: string; academiaIntroducao: string; cadeirasIntroducao: string
+  acervoIntroducao: string; agendaIntroducao: string; agendaAviso: string; noticiasIntroducao: string
+  contatoIntroducao: string; contatoAssuntos: string[]
+}
+export const fetchPortalContent = (signal?: AbortSignal) => request<PortalContent>('/portal', { signal })
 export function invalidateInstituicao() {
   publicCache.delete('/instituicao')
   publicRequests.delete('/instituicao')

@@ -2,6 +2,7 @@ import { useInstituicao } from '@/hooks/useInstituicao'
 import LoadState from '@/components/LoadState'
 import { NavLink } from 'react-router'
 import { ArrowUpRight } from 'lucide-react'
+import PortalText from '@/components/PortalText'
 
 
 export default function Academia() {
@@ -18,10 +19,7 @@ export default function Academia() {
       {/* ── Hero da página ── */}
       <section className="page-hero wrap">
         <h1 className="page-title">Academia</h1>
-        <p className="page-lede">
-          A Academia Limoeirense de Letras existe para valorizar a língua portuguesa, celebrar
-          a literatura nacional e preservar a cultura — especialmente a do Vale do Jaguaribe.
-        </p>
+        <PortalText className="page-lede" field="academiaIntroducao" />
       </section>
 
       {/* ── Sobre ── */}

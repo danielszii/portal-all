@@ -24,6 +24,7 @@ export async function findInstituicao(now = new Date()) {
   const info = await prisma.instituicao.findUnique({ where: { id: 'all' }, select: {
     id: true, nome: true, historia: true, missao: true, endereco: true, email: true, telefone: true,
     fundacaoAno: true, sedeTexto: true, trajetoriaTexto: true, horarioAtendimento: true,
+    emailImprensa: true, mapaUrl: true, redesSociais: true,
   } })
   const gestao = await prisma.gestao.findFirst({
     where: { inicioAno: { lte: ano }, OR: [{ fimAno: null }, { fimAno: { gte: ano } }] },

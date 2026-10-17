@@ -2,9 +2,12 @@ import { useInstituicao } from '@/hooks/useInstituicao'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, MapPin, Mail, Clock } from 'lucide-react'
 import { postContato } from '@/services/api'
+import PortalText from '@/components/PortalText'
+import { usePortalContent } from '@/hooks/usePortalContent'
 
 export default function Contato() {
   const institution = useInstituicao()
+  const portal = usePortalContent()
   const info = institution.data.info
   const [form, setForm] = useState({ nome: '', email: '', assunto: '', mensagem: '' })
   const [enviado, setEnviado] = useState(false)
@@ -38,10 +41,7 @@ export default function Contato() {
     <main>
       <section className="page-hero wrap">
         <h1 className="page-title">Contato</h1>
-        <p className="page-lede">
-          A Academia Limoeirense de Letras está aberta a pesquisadores, escritores,
-          estudantes e à comunidade em geral.
-        </p>
+        <PortalText className="page-lede" field="contatoIntroducao" />
       </section>
 
       <section className="contato-section wrap">
@@ -53,9 +53,9 @@ export default function Contato() {
             <h2>Visite-nos</h2>
             <p className="eyebrow">Endereço</p>
             <p>{info?.endereco ?? 'Endereço ainda não disponibilizado.'}</p>
-            <a className="action-pill contact-map-link" href="https://www.google.com/maps/search/?api=1&query=-5.143925725893628%2C-38.095030768627986" target="_blank" rel="noopener noreferrer">
+            {info?.mapaUrl && <a className="action-pill contact-map-link" href={info.mapaUrl} target="_blank" rel="noopener noreferrer">
               Ver no mapa <ArrowUpRight size={14} aria-hidden="true" /><span className="visually-hidden"> (abre em nova aba)</span>
-            </a>
+            </a>}
           </article>
 
           {/* Email */}
@@ -111,11 +111,7 @@ export default function Contato() {
                 <label htmlFor="assunto">Assunto</label>
                 <select id="assunto" name="assunto" required value={form.assunto} onChange={handle}>
                   <option value="">Selecione um assunto</option>
-                  <option>Informações institucionais</option>
-                  <option>Publicações e acervo</option>
-                  <option>Associação e cadeiras</option>
-                  <option>Imprensa e mídia</option>
-                  <option>Outros</option>
+                  {portal.data?.contatoAssuntos.map(assunto => <option key={assunto}>{assunto}</option>)}
                 </select>
               </div>
               <div className="form-field">

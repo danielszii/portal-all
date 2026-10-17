@@ -4,7 +4,7 @@ export type { AdminProfile, AdminPermission } from '../../../backend/src/domain/
 
 const pages: Record<string, AdminPermission> = {
   acervo: 'conteudo:ler', noticias: 'conteudo:ler', agenda: 'conteudo:ler', galeria: 'conteudo:ler',
-  membros: 'instituicao:ler', pessoas: 'instituicao:ler', instituicao: 'instituicao:ler',
+  membros: 'instituicao:ler', pessoas: 'instituicao:ler', instituicao: 'instituicao:ler', portal: 'instituicao:ler',
   auditoria: 'auditoria:ler', contas: 'contas:gerenciar',
 }
 export function canOpenAdminPage(path: string, can: (permission: AdminPermission) => boolean) {

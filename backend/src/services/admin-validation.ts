@@ -50,6 +50,11 @@ function url(value: unknown, name: string, required = false): string {
     return parsed.href
   } catch { throw new ValidationError(`${name}: use URL HTTP(S) ou caminho local absoluto.`) }
 }
+export function webUrl(value: unknown, name: string): string {
+  const result = url(value, name, true)
+  if (result.startsWith('/')) throw new ValidationError(`${name}: informe uma URL HTTP(S) completa.`)
+  return result
+}
 export function mediaUrl(value: unknown, name: string, kind: MediaKind, required = false): string {
   const result = url(value, name, required)
   if (!result) return result

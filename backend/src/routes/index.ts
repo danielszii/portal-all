@@ -9,6 +9,7 @@ import inicioRouter from './inicio.routes.js'
 import { databaseReady } from '../services/readiness.service.js'
 import { findSearchPage } from '../repositories/busca.repository.js'
 import { parsePagination } from '../repositories/catalog-query.js'
+import { getPortalContent } from '../services/admin-portal.service.js'
 
 const apiRouter = Router()
 
@@ -22,6 +23,12 @@ apiRouter.get('/busca', async (req, res, next) => {
 apiRouter.get('/instituicao', async (_req, res, next) => {
   try {
     res.json(await findInstituicao())
+  } catch (error) { next(error) }
+})
+apiRouter.get('/portal', async (_req, res, next) => {
+  try {
+    const { atualizadoEm: _version, ...content } = await getPortalContent()
+    res.json(content)
   } catch (error) { next(error) }
 })
 

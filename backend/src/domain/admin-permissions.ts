@@ -39,7 +39,7 @@ export function permissionForRequest(method: string, path: string, contentType =
     return contentType.split(';')[0].trim().toLowerCase() === 'application/pdf' ? 'arquivos:pdf' : 'arquivos:imagem'
   }
   const area = ['noticias', 'acervo', 'agenda', 'galeria'].includes(resource) ? 'conteudo'
-    : ['cadeiras', 'academicos', 'patronos', 'instituicao', 'gestoes'].includes(resource) ? 'instituicao' : null
+    : ['cadeiras', 'academicos', 'patronos', 'instituicao', 'gestoes', 'portal', 'obras', 'producoes'].includes(resource) ? 'instituicao' : null
   if (!area) return null
   if (read) return `${area}:ler`
   if (method === 'DELETE') return 'registros:excluir'

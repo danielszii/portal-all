@@ -1,9 +1,10 @@
-import { ArrowUpRight, BookOpen, Building2, CalendarDays, History, LayoutDashboard, Newspaper, Users, UserCog } from 'lucide-react'
+import { ArrowUpRight, BookOpen, Building2, CalendarDays, History, LayoutDashboard, Newspaper, Users, UserCog, PanelsTopLeft } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { NavLink } from 'react-router'
 import { canOpenAdminPage } from '@/services/admin-permissions'
 
 const modules = [
+  { title: 'Portal', description: 'Edite os destaques e textos apresentados nas páginas públicas.', action: 'Editar portal', to: '/admin/portal', icon: PanelsTopLeft },
   { title: 'Acervo', description: 'Cadastre livros, edições e arquivos digitais.', action: 'Gerenciar acervo', to: '/admin/acervo', icon: BookOpen },
   { title: 'Notícias', description: 'Prepare e publique novidades da Academia.', action: 'Gerenciar notícias', to: '/admin/noticias', icon: Newspaper },
   { title: 'Agenda', description: 'Organize eventos, solenidades e encontros.', action: 'Gerenciar agenda', to: '/admin/agenda', icon: CalendarDays },

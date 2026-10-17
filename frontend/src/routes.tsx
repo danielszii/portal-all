@@ -22,6 +22,7 @@ import AdminAuditoria from './pages/AdminAuditoria'
 import AdminPessoas from './pages/AdminPessoas'
 import AdminInstituicao from './pages/AdminInstituicao'
 import AdminContas from './pages/AdminContas'
+import AdminPortal from './pages/AdminPortal'
 
 export const router = createBrowserRouter([
   { path: '/login', Component: Login },
@@ -51,6 +52,7 @@ export const router = createBrowserRouter([
           { path: 'admin/pessoas', Component: AdminPessoas },
           { path: 'admin/instituicao', Component: AdminInstituicao },
           { path: 'admin/contas', Component: AdminContas },
+          { path: 'admin/portal', Component: AdminPortal },
         ],
       },
       { path: '*', Component: NaoEncontrada },

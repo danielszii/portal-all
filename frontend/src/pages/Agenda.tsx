@@ -1,6 +1,7 @@
 import GalleryModal from '@/components/GalleryModal'
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
+import PortalText from '@/components/PortalText'
 import { useState, useCallback } from 'react'
 import { NavLink } from 'react-router'
 import { ArrowUpRight } from 'lucide-react'
@@ -27,10 +28,7 @@ export default function Agenda() {
     <main>
       <section className="page-hero wrap">
         <h1 className="page-title">Agenda</h1>
-        <p className="page-lede">
-          Sessões solenes, posses, palestras e lançamentos de livros da Academia
-          Limoeirense de Letras. Todos os eventos são abertos ao público.
-        </p>
+        <PortalText className="page-lede" field="agendaIntroducao" />
       </section>
 
       {eventosList.length === 0 && <p className="wrap" role="status">Nenhum evento encontrado.</p>}
@@ -130,7 +128,7 @@ export default function Agenda() {
         <div className="agenda-cta-inner">
           <h2>Quer participar<br /><em>de nossos eventos?</em></h2>
           <div className="agenda-cta-copy">
-            <p>Todos os eventos da Academia são abertos ao público e de entrada franca. Para informações sobre datas e programação, entre em contato com nossa secretaria.</p>
+            <PortalText field="agendaAviso" />
             <NavLink className="action-pill" to="/contato">
               Fale com a secretaria <ArrowUpRight size={15} aria-hidden="true" />
             </NavLink>

@@ -13,7 +13,7 @@ test('auditoria exige sessão e valida filtros antes de consultar o histórico',
   const base = await serve(t, createApp())
   assert.equal((await fetch(base + '/api/admin/auditoria')).status, 401)
   const headers = { Cookie: `${cookieName}=${'a'.repeat(64)}` }
-  for (const filter of ['pageSize=51', 'page=0', 'acao=APAGAR_TUDO', 'recurso=CONTATO', 'administradorId[x]=a', 'recurso=NOTICIA&recurso=EVENTO', 'inicio=invalido', 'fim=2026-01-01T00:00:00Z&inicio=2026-02-01T00:00:00Z', 'campoDesconhecido=x']) {
+  for (const filter of ['pageSize=51', 'page=0', 'acao=APAGAR_TUDO', 'recurso=DESCONHECIDO', 'administradorId[x]=a', 'recurso=NOTICIA&recurso=EVENTO', 'inicio=invalido', 'fim=2026-01-01T00:00:00Z&inicio=2026-02-01T00:00:00Z', 'campoDesconhecido=x']) {
     assert.equal((await fetch(base + '/api/admin/auditoria?' + filter, { headers })).status, 400, filter)
   }
   assert.equal(query.mock.callCount(), 0)

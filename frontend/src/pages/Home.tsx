@@ -1,7 +1,7 @@
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import { useEffect, useState } from 'react'
-import { fetchInicioCadeiras, fetchInicioAcervo, fetchInicioEventos, fetchInicioNoticias, fetchInstituicao } from '@/services/api'
+import { fetchInicioCadeiras, fetchInicioAcervo, fetchInicioEventos, fetchInicioNoticias, fetchInstituicao, fetchPortalContent } from '@/services/api'
 import { ArrowUpRight, Clock3, MapPin } from 'lucide-react'
 import { NavLink } from 'react-router'
 import heroImg from '@/imports/academialetters.jpg'
@@ -29,11 +29,13 @@ const heroSlides = [
 export default function Home() {
   const [currentHero, setCurrentHero] = useState(0)
   const [heroPaused, setHeroPaused] = useState(false)
+  const portal = useResource(fetchPortalContent, null)
+  const slides = portal.data?.heroSlides ?? heroSlides
   useEffect(() => {
     if (heroPaused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const timer = window.setInterval(() => setCurrentHero(current => (current + 1) % heroSlides.length), 6500)
+    const timer = window.setInterval(() => setCurrentHero(current => (current + 1) % slides.length), 6500)
     return () => window.clearInterval(timer)
-  }, [heroPaused])
+  }, [heroPaused, slides.length])
 
   const cadeiras = useResource(fetchInicioCadeiras, { total: 0, items: [] })
   const acervo = useResource(fetchInicioAcervo, { total: 0, items: [] })
@@ -43,6 +45,7 @@ export default function Home() {
   const chairs = cadeiras.error ? [] : cadeiras.data.items
   const publications = acervo.error ? [] : acervo.data.items
   const nextEvent = eventos.error ? null : eventos.data[0]
+  if (portal.error) return <main><LoadState {...portal} /></main>
 
   return (
     <main className="home-page">
@@ -58,17 +61,17 @@ export default function Home() {
         onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setHeroPaused(false) }}
       >
         <div className="hero-bg">
-          <img src={heroImg} alt="Fachada da Academia Limoeirense de Letras, Limoeiro do Norte — CE" width="1920" height="1080" fetchPriority="high" />
+          <img src={portal.data?.heroImagem || heroImg} alt="Fachada da Academia Limoeirense de Letras, Limoeiro do Norte — CE" width="1920" height="1080" fetchPriority="high" />
           <div className="hero-overlay" />
         </div>
         <div className="hero-copy">
           <div className="hero-message" key={currentHero} aria-live={heroPaused ? 'polite' : 'off'} aria-atomic="true">
-            <h1>{heroSlides[currentHero].title}<br /><em>{heroSlides[currentHero].emphasis}</em></h1>
-            <p className="hero-intro">{heroSlides[currentHero].description}</p>
+            <h1>{slides[currentHero].title}<br /><em>{slides[currentHero].emphasis}</em></h1>
+            <p className="hero-intro">{slides[currentHero].description}</p>
           </div>
         </div>
         <div className="hero-index" role="group" aria-label="Selecionar mensagem em destaque">
-          {heroSlides.map((slide, index) => (
+          {slides.map((slide, index) => (
             <button
               type="button"
               key={slide.title}
@@ -89,10 +92,10 @@ export default function Home() {
         <div className="wrap intro-z-wrap">
           <div className="intro-z-main">
             <div className="intro-z-title">
-              <h2>Literatura que<br /><em>atravessa o tempo.</em></h2>
+              <h2>{portal.data?.inicioTitulo}</h2>
             </div>
             <div className="intro-z-story">
-              <p className="lead">Preservamos a memória literária de Limoeiro do Norte e criamos espaço para as próximas vozes.</p>
+              <p className="lead">{portal.data?.inicioTexto}</p>
             </div>
           </div>
 

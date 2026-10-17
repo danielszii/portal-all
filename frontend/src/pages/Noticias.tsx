@@ -3,6 +3,7 @@ import Pagination, { pageFromUrl } from '@/components/Pagination'
 import type { Noticia } from '@/types'
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
+import PortalText from '@/components/PortalText'
 import { useCallback } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { NavLink, useSearchParams } from 'react-router'
@@ -77,7 +78,7 @@ function NoticiasConteudo() {
     <main>
       <section className="page-hero wrap">
         <h1 className="page-title">Notícias</h1>
-        <p className="page-lede">{q ? <>Resultados para: <strong>"{q}"</strong></> : 'Acompanhe os acontecimentos, publicações e atividades da Academia Limoeirense de Letras.'}</p>
+        {q ? <p className="page-lede">Resultados para: <strong>"{q}"</strong></p> : <PortalText className="page-lede" field="noticiasIntroducao" />}
       </section>
 
       <section className="noticias-section wrap" data-pagination-start>

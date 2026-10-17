@@ -7,6 +7,7 @@ import type { Cadeira } from '@/types'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 import Pagination from '@/components/Pagination'
 import { formatNumeroCadeira } from '@/utils/formatters'
+import PortalText from '@/components/PortalText'
 
 export default function Cadeiras() {
   const [page, setPage] = useState(1)
@@ -23,10 +24,7 @@ export default function Cadeiras() {
     <main>
       <section className="page-hero wrap">
         <h1 className="page-title">Cadeiras</h1>
-        <p className="page-lede">
-          A Academia Limoeirense de Letras possui 40 cadeiras acadêmicas, cada uma com um patrono
-          da literatura nacional ou regional, um fundador e um titular em exercício.
-        </p>
+        <PortalText className="page-lede" field="cadeirasIntroducao" />
       </section>
 
       {/* Grade */}

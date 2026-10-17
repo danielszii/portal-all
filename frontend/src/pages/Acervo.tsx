@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router'
 import { useDialog } from '@/hooks/useDialog'
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
+import PortalText from '@/components/PortalText'
 import { useState, useCallback, useEffect } from 'react'
 import { ArrowUpRight, Search, X, Download } from 'lucide-react'
 import { pdfViewerUrl } from '@/utils/pdf'
@@ -95,10 +96,7 @@ function AcervoConteudo() {
 
       <section className="archive-hero wrap">
         <h1 className="page-title">Acervo</h1>
-        <p className="page-lede">
-          Edições, cadernos, antologias, revistas, discursos e estatutos publicados pela
-          Academia Limoeirense de Letras desde 1998. Acesso gratuito e irrestrito — sem cadastro.
-        </p>
+        <PortalText className="page-lede" field="acervoIntroducao" />
       </section>
 
       <section className="archive-catalog wrap" data-pagination-start>

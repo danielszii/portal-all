@@ -19,6 +19,8 @@ import * as institutionAdmin from '../services/admin-instituicao.service.js'
 import { requireAdminPermission } from '../middlewares/admin-permissions.middleware.js'
 import { publicAdmin } from '../domain/admin-permissions.js'
 import { listAccounts, createAccount, editAccount } from '../services/admin-accounts.service.js'
+import { getPortalContent, savePortalContent } from '../services/admin-portal.service.js'
+import { createProduction, createWork, deleteProduction, deleteWork, listProductions, listWorks, updateProduction, updateWork } from '../services/admin-member-content.service.js'
 
 const router = Router()
 const handle = (fn: RequestHandler): RequestHandler => (req, res, next) => { Promise.resolve(fn(req, res, next)).catch(next) }
@@ -59,6 +61,16 @@ router.get('/contas', handle(async (req, res) => { res.json(await listAccounts(r
 router.post('/contas', handle(async (req, res) => { res.status(201).json(await createAccount(req.body, actor(res))) }))
 router.put('/contas/:id', handle(async (req, res) => { res.json(await editAccount(v.text(req.params.id, 'id', 100), req.body, actor(res))) }))
 router.get('/auditoria', handle(async (req, res) => { res.json(await listAudit(req.query)) }))
+router.get('/portal', handle(async (_req, res) => { res.json(await getPortalContent()) }))
+router.put('/portal', handle(async (req, res) => { res.json(await savePortalContent(req.body, actor(res))) }))
+router.get('/obras', handle(async (req, res) => { res.json(await listWorks(req.query)) }))
+router.post('/obras', handle(async (req, res) => { res.status(201).json(await createWork(req.body, actor(res))) }))
+router.put('/obras/:id', handle(async (req, res) => { res.json(await updateWork(v.text(req.params.id, 'id', 100), req.body, actor(res))) }))
+router.delete('/obras/:id', handle(async (req, res) => { await deleteWork(v.text(req.params.id, 'id', 100), actor(res)); res.status(204).end() }))
+router.get('/producoes', handle(async (req, res) => { res.json(await listProductions(req.query)) }))
+router.post('/producoes', handle(async (req, res) => { res.status(201).json(await createProduction(req.body, actor(res))) }))
+router.put('/producoes/:id', handle(async (req, res) => { res.json(await updateProduction(v.text(req.params.id, 'id', 100), req.body, actor(res))) }))
+router.delete('/producoes/:id', handle(async (req, res) => { await deleteProduction(v.text(req.params.id, 'id', 100), actor(res)); res.status(204).end() }))
 
 router.get('/instituicao', handle(async (_req, res) => { res.json(await institutionAdmin.getInstitution()) }))
 router.put('/instituicao', handle(async (req, res) => {

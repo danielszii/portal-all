@@ -41,9 +41,9 @@ async function mount(t: TestContext, profiles: AdminProfile[], path = '/admin', 
 
 test('painel mostra somente módulos permitidos para cada perfil', async t => {
   for (const [profile, paths] of [
-    ['ADMINISTRADOR', ['acervo', 'noticias', 'agenda', 'membros', 'auditoria', 'instituicao', 'contas']],
-    ['EDITOR', ['acervo', 'noticias', 'agenda']], ['SECRETARIA', ['membros', 'instituicao']],
-    ['CONSULTA', ['acervo', 'noticias', 'agenda', 'membros', 'auditoria', 'instituicao']],
+    ['ADMINISTRADOR', ['portal', 'acervo', 'noticias', 'agenda', 'membros', 'auditoria', 'instituicao', 'contas']],
+    ['EDITOR', ['acervo', 'noticias', 'agenda']], ['SECRETARIA', ['portal', 'membros', 'instituicao']],
+    ['CONSULTA', ['portal', 'acervo', 'noticias', 'agenda', 'membros', 'auditoria', 'instituicao']],
   ] as [AdminProfile, string[]][]) {
     await t.test(profile, async child => {
       const { container } = await mount(child, [profile])
