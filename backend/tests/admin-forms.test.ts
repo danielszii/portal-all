@@ -150,3 +150,53 @@ test('edição envia a versão original e mantém conflito visível sem repetir 
   await assert.rejects(saveAdminForm('noticias', values, '1', 'csrf', () => true), /outra pessoa/)
   assert.equal(fetch.mock.callCount(), 1)
 })
+
+test('edição de membros inclui posse, fundador e dados de membro in memoriam', () => {
+  const values = {
+    ...adminItem('cadeiras', chair).values,
+    posse: '2005-03-15',
+    fundador: 'Fundador Alterado',
+  }
+  const payload = adminPayload('cadeiras', values, true)
+  assert.equal(payload.inicioEm, '2005-03-15')
+  assert.deepEqual(payload.fundador, { nome: 'Fundador Alterado' })
+
+  // Cadeira com membro in memoriam (sem titular vigente)
+  const inMemoriamChair: CadeiraAdmin = {
+    versao: 'b'.repeat(64),
+    id: 'chair-2',
+    numero: 5,
+    patrono: { id: 'patron-2', nome: 'Patrono 2', biografia: 'Bio Patrono', fotoUrl: null },
+    ocupacoes: [{
+      id: 'occ-1',
+      academicoId: 'member-past',
+      vigente: false,
+      fundador: false,
+      inicioEm: '1995-04-10T00:00:00.000Z',
+      inicioAno: 1995,
+      fimEm: '2020-08-15T00:00:00.000Z',
+      fimAno: 2020,
+      academico: {
+        id: 'member-past',
+        nome: 'Saudoso Acadêmico',
+        biografia: 'Biografia memorial',
+        bioExtra: 'Mais detalhes',
+        fotoUrl: '/antiga.jpg',
+        inMemoriam: true,
+      },
+    }],
+  }
+  const memValues = adminItem('cadeiras', inMemoriamChair).values
+  assert.equal(memValues.status, 'In memoriam')
+  assert.equal(memValues.nome, 'Saudoso Acadêmico')
+  assert.equal(memValues.posse, '1995-04-10')
+  assert.equal(memValues.fimEm, '2020-08-15')
+  assert.equal(memValues.academicoId, 'member-past')
+  assert.equal(memValues.ocupacaoAtualId, '')
+
+  const memPayload = adminPayload('cadeiras', { ...memValues, biografia: 'Nova biografia' }, true)
+  assert.equal(memPayload.academicoId, 'member-past')
+  assert.equal((memPayload.academico as { biografia: string }).biografia, 'Nova biografia')
+  assert.equal(memPayload.inicioEm, '1995-04-10')
+})
+

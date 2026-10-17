@@ -161,10 +161,13 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
         <form onSubmit={submit} aria-busy={saving}>
           <span className="visually-hidden" role="status" aria-live="polite">{saving ? 'Salvando dados, aguarde.' : ''}</span>
           <p className="admin-form-guidance admin-field-wide">{readOnly ? 'Visualização somente para consulta.' : 'Preencha os campos marcados com * antes de salvar.'}</p>
-          {fields.filter(field => !(field.onlyEnd && (!editing || !values.ocupacaoAtualId || values.status === 'Titular em exercício'))).map(field => {
-            const disabled = readOnly || saving || (editing && field.readOnlyOnEdit) || (resource === 'cadeiras' && field.name === 'status' && (!editing || !values.ocupacaoAtualId))
-              || (resource === 'cadeiras' && editing && !values.ocupacaoAtualId && ['nome', 'biografia', 'bioExtra', 'foto'].includes(field.name))
-            const required = field.required || (field.publishedRequired && values.status === 'PUBLICADO') || field.onlyEnd
+          {fields.filter(field => !(field.onlyEnd && (!editing || values.status === 'Titular em exercício'))).map(field => {
+            const hasMember = Boolean(values.ocupacaoAtualId || values.academicoId || values.nome?.trim())
+            const isCadeiraSemMembro = resource === 'cadeiras' && editing && !hasMember
+            const disabled = readOnly || saving || (editing && field.readOnlyOnEdit)
+              || (isCadeiraSemMembro && ['nome', 'biografia', 'bioExtra', 'foto', 'status', 'posse', 'fimEm'].includes(field.name))
+
+            const required = (field.name === 'posse' && editing && !values.posse && values.inicioAno ? false : field.required) || (field.publishedRequired && values.status === 'PUBLICADO') || field.onlyEnd
             const options = field.options?.map(option => typeof option === 'string' ? { value: option, label: option } : option)
             const stored = field.urlField ? values[field.urlField] : ''
             return <label className={field.type === 'textarea' ? 'admin-field admin-field-wide' : 'admin-field'} key={field.name}>

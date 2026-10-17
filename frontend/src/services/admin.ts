@@ -117,11 +117,14 @@ export function adminItem(resource: AdminResource, record: AdminRecord): AdminLi
     const row = record as CadeiraAdmin
     const { atual: current, membro: person, ocupacoes, status } = situacaoCadeira(row.ocupacoes)
     const founder = ocupacoes.find(o => o.fundador)
+    const occupant = current ?? (person ? ocupacoes.find(o => o.academicoId === person.id) : undefined)
     return { id: String(row.numero), title: person?.nome ?? `Cadeira ${row.numero} sem titular`, meta: `Cadeira ${row.numero} · Patrono: ${row.patrono.nome}`, status,
       values: { nome: person?.nome ?? '', cadeira: String(row.numero), status, patrono: row.patrono.nome,
-        fundador: founder?.academico.nome ?? '', posse: current?.inicioEm?.slice(0, 10) ?? '', inicioAno: str(current?.inicioAno),
+        fundador: founder?.academico.nome ?? '', posse: occupant?.inicioEm?.slice(0, 10) ?? '', inicioAno: str(occupant?.inicioAno),
+        fimEm: occupant?.fimEm?.slice(0, 10) ?? '',
         biografia: person?.biografia ?? '', bioExtra: person?.bioExtra ?? '', fotoUrl: person?.fotoUrl ?? '',
-        patronoBio: row.patrono.biografia ?? '', patronoFoto: row.patrono.fotoUrl ?? '', ocupacaoAtualId: current?.id ?? '', versao: row.versao,
+        patronoBio: row.patrono.biografia ?? '', patronoFoto: row.patrono.fotoUrl ?? '',
+        ocupacaoAtualId: current?.id ?? '', academicoId: person?.id ?? '', versao: row.versao,
       } }
   }
   const row = record as EditorialRecord
@@ -143,8 +146,21 @@ export function adminPayload(resource: AdminResource, v: FormValues, editing: bo
   if (resource === 'agenda') return { titulo: v.titulo, tipo: v.tipo, inicioEm: isoDateTime(v.inicioEm), fimEm: isoDateTime(v.fimEm), local: v.local, descricao: v.descricao || '', foto: v.foto || null, status }
   const academico = { nome: v.nome, biografia: v.biografia || null, bioExtra: v.bioExtra || null, fotoUrl: v.fotoUrl || null }
   const patrono = { nome: v.patrono, biografia: v.patronoBio || null, fotoUrl: v.patronoFoto || null }
-  if (editing) return { versao: v.versao, patrono, ...(v.ocupacaoAtualId ? { academico, ocupacaoAtualId: v.ocupacaoAtualId,
-    ...(v.status !== 'Titular em exercício' ? { encerramento: { fimEm: v.fimEm, inMemoriam: v.status === 'In memoriam' } } : {}) } : {}) }
+  if (editing) return {
+    versao: v.versao,
+    patrono,
+    ...(v.ocupacaoAtualId ? {
+      academico,
+      ocupacaoAtualId: v.ocupacaoAtualId,
+      ...(v.status !== 'Titular em exercício' ? { encerramento: { fimEm: v.fimEm, inMemoriam: v.status === 'In memoriam' } } : {}),
+    } : v.academicoId ? {
+      academico,
+      academicoId: v.academicoId,
+      ...(v.status !== 'Titular em exercício' && v.fimEm ? { encerramento: { fimEm: v.fimEm, inMemoriam: v.status === 'In memoriam' } } : {}),
+    } : {}),
+    ...(v.posse ? { inicioEm: v.posse } : {}),
+    ...(v.fundador?.trim() ? { fundador: { nome: v.fundador.trim() } } : {}),
+  }
   return { numero: Number(v.cadeira), patrono, academico, inicioEm: v.posse,
     ...(v.fundador?.trim() ? { fundador: { nome: v.fundador.trim() } } : {}) }
 }
@@ -153,7 +169,7 @@ export async function saveAdminForm(resource: AdminResource, values: FormValues,
   confirm: (message: string) => boolean | Promise<boolean>) {
   const body = adminPayload(resource, values, id !== null)
   if (id !== null && resource !== 'cadeiras') body.atualizadoEm = values.atualizadoEm
-  if (resource === 'cadeiras' && body.encerramento && !await confirm(`Encerrar a ocupação de ${values.nome} e preservá-la no histórico?`)) return false
+  if (resource === 'cadeiras' && body.encerramento && body.ocupacaoAtualId && !await confirm(`Encerrar a ocupação de ${values.nome} e preservá-la no histórico?`)) return false
   const resolvedPeople = new Set<string>()
   for (;;) {
     try {

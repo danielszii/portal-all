@@ -5,6 +5,7 @@ import { AppError, ValidationError } from '../errors/app.error.js'
 import * as v from './admin-validation.js'
 import { checkPersonName, confirmedHomonyms, lockPersonNames, normalizePersonName, PersonConflict, type PersonRole } from './admin-person.service.js'
 import { changedFields, recordAudit, type AuditActor } from './admin-audit.service.js'
+import { situacaoCadeira } from '../domain/ocupacoes.js'
 
 export const adminCadeiraInclude = {
   patrono: true,
@@ -142,17 +143,23 @@ export async function createOrReplaceCadeira(input: unknown, actor: AuditActor) 
 
 export async function editCadeira(numero: number, input: unknown, actor: AuditActor) {
   const b = v.object(input)
-  v.keys(b, ['patrono', 'academico', 'ocupacaoAtualId', 'encerramento', 'versao'])
+  v.keys(b, ['patrono', 'academico', 'ocupacaoAtualId', 'academicoId', 'encerramento', 'inicioEm', 'fundador', 'versao'])
   if (typeof b.versao !== 'string' || !/^[a-f0-9]{64}$/.test(b.versao)) {
     throw new ValidationError('Informe a versão recebida ao abrir a cadeira. Reabra a edição antes de salvar.')
   }
-  if (b.patrono === undefined && b.academico === undefined && b.encerramento === undefined) throw new ValidationError('Informe dados para editar.')
+  if (b.patrono === undefined && b.academico === undefined && b.encerramento === undefined && b.inicioEm === undefined && b.fundador === undefined) {
+    throw new ValidationError('Informe dados para editar.')
+  }
   const p = b.patrono === undefined ? undefined : patrono(b.patrono)
   const a = b.academico === undefined ? undefined : pessoa(b.academico)
+  const f = b.fundador === undefined ? undefined : pessoa(b.fundador)
+  const inicioEm = b.inicioEm === undefined ? undefined : (b.inicioEm ? v.day(b.inicioEm, 'inicioEm') : null)
   const encerramento = b.encerramento === undefined ? undefined : v.object(b.encerramento)
   if (encerramento) v.keys(encerramento, ['fimEm', 'inMemoriam'])
   const fimEm = encerramento ? v.day(encerramento.fimEm, 'fimEm') : undefined
   const inMemoriam = encerramento ? v.bool(encerramento.inMemoriam) : false
+  const ocupacaoAtualId = b.ocupacaoAtualId === undefined ? undefined : v.text(b.ocupacaoAtualId, 'ocupacaoAtualId', 100)
+  const academicoId = b.academicoId === undefined ? undefined : v.text(b.academicoId, 'academicoId', 100)
   // Protege também pessoas compartilhadas por cadeiras diferentes. Conflitos
   // de serialização viram 409 na rota; não repetimos um formulário desatualizado.
   return prisma.$transaction(async tx => {
@@ -163,16 +170,85 @@ export async function editCadeira(numero: number, input: unknown, actor: AuditAc
       throw new AppError('Esta cadeira ou uma pessoa vinculada foi alterada. Reabra a edição e confira os dados antes de salvar.', 409)
     }
     const atual = cadeira.ocupacoes.find(o => o.vigente)
-    if ((a || encerramento) && (!atual || b.ocupacaoAtualId !== atual.id)) throw new CadeiraConflict(cadeira, atual?.id ?? null)
-    if (fimEm) checkDate(fimEm, atual)
-    if (p) await tx.patrono.update({ where: { id: cadeira.patronoId }, data: p })
-    if (a) await tx.academico.update({ where: { id: atual!.academicoId }, data: a })
-    if (fimEm) {
-      await tx.ocupacaoCadeira.update({ where: { id: atual!.id }, data: { vigente: false, fimEm, fimAno: fimEm.getUTCFullYear(), periodoTexto: null } })
-      if (inMemoriam) await tx.academico.update({ where: { id: atual!.academicoId }, data: { inMemoriam: true } })
+    const { membro } = situacaoCadeira(cadeira.ocupacoes)
+    const targetOcupacao = atual
+      ?? (academicoId ? cadeira.ocupacoes.find(o => o.academicoId === academicoId) : undefined)
+      ?? (membro ? cadeira.ocupacoes.find(o => o.academicoId === membro.id) : undefined)
+      ?? cadeira.ocupacoes.at(-1)
+
+    if ((a || encerramento) && atual && ocupacaoAtualId && ocupacaoAtualId !== atual.id) {
+      throw new CadeiraConflict(cadeira, atual.id)
     }
+    if ((a || encerramento) && !atual && !targetOcupacao) {
+      throw new CadeiraConflict(cadeira, null)
+    }
+    if (fimEm && atual) checkDate(fimEm, atual)
+    if (p) await tx.patrono.update({ where: { id: cadeira.patronoId }, data: p })
+
+    const targetAcademicoId = atual?.academicoId ?? targetOcupacao?.academicoId
+    if (a && targetAcademicoId) {
+      await tx.academico.update({ where: { id: targetAcademicoId }, data: a })
+    }
+
+    if (inicioEm !== undefined && targetOcupacao) {
+      const currentIso = targetOcupacao.inicioEm?.toISOString().slice(0, 10) ?? null
+      const nextIso = inicioEm ? inicioEm.toISOString().slice(0, 10) : null
+      if (currentIso !== nextIso) {
+        if (inicioEm) {
+          const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Fortaleza', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+          if (inicioEm.toISOString().slice(0, 10) > today) throw new ValidationError('A data de posse não pode ser futura.')
+          for (const previous of cadeira.ocupacoes) {
+            if (previous.id !== targetOcupacao.id && !previous.vigente && ((previous.fimEm && inicioEm < previous.fimEm) || (previous.fimAno && inicioEm.getUTCFullYear() < previous.fimAno))) {
+              throw new ValidationError('A data de posse não pode preceder o encerramento de uma ocupação anterior.')
+            }
+          }
+          if (targetOcupacao.fimEm && inicioEm > targetOcupacao.fimEm) {
+            throw new ValidationError('A data de posse não pode ser posterior ao encerramento da ocupação.')
+          }
+          await tx.ocupacaoCadeira.update({ where: { id: targetOcupacao.id }, data: { inicioEm, inicioAno: inicioEm.getUTCFullYear() } })
+        } else {
+          await tx.ocupacaoCadeira.update({ where: { id: targetOcupacao.id }, data: { inicioEm: null } })
+        }
+      }
+    }
+
+    if (f) {
+      const founderOcc = cadeira.ocupacoes.find(o => o.fundador)
+      if (founderOcc) {
+        if (founderOcc.id === atual?.id) {
+          if (normalizePersonName(f.nome) !== normalizePersonName(atual.academico.nome)) {
+            await tx.ocupacaoCadeira.update({ where: { id: atual.id }, data: { fundador: false } })
+            let founderPerson = await tx.academico.findFirst({ where: { nome: f.nome } })
+            if (!founderPerson) founderPerson = await tx.academico.create({ data: { nome: f.nome } })
+            await tx.ocupacaoCadeira.create({ data: { cadeiraId: cadeira.id, academicoId: founderPerson.id, fundador: true, vigente: false } })
+          }
+        } else if (founderOcc.academico.nome !== f.nome) {
+          await tx.academico.update({ where: { id: founderOcc.academicoId }, data: { nome: f.nome } })
+        }
+      } else if (f.nome) {
+        const targetOcc = atual ?? targetOcupacao
+        if (targetOcc && normalizePersonName(targetOcc.academico.nome) === normalizePersonName(f.nome)) {
+          await tx.ocupacaoCadeira.update({ where: { id: targetOcc.id }, data: { fundador: true } })
+        } else {
+          let founderPerson = await tx.academico.findFirst({ where: { nome: f.nome } })
+          if (!founderPerson) founderPerson = await tx.academico.create({ data: { nome: f.nome } })
+          await tx.ocupacaoCadeira.create({ data: { cadeiraId: cadeira.id, academicoId: founderPerson.id, fundador: true, vigente: false } })
+        }
+      }
+    }
+
+    if (encerramento) {
+      if (atual) {
+        await tx.ocupacaoCadeira.update({ where: { id: atual.id }, data: { vigente: false, fimEm, fimAno: fimEm ? fimEm.getUTCFullYear() : null, periodoTexto: null } })
+        if (inMemoriam) await tx.academico.update({ where: { id: atual.academicoId }, data: { inMemoriam: true } })
+      } else if (targetOcupacao && fimEm) {
+        await tx.ocupacaoCadeira.update({ where: { id: targetOcupacao.id }, data: { fimEm, fimAno: fimEm.getUTCFullYear(), periodoTexto: null } })
+        if (inMemoriam) await tx.academico.update({ where: { id: targetOcupacao.academicoId }, data: { inMemoriam: true } })
+      }
+    }
+
     const saved = await tx.cadeira.findUniqueOrThrow({ where: { numero }, include: adminCadeiraInclude })
-    await auditCadeira(tx, actor, fimEm ? 'ENCERRAR_OCUPACAO' : 'EDITAR', saved, cadeira)
+    await auditCadeira(tx, actor, (encerramento && atual) ? 'ENCERRAR_OCUPACAO' : 'EDITAR', saved, cadeira)
     return saved
   }, { isolationLevel: 'Serializable' })
 }
