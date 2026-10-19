@@ -10,9 +10,8 @@ try {
   const password = process.env.ADMIN_PASSWORD ?? ''
   delete process.env.ADMIN_PASSWORD
   const perfis = (process.env.ADMIN_PERFIS ?? 'CONSULTA').split(',').map(value => value.trim().toUpperCase())
-  const options = { allowShortPassword: process.argv.includes('--allow-short-password') }
   if (command === 'create') {
-    await createAccount({ email: address, password, perfis }, null, options)
+    await createAccount({ email: address, password, perfis }, null)
   } else if (['disable', 'password', 'profiles'].includes(command)) {
     const user = await prisma.administrador.findUniqueOrThrow({ where: { email: address } })
     if (command === 'profiles' && !process.env.ADMIN_PERFIS) throw new Error('Informe ADMIN_PERFIS.')
@@ -20,10 +19,10 @@ try {
       perfis: command === 'profiles' ? perfis : user.perfis,
       ativo: command === 'disable' ? false : command === 'password' ? true : user.ativo,
       atualizadoEm: user.atualizadoEm.toISOString(), ...(command === 'password' && { password }),
-    }, null, options)
+    }, null)
   } else throw new Error('Comando inválido.')
   console.log('Conta administrativa atualizada.')
 } catch {
-  console.error('Operação não concluída. Confira comando, conexão, ADMIN_EMAIL, ADMIN_PERFIS, senha (15 a 128 caracteres) e se restará um administrador geral ativo.')
+  console.error('Operação não concluída. Confira comando, conexão, ADMIN_EMAIL, ADMIN_PERFIS, senha (6 a 128 caracteres) e se restará um administrador geral ativo.')
   process.exitCode = 1
 } finally { await prisma.$disconnect() }

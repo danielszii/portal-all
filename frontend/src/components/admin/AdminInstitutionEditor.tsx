@@ -1,12 +1,12 @@
 import { useCallback, useRef, useState, type FormEvent } from 'react'
-import { X } from 'lucide-react'
+import { Plus, Trash2, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useDialog } from '@/hooks/useDialog'
 import { useResource } from '@/hooks/useResource'
 import { AdminApiError } from '@/services/admin'
 import { institutionValues, loadAdminInstitution, saveAdminInstitution, type AdminInstitution, type InstitutionValues } from '@/services/admin-instituicao'
 
-type Field = { name: keyof InstitutionValues; label: string; type?: 'text' | 'email' | 'tel' | 'number' | 'textarea'; required?: boolean; maxLength?: number }
+type Field = { name: Exclude<keyof InstitutionValues, 'redesSociais'>; label: string; type?: 'text' | 'email' | 'tel' | 'number' | 'textarea'; required?: boolean; maxLength?: number }
 const fields: Field[] = [
   { name: 'nome', label: 'Nome oficial', required: true, maxLength: 300 },
   { name: 'fundacaoAno', label: 'Ano de fundação', type: 'number' },
@@ -16,7 +16,6 @@ const fields: Field[] = [
   { name: 'horarioAtendimento', label: 'Horário de atendimento', maxLength: 500 },
   { name: 'emailImprensa', label: 'E-mail de imprensa', type: 'email', maxLength: 254 },
   { name: 'mapaUrl', label: 'Link público do mapa', maxLength: 2048 },
-  { name: 'redesSociais', label: 'Redes sociais (JSON: nome e url)', type: 'textarea', maxLength: 10000 },
   { name: 'historia', label: 'História', type: 'textarea', required: true, maxLength: 100000 },
   { name: 'missao', label: 'Missão', type: 'textarea', required: true, maxLength: 20000 },
   { name: 'sedeTexto', label: 'Sede', type: 'textarea', maxLength: 20000 },
@@ -76,6 +75,26 @@ function InstitutionForm({ info, onClose, onSaved, onSaving }: {
         ? <textarea name={field.name} rows={5} required={field.required} maxLength={field.maxLength} disabled={saving || !allowed} value={values[field.name]} onChange={event => setValues(current => ({ ...current, [field.name]: event.target.value }))} />
         : <input name={field.name} type={field.type ?? 'text'} required={field.required} maxLength={field.maxLength} min={field.type === 'number' ? 1 : undefined} max={field.type === 'number' ? year : undefined} step={field.type === 'number' ? 1 : undefined} disabled={saving || !allowed} value={values[field.name]} onChange={event => setValues(current => ({ ...current, [field.name]: event.target.value }))} />}
     </label>)}
+    <fieldset className="admin-institution-socials admin-field-wide" disabled={saving || !allowed}>
+      <legend>Redes sociais</legend>
+      {values.redesSociais.map((link, index) => <div className="admin-institution-social-row" key={index}>
+        <label className="admin-field"><span>Nome</span><input name={`redesSociais.${index}.nome`} maxLength={50} value={link.nome} required={Boolean(link.nome || link.url)} onChange={event => setValues(current => ({
+          ...current,
+          redesSociais: current.redesSociais.map((item, itemIndex) => itemIndex === index ? { ...item, nome: event.target.value } : item),
+        }))} /></label>
+        <label className="admin-field"><span>Link</span><input name={`redesSociais.${index}.url`} type="url" maxLength={2048} value={link.url} required={Boolean(link.nome || link.url)} placeholder="https://…" onChange={event => setValues(current => ({
+          ...current,
+          redesSociais: current.redesSociais.map((item, itemIndex) => itemIndex === index ? { ...item, url: event.target.value } : item),
+        }))} /></label>
+        <button className="admin-delete-action" type="button" aria-label={`Remover rede social ${index + 1}`} onClick={() => setValues(current => ({
+          ...current, redesSociais: current.redesSociais.filter((_, itemIndex) => itemIndex !== index),
+        }))}><Trash2 size={15} aria-hidden="true" /> Remover</button>
+      </div>)}
+      <button className="admin-secondary-action" type="button" disabled={values.redesSociais.length >= 10} onClick={() => setValues(current => ({
+        ...current, redesSociais: [...current.redesSociais, { nome: '', url: '' }],
+      }))}><Plus size={15} aria-hidden="true" /> Adicionar rede social</button>
+      <small>Adicione até 10 links oficiais. Deixe os campos vazios para não cadastrar uma rede.</small>
+    </fieldset>
     {error && <p className="admin-field-wide admin-state-error" role="alert">{error}</p>}
     <div className="admin-form-actions"><button type="button" disabled={saving} onClick={onClose}>Cancelar</button><button type="submit" disabled={saving || !allowed}>{saving ? 'Salvando…' : 'Salvar alterações'}</button></div>
   </form></div>

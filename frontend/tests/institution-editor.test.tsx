@@ -106,6 +106,28 @@ test('primeiro cadastro envia versão nula e ano opcional vazio como null', asyn
   assert.match(ui.container.textContent!, /Academia nova/)
 })
 
+test('redes sociais são adicionadas com campos simples e enviadas como lista', async t => {
+  const ui = await mount(t)
+  await ui.open()
+  assert.equal(ui.container.querySelector('[name="redesSociais"]'), null)
+  await act(async () => ui.button('Adicionar rede social')!.click())
+  await change(ui.container, 'redesSociais.0.nome', 'Instagram')
+  await change(ui.container, 'redesSociais.0.url', 'https://instagram.com/academia')
+  await ui.submit()
+  assert.deepEqual(ui.writes[0].body.redesSociais, [{ nome: 'Instagram', url: 'https://instagram.com/academia' }])
+})
+
+test('redes sociais existentes podem ser removidas antes de salvar', async t => {
+  const ui = await mount(t, 'SECRETARIA', {
+    ...original,
+    redesSociais: [{ nome: 'Instagram', url: 'https://instagram.com/academia' }],
+  })
+  await ui.open()
+  await act(async () => ui.container.querySelector<HTMLButtonElement>('[aria-label="Remover rede social 1"]')!.click())
+  await ui.submit()
+  assert.deepEqual(ui.writes[0].body.redesSociais, [])
+})
+
 test('conflito e falha do servidor preservam os ajustes sem confirmar sucesso ou trocar a versão', async t => {
   const ui = await mount(t)
   await ui.open()

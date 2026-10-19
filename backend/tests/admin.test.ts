@@ -14,9 +14,9 @@ test('senhas usam salt individual e não aceitam uma senha incorreta', async () 
   assert.notEqual(hash, await hashPassword(password))
   assert.ok(await verifyPassword(password, hash))
   assert.equal(await verifyPassword('senha incorreta', hash), false)
-  await assert.rejects(hashPassword('curta'))
-  assert.ok(await verifyPassword('curta', await hashPassword('curta', { allowShortPassword: true })))
-  await assert.rejects(hashPassword('', { allowShortPassword: true }))
+  assert.ok(await verifyPassword('123456', await hashPassword('123456')))
+  await assert.rejects(hashPassword('12345'), /entre 6 e 128 caracteres/)
+  await assert.rejects(hashPassword('a'.repeat(129)), /entre 6 e 128 caracteres/)
 })
 
 test('todas as operações administrativas exigem sessão antes de acessar o banco', async t => {
@@ -41,13 +41,22 @@ test('login rejeita origem externa e limita tentativas antes de verificar senhas
     method: 'POST', headers: { Origin: envConfig.frontendUrl, 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'inexistente@example.test', password: 'senha incorreta de teste' }),
   })
-  for (let i = 0; i < 5; i++) {
+  const shortPassword = await fetch(base + '/api/admin/auth/login', {
+    method: 'POST',
+    headers: { Origin: envConfig.frontendUrl, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'admin@example.test', password: '12345', remember: false }),
+  })
+  assert.equal(shortPassword.status, 400)
+  const error = await shortPassword.json() as { error: string }
+  assert.match(error.error, /entre 6 e 128 caracteres/)
+  assert.equal(query.mock.callCount(), 0)
+  for (let i = 0; i < 4; i++) {
     assert.equal((await attempt()).status, 401)
   }
   const blocked = await attempt()
   assert.equal(blocked.status, 429)
   assert.ok(Number(blocked.headers.get('retry-after')) > 0)
-  assert.equal(query.mock.callCount(), 5)
+  assert.equal(query.mock.callCount(), 4)
 })
 
 test('validação editorial bloqueia publicação incompleta, campos extras e URLs executáveis', () => {

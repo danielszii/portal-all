@@ -91,7 +91,7 @@ function AccountEditor({ account, onClose, onSaved }: { account: Account | null;
       <div className="admin-form-content"><form onSubmit={submit} aria-busy={saving}>
         <p className="admin-form-guidance admin-field-wide">{account ? 'Altere apenas o que for necessário. A senha atual será mantida se o campo ficar vazio.' : 'Preencha os campos obrigatórios e escolha ao menos um perfil.'}</p>
         <label className="admin-field admin-field-wide"><span>E-mail *</span><input name="email" type="email" required maxLength={254} disabled={saving || account !== null} value={email} onChange={event => setEmail(event.target.value)} autoComplete="off" /></label>
-        <label className="admin-field admin-field-wide"><span>{account ? 'Nova senha (opcional)' : 'Senha inicial *'}</span><input name="password" type="password" required={!account} minLength={15} maxLength={128} disabled={saving} value={password} onChange={event => setPassword(event.target.value)} autoComplete="new-password" /><small>De 15 a 128 caracteres. Compartilhe a senha diretamente com o titular.</small></label>
+        <label className="admin-field admin-field-wide"><span>{account ? 'Nova senha (opcional)' : 'Senha inicial *'}</span><input name="password" type="password" required={!account} minLength={6} maxLength={128} disabled={saving} value={password} onChange={event => setPassword(event.target.value)} autoComplete="new-password" /><small>De 6 a 128 caracteres. Compartilhe a senha diretamente com o titular.</small></label>
         <fieldset className="admin-field-wide" disabled={saving}>
           <legend>Perfis de acesso *</legend>
           {adminProfiles.map(profile => <div className="admin-profile-option" key={profile}>

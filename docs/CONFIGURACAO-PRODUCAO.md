@@ -371,7 +371,7 @@ Se for necessário criar outra conta, use variáveis temporárias no console seg
 
 ```powershell
 $env:ADMIN_EMAIL = Read-Host 'E-mail do administrador'
-$adminSecret = Read-Host 'Senha (15 a 128 caracteres)' -AsSecureString
+$adminSecret = Read-Host 'Senha (6 a 128 caracteres)' -AsSecureString
 try {
   $env:ADMIN_PASSWORD = [System.Net.NetworkCredential]::new('', $adminSecret).Password
   $env:ADMIN_PERFIS = 'ADMINISTRADOR'

@@ -7,8 +7,13 @@ import { publicAdmin } from '../domain/admin-permissions.js'
 const derive = (password: string, salt: string) => new Promise<Buffer>((resolve, reject) => {
   scrypt(password, salt, 64, { N: 131072, r: 8, p: 1, maxmem: 160 * 1024 * 1024 }, (err, key) => err ? reject(err) : resolve(key))
 })
-export async function hashPassword(password: string, options: { allowShortPassword?: boolean } = {}) {
-  if (!password.length || password.length > 128 || (!options.allowShortPassword && password.length < 15)) throw new ValidationError('A senha deve ter entre 15 e 128 caracteres.')
+export const minimumPasswordLength = 6
+export const maximumPasswordLength = 128
+
+export async function hashPassword(password: string) {
+  if (password.length < minimumPasswordLength || password.length > maximumPasswordLength) {
+    throw new ValidationError(`A senha deve ter entre ${minimumPasswordLength} e ${maximumPasswordLength} caracteres.`)
+  }
   const salt = randomBytes(16).toString('hex')
   return `scrypt$${salt}$${(await derive(password, salt)).toString('hex')}`
 }
@@ -22,6 +27,9 @@ const tokenHash = (value: string) => createHash('sha256').update(value).digest('
 // Bound expensive password derivations even when requests use many IP addresses.
 let activeLogins = 0
 export async function login(email: string, password: string, remember: boolean) {
+  if (password.length < minimumPasswordLength || password.length > maximumPasswordLength) {
+    throw new ValidationError(`A senha deve ter entre ${minimumPasswordLength} e ${maximumPasswordLength} caracteres.`)
+  }
   if (activeLogins >= 2) throw new AppError('Aguarde e tente novamente.', 429)
   activeLogins++
   try {

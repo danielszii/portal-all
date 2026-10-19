@@ -33,7 +33,7 @@ esse `Origin`. `NODE_ENV=production` ativa cookie Secure, exigindo HTTPS.
 
 Não existe cadastro público. Um administrador geral pode criar contas pelo painel
 em `/admin/contas`; a CLI permite provisionar a primeira conta ou recuperar acesso.
-Por padrão, a senha tem 15 a 128 caracteres e é armazenada com scrypt e salt
+Por padrão, a senha tem 6 a 128 caracteres e é armazenada com scrypt e salt
 individual; sessões guardam apenas o hash do identificador.
 
 Para criar uma conta sem colocar a senha no histórico do PowerShell:
@@ -41,7 +41,7 @@ Para criar uma conta sem colocar a senha no histórico do PowerShell:
 ```powershell
 $env:ADMIN_EMAIL = Read-Host 'E-mail do administrador'
 $env:ADMIN_PERFIS = 'ADMINISTRADOR'
-$adminSecret = Read-Host 'Senha (15 a 128 caracteres)' -AsSecureString
+$adminSecret = Read-Host 'Senha (6 a 128 caracteres)' -AsSecureString
 try {
   $env:ADMIN_PASSWORD = [System.Net.NetworkCredential]::new('', $adminSecret).Password
   npm --prefix backend run admin:account -- create
@@ -63,9 +63,6 @@ separados por vírgula para combinar funções. Sem essa variável, `create` usa
 `npm --prefix backend run admin:account -- profiles`. Alterações pela CLI também
 respeitam a proteção do último administrador e registram `operador-cli` na auditoria.
 
-O operador local pode autorizar uma senha menor com `--allow-short-password`
-após `create` ou `password`. É uma exceção explícita de provisionamento; não há
-endpoint público para habilitá-la. Prefira manter o mínimo padrão de 15 caracteres.
 Não grave senhas reais neste documento nem no código do frontend.
 
 ## Perfis e gerenciamento de contas

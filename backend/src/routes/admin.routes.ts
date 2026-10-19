@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../db/prisma.js'
 import { createRequestLimit } from '../middlewares/contato-limit.middleware.js'
 import { cookieName, cookieOptions, requireAdmin, requireOrigin } from '../middlewares/admin-auth.middleware.js'
-import { login, logout } from '../services/admin-auth.service.js'
+import { login, logout, minimumPasswordLength, maximumPasswordLength } from '../services/admin-auth.service.js'
 import { contentResources } from '../services/admin-content.service.js'
 import { adminCadeiraInclude, CadeiraConflict, createOrReplaceCadeira, editCadeira, endOcupacao, withCadeiraVersion } from '../services/admin-cadeiras.service.js'
 import { saveUpload } from '../services/admin-upload.service.js'
@@ -33,7 +33,9 @@ router.post('/auth/login', createRequestLimit({ limit: 5, windowMs: 15 * 60_000,
   const b = v.object(req.body)
   v.keys(b, ['email', 'password', 'remember'])
   // Preserve spaces in passwords; unlike display text they are significant.
-  if (typeof b.password !== 'string' || !b.password.length || b.password.length > 128) throw new ValidationError('Senha inválida.')
+  if (typeof b.password !== 'string' || b.password.length < minimumPasswordLength || b.password.length > maximumPasswordLength) {
+    throw new ValidationError(`A senha deve ter entre ${minimumPasswordLength} e ${maximumPasswordLength} caracteres.`)
+  }
   const remember = v.bool(b.remember)
   const result = await login(v.email(b.email), b.password, remember)
   res.cookie(cookieName, result.token, { ...cookieOptions, ...(remember ? { maxAge: result.maxAge } : {}) })

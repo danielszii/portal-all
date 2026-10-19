@@ -31,7 +31,7 @@ export default function AdminResourcePage(props: Props) {
   const [query, setQuery] = useState('')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [editor, setEditor] = useState<{ id: string | null; values: FormValues } | null>(null)
+  const [editor, setEditor] = useState<{ id: string | null; values: FormValues; fixedChairNumber?: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [error, setError] = useState('')
@@ -48,7 +48,15 @@ export default function AdminResourcePage(props: Props) {
   }
   const edit = async (item: AdminListItem) => {
     setBusy(true); setError(''); setFeedback('')
-    try { setEditor({ id: item.id, values: adminItem(resource, await loadAdminRecord(resource, item.id)).values }) }
+    try {
+      const values = adminItem(resource, await loadAdminRecord(resource, item.id)).values
+      if (resource === 'cadeiras' && item.status === 'Vaga') {
+        setEditor({ id: null, fixedChairNumber: true, values: {
+          ...values, nome: '', status: 'Titular em exercício', posse: '', fimEm: '',
+          biografia: '', bioExtra: '', fotoUrl: '',
+        } })
+      } else setEditor({ id: item.id, values })
+    }
     catch (err) { handleError(err) }
     finally { setBusy(false) }
   }
@@ -97,7 +105,7 @@ export default function AdminResourcePage(props: Props) {
             <div><h2>{item.title}</h2><p>{item.meta}</p></div>
             <span className={item.status === 'Rascunho' ? 'draft' : item.status === 'Publicado' ? 'is-published' : ''}>{item.status}</span>
             <div className="admin-record-actions">
-              <button className="admin-edit-action" type="button" disabled={busy} onClick={() => void edit(item)}>{canEdit ? <Pencil size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />} {canEdit ? 'Editar' : 'Visualizar'}</button>
+              <button className="admin-edit-action" type="button" disabled={busy} onClick={() => void edit(item)}>{canEdit ? <Pencil size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />} {canEdit && resource === 'cadeiras' && item.status === 'Vaga' ? 'Adicionar titular' : canEdit ? 'Editar' : 'Visualizar'}</button>
               {resource !== 'cadeiras' && can('registros:excluir') && <button className="admin-delete-action" type="button" disabled={busy} title="Excluir definitivamente" onClick={() => void remove(item)}><Trash2 size={14} aria-hidden="true" /> Excluir</button>}
             </div>
           </article>)}
@@ -105,14 +113,14 @@ export default function AdminResourcePage(props: Props) {
         {!state.loading && !state.error && <Pagination page={state.data.page} totalPages={state.data.totalPages} onChange={setPage} />}
       </section>
     </div>
-    {editor && <AdminEditor key={editor.id ?? 'new'} {...props} editor={editor} onClose={() => setEditor(null)} onSaved={() => {
+    {editor && <AdminEditor key={editor.id ?? (editor.fixedChairNumber ? `vacant-chair-${editor.values.cadeira}` : 'new')} {...props} editor={editor} fixedChairNumber={editor.fixedChairNumber} onClose={() => setEditor(null)} onSaved={() => {
       setEditor(null); setFeedback('Dados salvos no banco com sucesso.'); state.retry()
     }} />}
   </main>{confirmation.dialog}</>
 }
 
-function AdminEditor({ resource, fields, singular, renderPreview, editor, onClose, onSaved }: Props & {
-  editor: { id: string | null; values: FormValues }; onClose: () => void; onSaved: () => void
+function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedChairNumber, onClose, onSaved }: Props & {
+  editor: { id: string | null; values: FormValues }; fixedChairNumber?: boolean; onClose: () => void; onSaved: () => void
 }) {
   const { csrfToken, refresh, can } = useAuth()
   const readOnly = !can(resource === 'cadeiras' ? 'instituicao:editar' : 'conteudo:editar')
@@ -133,6 +141,15 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
     if (!csrfToken) { setError('Entre novamente para salvar.'); return }
     lock.current = true; setSaving(true); setError('')
     try {
+      if (values.status === 'PUBLICADO' && (editor.id === null || editor.values.status !== 'PUBLICADO')) {
+        const accepted = await confirmation.confirm({
+          title: 'Publicar agora?',
+          message: 'Este conteúdo ficará visível no portal assim que for salvo. Deseja continuar?',
+          confirmLabel: 'Publicar conteúdo',
+          tone: 'warning',
+        })
+        if (!accepted) return
+      }
       const next = { ...values }
       for (const field of fields) {
         const file = files[field.name]
@@ -165,6 +182,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, onClos
             const hasMember = Boolean(values.ocupacaoAtualId || values.academicoId || values.nome?.trim())
             const isCadeiraSemMembro = resource === 'cadeiras' && editing && !hasMember
             const disabled = readOnly || saving || (editing && field.readOnlyOnEdit)
+              || (fixedChairNumber && field.name === 'cadeira')
               || (isCadeiraSemMembro && ['nome', 'biografia', 'bioExtra', 'foto', 'status', 'posse', 'fimEm'].includes(field.name))
 
             const required = (field.name === 'posse' && editing && !values.posse && values.inicioAno ? false : field.required) || (field.publishedRequired && values.status === 'PUBLICADO') || field.onlyEnd

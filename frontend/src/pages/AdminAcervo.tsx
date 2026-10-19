@@ -4,7 +4,7 @@ import { ArrowUpRight } from 'lucide-react'
 
 export default function AdminAcervo() {
   return <AdminResourcePage
-    resource="acervo" defaults={{ status: 'RASCUNHO', cor: 'navy' }}
+    resource="acervo" defaults={{ status: 'PUBLICADO', cor: 'navy' }}
     title="Gerenciar" emphasis="acervo"
     description="Organize livros, edições e arquivos digitais publicados no portal."
     singular="Publicação"

@@ -4,7 +4,7 @@ import { ImageIcon } from 'lucide-react'
 
 export default function AdminNoticias() {
   return <AdminResourcePage
-    resource="noticias" defaults={{ status: 'RASCUNHO' }}
+    resource="noticias" defaults={{ status: 'PUBLICADO' }}
     title="Gerenciar" emphasis="notícias"
     description="Prepare chamadas, textos e imagens para as notícias institucionais."
     singular="Notícia"

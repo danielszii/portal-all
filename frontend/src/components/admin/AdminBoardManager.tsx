@@ -26,12 +26,15 @@ export default function AdminBoardManager({ onClose, onChanged }: { onClose: () 
     setError(reason instanceof Error ? reason.message : 'Não foi possível concluir a operação.')
     if (reason instanceof AdminApiError && [401, 403].includes(reason.status)) void refresh()
   }
+  const handleEditorError = (reason: unknown) => {
+    if (reason instanceof AdminApiError && [401, 403].includes(reason.status)) void refresh()
+  }
   const openBoard = async (id: string) => {
     setBusy(true); setError('')
     try { setSelected(await loadGestao(id)) } catch (reason) { handleError(reason) } finally { setBusy(false) }
   }
   const changed = (message: string, board?: AdminGestao | null) => {
-    setSelected(board ?? null); setTermEditor(null); setMandateEditor(null); boards.retry(); onChanged(message)
+    setSelected(board ?? null); setTermEditor(null); setMandateEditor(null); setError(''); boards.retry(); onChanged(message)
   }
   const deleteBoard = async () => {
     if (!selected || !csrfToken || selected.mandatos.length) return
@@ -67,8 +70,8 @@ export default function AdminBoardManager({ onClose, onChanged }: { onClose: () 
           <div className="admin-board-toolbar">
             <button className="admin-secondary-action" type="button" onClick={() => { setSelected(null); setError('') }}><ArrowLeft size={15} /> Todas as gestões</button>
             <div><strong>Gestão {selected.inicioAno} — {selected.fimAno ?? 'atual'}</strong><span>{selected.mandatos.length} integrante{selected.mandatos.length !== 1 ? 's' : ''}</span></div>
-            <button className="admin-secondary-action" type="button" onClick={() => setTermEditor(selected)}><Pencil size={14} /> Editar período</button>
-            <button className="admin-primary-action" type="button" disabled={people.loading || Boolean(people.error)} onClick={() => setMandateEditor('new')}><Plus size={14} /> Integrante</button>
+            <button className="admin-secondary-action" type="button" onClick={() => { setError(''); setTermEditor(selected) }}><Pencil size={14} /> Editar período</button>
+            <button className="admin-primary-action" type="button" disabled={people.loading || Boolean(people.error)} onClick={() => { setError(''); setMandateEditor('new') }}><Plus size={14} /> Integrante</button>
           </div>
           {people.error && <div className="admin-state admin-state-error" role="alert"><p>Não foi possível carregar os acadêmicos disponíveis.</p><button className="filtro-btn" type="button" onClick={people.retry}>Tentar novamente</button></div>}
           {!selected.mandatos.length && <div className="admin-board-empty"><UserRound size={22} /><p>Esta gestão ainda não possui integrantes.</p>{can('registros:excluir') && <button className="admin-delete-action" type="button" onClick={() => void deleteBoard()}><Trash2 size={14} /> Excluir gestão vazia</button>}</div>}
@@ -80,8 +83,8 @@ export default function AdminBoardManager({ onClose, onChanged }: { onClose: () 
       </div>
     </div>
   </div>
-  {termEditor && <TermEditor current={termEditor === 'new' ? null : termEditor} csrfToken={csrfToken} onClose={() => setTermEditor(null)} onError={handleError} onSaved={board => changed(termEditor === 'new' ? 'Gestão criada com sucesso.' : 'Período da gestão atualizado.', board)} />}
-  {mandateEditor && selected && <MandateEditor current={mandateEditor === 'new' ? null : mandateEditor} board={selected} people={people.data.items} csrfToken={csrfToken} onClose={() => setMandateEditor(null)} onError={handleError} onSaved={board => changed(mandateEditor === 'new' ? 'Integrante incluído na diretoria.' : 'Mandato atualizado.', board)} />}
+  {termEditor && <TermEditor current={termEditor === 'new' ? null : termEditor} csrfToken={csrfToken} onClose={() => setTermEditor(null)} onError={handleEditorError} onSaved={board => changed(termEditor === 'new' ? 'Gestão criada com sucesso.' : 'Período da gestão atualizado.', board)} />}
+  {mandateEditor && selected && <MandateEditor current={mandateEditor === 'new' ? null : mandateEditor} board={selected} people={people.data.items} csrfToken={csrfToken} onClose={() => setMandateEditor(null)} onError={handleEditorError} onSaved={board => changed(mandateEditor === 'new' ? 'Integrante incluído na diretoria.' : 'Mandato atualizado.', board)} />}
   {confirmation.dialog}</>
 }
 
@@ -92,10 +95,15 @@ function TermEditor({ current, csrfToken, onClose, onError, onSaved }: { current
   const [start, setStart] = useState(String(current?.inicioAno ?? year))
   const [end, setEnd] = useState(current?.fimAno == null ? '' : String(current.fimAno))
   const [saving, setSaving] = useState(false)
-  const submit = async (event: FormEvent) => { event.preventDefault(); if (!csrfToken || saving) return; setSaving(true)
-    try { onSaved(await saveGestao({ inicioAno: Number(start), fimAno: end ? Number(end) : null }, csrfToken, current ?? undefined)) } catch (reason) { onError(reason) } finally { setSaving(false) }
+  const [error, setError] = useState('')
+  const submit = async (event: FormEvent) => { event.preventDefault(); if (!csrfToken || saving) return; setSaving(true); setError('')
+    try { onSaved(await saveGestao({ inicioAno: Number(start), fimAno: end ? Number(end) : null }, csrfToken, current ?? undefined)) } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Não foi possível salvar o período da gestão.')
+      onError(reason)
+    } finally { setSaving(false) }
   }
   return <NestedForm title={current ? 'Editar período' : 'Nova gestão'} onClose={onClose} busy={saving}><form onSubmit={submit}>
+    {error && <p className="admin-state admin-state-error" role="alert">{error}</p>}
     <label className="admin-field"><span>Ano inicial</span><input type="number" min="1" max="9999" required value={start} onChange={event => setStart(event.target.value)} /></label>
     <label className="admin-field"><span>Ano final (opcional)</span><input type="number" min={Number(start) || 1} max="9999" value={end} onChange={event => setEnd(event.target.value)} /></label>
     <div className="admin-form-actions admin-field-wide"><button type="button" onClick={onClose}>Cancelar</button><button type="submit" disabled={saving}>{saving ? 'Salvando…' : 'Salvar período'}</button></div>
@@ -108,11 +116,16 @@ function MandateEditor({ current, board, people, csrfToken, onClose, onError, on
   const [start, setStart] = useState(current?.inicioEm?.slice(0, 10) ?? '')
   const [end, setEnd] = useState(current?.fimEm?.slice(0, 10) ?? '')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
   const options = current && !people.some(item => item.id === current.academico.id) ? [current.academico, ...people] : people
-  const submit = async (event: FormEvent) => { event.preventDefault(); if (!csrfToken || saving) return; setSaving(true)
-    try { onSaved(await saveMandato(board, { academicoId: person, cargo: role, inicioEm: start || null, fimEm: end || null }, csrfToken, current?.id)) } catch (reason) { onError(reason) } finally { setSaving(false) }
+  const submit = async (event: FormEvent) => { event.preventDefault(); if (!csrfToken || saving) return; setSaving(true); setError('')
+    try { onSaved(await saveMandato(board, { academicoId: person, cargo: role, inicioEm: start || null, fimEm: end || null }, csrfToken, current?.id)) } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Não foi possível salvar o mandato.')
+      onError(reason)
+    } finally { setSaving(false) }
   }
   return <NestedForm title={current ? 'Editar integrante' : 'Adicionar integrante'} onClose={onClose} busy={saving}><form onSubmit={submit}>
+    {error && <p className="admin-state admin-state-error" role="alert">{error}</p>}
     <label className="admin-field admin-field-wide"><span>Acadêmico</span><select required value={person} onChange={event => setPerson(event.target.value)}><option value="" disabled>Selecione</option>{options.map(item => <option key={item.id} value={item.id}>{item.nome}{item.inMemoriam ? ' — in memoriam' : ''}</option>)}</select><small>O acadêmico precisa estar cadastrado anteriormente no quadro de membros.</small></label>
     <label className="admin-field admin-field-wide"><span>Cargo</span><input required maxLength={100} value={role} onChange={event => setRole(event.target.value)} placeholder="Ex.: Presidente" /></label>
     <label className="admin-field"><span>Início no cargo (opcional)</span><input type="date" value={start} onChange={event => setStart(event.target.value)} /></label>

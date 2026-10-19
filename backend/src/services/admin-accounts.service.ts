@@ -38,12 +38,12 @@ export async function listAccounts(query: Record<string, unknown>) {
   }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead })
 }
 
-export async function createAccount(input: unknown, actor: AuditActor | null, options: { allowShortPassword?: boolean } = {}) {
+export async function createAccount(input: unknown, actor: AuditActor | null) {
   const body = v.object(input)
   v.keys(body, ['email', 'password', 'perfis'])
   const email = v.email(body.email)
   const perfis = profiles(body.perfis)
-  const senhaHash = await hashPassword(password(body.password), options)
+  const senhaHash = await hashPassword(password(body.password))
   return prisma.$transaction(async tx => {
     await authorizeChange(tx, actor)
     const account = await tx.administrador.create({ data: { email, perfis, senhaHash }, select: accountSelect })
@@ -53,14 +53,14 @@ export async function createAccount(input: unknown, actor: AuditActor | null, op
   })
 }
 
-export async function editAccount(id: string, input: unknown, actor: AuditActor | null, options: { allowShortPassword?: boolean } = {}) {
+export async function editAccount(id: string, input: unknown, actor: AuditActor | null) {
   const body = v.object(input)
   v.keys(body, ['perfis', 'ativo', 'atualizadoEm', 'password'])
   const perfis = profiles(body.perfis)
   if (typeof body.ativo !== 'boolean') throw new ValidationError('Informe se a conta está ativa.')
   const ativo = body.ativo
   const version = v.date(body.atualizadoEm, 'atualizadoEm')
-  const senhaHash = body.password === undefined ? undefined : await hashPassword(password(body.password), options)
+  const senhaHash = body.password === undefined ? undefined : await hashPassword(password(body.password))
   return prisma.$transaction(async tx => {
     await authorizeChange(tx, actor)
     const previous = await tx.administrador.findUnique({ where: { id }, select: accountSelect })

@@ -61,7 +61,7 @@ export default function Login() {
               <label htmlFor="login-password">Senha</label>
               <div className="login-input-wrap">
                 <LockKeyhole size={17} strokeWidth={1.5} aria-hidden="true" />
-                <input id="login-password" name="password" type="password" autoComplete="current-password" maxLength={128} disabled={isSubmitting} required placeholder="Digite sua senha" />
+                <input id="login-password" name="password" type="password" autoComplete="current-password" minLength={6} maxLength={128} disabled={isSubmitting} required placeholder="Digite sua senha" />
               </div>
             </div>
 

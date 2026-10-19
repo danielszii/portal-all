@@ -366,7 +366,7 @@ Caminho: **Painel → Contas**. Disponível somente para Administrador geral.
 
 1. Selecione **Nova conta**.
 2. Informe um e-mail único.
-3. Crie uma senha inicial entre 15 e 128 caracteres.
+3. Crie uma senha inicial entre 6 e 128 caracteres.
 4. Selecione pelo menos um perfil.
 5. Salve.
 6. Compartilhe a senha diretamente com o titular por um canal seguro.
@@ -605,4 +605,3 @@ Procure suporte técnico quando:
 
 Ao relatar, informe o horário, a página, a ação realizada e a mensagem exibida. Não
 envie senha, cookie, token ou arquivo contendo dados pessoais sem orientação segura.
-

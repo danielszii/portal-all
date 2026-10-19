@@ -15,7 +15,7 @@ function eventDate(value: string) {
 
 export default function AdminAgenda() {
   return <AdminResourcePage
-    resource="agenda" defaults={{ status: 'RASCUNHO' }}
+    resource="agenda" defaults={{ status: 'PUBLICADO' }}
     title="Gerenciar" emphasis="agenda"
     description="Cadastre solenidades, posses, palestras e encontros da Academia."
     singular="Evento"
