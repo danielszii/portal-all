@@ -110,7 +110,7 @@ function isoDateTime(value: string) {
   if (!value) return null
   return `${value.length === 16 ? value + ':00' : value}-03:00`
 }
-const editorialLabel = (value: string) => ({ PUBLICADO: 'Publicado', RASCUNHO: 'Rascunho', ARQUIVADO: 'Arquivado' }[value] ?? value)
+const editorialLabel = (value: string) => ({ PUBLICADO: 'Visível no site', RASCUNHO: 'Somente no painel', ARQUIVADO: 'Retirado do site' }[value] ?? value)
 
 export function adminItem(resource: AdminResource, record: AdminRecord): AdminListItem {
   if (resource === 'cadeiras') {

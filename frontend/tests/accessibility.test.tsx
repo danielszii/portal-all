@@ -95,6 +95,6 @@ test('área administrativa compartilha cabeçalho, estados e buscas reversíveis
   assert.match(header, /Voltar ao painel/)
   pages.forEach(page => assert.match(page, /AdminPageHeader/))
   assert.match(resource, /aria-label="Limpar busca"/)
-  assert.match(resource, /item\.status === 'Publicado' \? 'is-published'/)
+  assert.match(resource, /item\.status === 'Visível no site' \? 'is-published'/)
   assert.match(resource, /Preencha os campos marcados com \*/)
 })

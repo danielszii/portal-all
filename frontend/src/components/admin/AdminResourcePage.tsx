@@ -12,7 +12,7 @@ import { adminItem, deleteAdminRecord, loadAdminPage, loadAdminRecord, saveAdmin
   type AdminResource, type FormValues, type AdminListItem, type AdminPage, type AdminRecord } from '@/services/admin'
 
 export type AdminField = {
-  name: string; label: string; type?: 'text' | 'date' | 'datetime-local' | 'number' | 'textarea' | 'select' | 'file'
+  name: string; label: string; type?: 'text' | 'date' | 'datetime-local' | 'number' | 'textarea' | 'select' | 'file' | 'publication'
   options?: (string | { value: string; label: string })[]; required?: boolean; placeholder?: string; accept?: string
   publishedRequired?: boolean; urlField?: string; readOnlyOnEdit?: boolean; onlyEnd?: boolean
   min?: number; max?: number; maxLength?: number
@@ -23,6 +23,11 @@ type Props = {
   relatedActions?: { label: string; to: string }[]
 }
 const empty: AdminPage<AdminRecord> = { items: [], page: 1, pageSize: 20, total: 0, totalPages: 1 }
+const publicationHelp: Record<string, string> = {
+  PUBLICADO: 'Fica visível para todos assim que você salvar.',
+  RASCUNHO: 'Fica guardado somente no painel para terminar depois.',
+  ARQUIVADO: 'Sai do site, mas continua guardado no painel.',
+}
 
 export default function AdminResourcePage(props: Props) {
   const { resource, title, emphasis, description, singular } = props
@@ -65,7 +70,7 @@ export default function AdminResourcePage(props: Props) {
     const consequence = resource === 'agenda' ? ' e suas referências na galeria' : ''
     const accepted = await confirmation.confirm({
       title: `Excluir ${singular.toLocaleLowerCase('pt-BR')}?`,
-      message: `“${item.title}” será excluído definitivamente${consequence}. Esta ação não pode ser desfeita. Para apenas retirar o conteúdo do portal, edite-o como Arquivado.`,
+      message: `“${item.title}” será excluído definitivamente${consequence}. Esta ação não pode ser desfeita. Se quiser apenas escondê-lo do público, escolha “Retirar do site” na edição.`,
       confirmLabel: 'Excluir definitivamente',
       tone: 'danger',
     })
@@ -103,7 +108,7 @@ export default function AdminResourcePage(props: Props) {
         {!state.loading && !state.error && <div className="admin-record-list">
           {items.map(item => <article className="admin-record" key={item.id}>
             <div><h2>{item.title}</h2><p>{item.meta}</p></div>
-            <span className={item.status === 'Rascunho' ? 'draft' : item.status === 'Publicado' ? 'is-published' : ''}>{item.status}</span>
+            <span className={item.status === 'Somente no painel' ? 'draft' : item.status === 'Visível no site' ? 'is-published' : item.status === 'Retirado do site' ? 'is-inactive' : ''}>{item.status}</span>
             <div className="admin-record-actions">
               <button className="admin-edit-action" type="button" disabled={busy} onClick={() => void edit(item)}>{canEdit ? <Pencil size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />} {canEdit && resource === 'cadeiras' && item.status === 'Vaga' ? 'Adicionar titular' : canEdit ? 'Editar' : 'Visualizar'}</button>
               {resource !== 'cadeiras' && can('registros:excluir') && <button className="admin-delete-action" type="button" disabled={busy} title="Excluir definitivamente" onClick={() => void remove(item)}><Trash2 size={14} aria-hidden="true" /> Excluir</button>}
@@ -143,9 +148,9 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
     try {
       if (values.status === 'PUBLICADO' && (editor.id === null || editor.values.status !== 'PUBLICADO')) {
         const accepted = await confirmation.confirm({
-          title: 'Publicar agora?',
-          message: 'Este conteúdo ficará visível no portal assim que for salvo. Deseja continuar?',
-          confirmLabel: 'Publicar conteúdo',
+          title: 'Mostrar no site agora?',
+          message: 'Ao confirmar, este conteúdo ficará visível para todos assim que for salvo.',
+          confirmLabel: 'Salvar e mostrar',
           tone: 'warning',
         })
         if (!accepted) return
@@ -168,6 +173,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
     } finally { lock.current = false; setSaving(false) }
   }
   const editing = editor.id !== null
+  const saveLabel = values.status === 'PUBLICADO' ? 'Salvar e mostrar no site' : values.status === 'RASCUNHO' ? 'Salvar somente no painel' : values.status === 'ARQUIVADO' ? 'Salvar e retirar do site' : 'Salvar alterações'
   return <><div className="admin-form-overlay" onMouseDown={event => { if (event.target === event.currentTarget && !saving) onClose() }}>
     <div ref={dialog} tabIndex={-1} className={renderPreview ? 'admin-form-panel has-preview' : 'admin-form-panel'} role="dialog" aria-modal="true" aria-labelledby="admin-form-title">
       <header>
@@ -188,6 +194,14 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
             const required = (field.name === 'posse' && editing && !values.posse && values.inicioAno ? false : field.required) || (field.publishedRequired && values.status === 'PUBLICADO') || field.onlyEnd
             const options = field.options?.map(option => typeof option === 'string' ? { value: option, label: option } : option)
             const stored = field.urlField ? values[field.urlField] : ''
+            if (field.type === 'publication') return <fieldset className='admin-publication-choice admin-field-wide' key={field.name}>
+              <legend>{field.label}</legend>
+              <p>Escolha o que deve acontecer com este conteúdo ao salvar.</p>
+              <div>{options?.map(option => <label className={values[field.name] === option.value ? 'is-selected' : ''} key={option.value}>
+                <input type='radio' name={field.name} value={option.value} checked={values[field.name] === option.value} disabled={disabled} onChange={() => update(field.name, option.value)} />
+                <span><strong>{option.label}</strong><small>{publicationHelp[option.value]}</small></span>
+              </label>)}</div>
+            </fieldset>
             return <label className={field.type === 'textarea' ? 'admin-field admin-field-wide' : 'admin-field'} key={field.name}>
               <span>{field.label}{required ? ' *' : ''}</span>
               {field.type === 'textarea' ? <textarea name={field.name} rows={5} disabled={disabled} required={required} maxLength={field.maxLength} value={values[field.name] ?? ''} onChange={event => update(field.name, event.target.value)} />
@@ -214,7 +228,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
           {error && <p className="admin-field-wide admin-state-error" role="alert">{error}</p>}
           <div className="admin-form-actions">
             <button type="button" disabled={saving} onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</button>
-            {!readOnly && <button type="submit" disabled={saving}>{saving ? 'Salvando…' : 'Salvar'}</button>}
+            {!readOnly && <button type="submit" disabled={saving}>{saving ? 'Salvando…' : saveLabel}</button>}
           </div>
         </form>
         {renderPreview && <aside className={`admin-live-preview preview-${previewViewport}`} aria-label="Pré-visualização do conteúdo">

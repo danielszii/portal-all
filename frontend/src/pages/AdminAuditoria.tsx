@@ -15,6 +15,7 @@ const resourceLabels: Record<string, string> = {
   NOTICIA: 'Notícia', ACERVO: 'Acervo', EVENTO: 'Evento', CADEIRA: 'Cadeira', ACADEMICO: 'Acadêmico',
   PATRONO: 'Patrono', GALERIA: 'Galeria', UPLOAD: 'Upload', SESSAO: 'Sessão',
   INSTITUICAO: 'Instituição', GESTAO: 'Gestão', MANDATO: 'Mandato', ADMINISTRADOR: 'Conta administrativa',
+  OBRA: 'Obra', PRODUCAO_LITERARIA: 'Produção literária', AUTORIA_ACERVO: 'Autoria', CONTATO: 'Contato', PORTAL: 'Portal',
 }
 const detailLabels: Record<string, string> = {
   camposAlterados: 'Campos alterados', statusAnterior: 'Status anterior', statusAtual: 'Status atual',
@@ -26,7 +27,8 @@ function detailValue(value: unknown) {
   if (value === null || value === undefined || value === '') return '—'
   if (Array.isArray(value)) return value.length ? value.join(', ') : 'Nenhum'
   if (typeof value === 'object') return JSON.stringify(value)
-  return String(value)
+  const text = String(value)
+  return ({ PUBLICADO: 'Visível no site', RASCUNHO: 'Somente no painel', ARQUIVADO: 'Retirado do site' } as Record<string, string>)[text] ?? text
 }
 
 export default function AdminAuditoria() {

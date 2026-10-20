@@ -102,13 +102,13 @@ test('novos conteúdos começam publicados e exigem confirmação antes de serem
     await t.test(resource, async child => {
       const { container, writes } = await mount(child, ['EDITOR'], `/admin/${resource}`)
       await act(async () => container.querySelector<HTMLButtonElement>('.admin-primary-action')!.click())
-      const status = container.querySelector<HTMLSelectElement>('select[name="status"]')
-      assert.equal(status?.value, 'PUBLICADO')
+      const status = container.querySelector<HTMLInputElement>('input[name="status"][value="PUBLICADO"]')
+      assert.equal(status?.checked, true)
       const form = container.querySelector<HTMLFormElement>('[role="dialog"] form')!
       await act(async () => form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })))
       assert.equal(writes.length, 0)
       const confirmation = container.querySelector('[role="alertdialog"]')
-      assert.match(confirmation?.textContent ?? '', /ficará visível no portal/)
+      assert.match(confirmation?.textContent ?? '', /ficará visível para todos/)
       await act(async () => container.querySelector<HTMLButtonElement>('[role="alertdialog"] .admin-confirm-actions button:first-child')!.click())
       assert.equal(writes.length, 0)
       await act(async () => form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })))
@@ -122,15 +122,12 @@ test('novos conteúdos começam publicados e exigem confirmação antes de serem
 test('publicar um rascunho existente também exige confirmação', async t => {
   const { container, writes } = await mount(t, ['EDITOR'], '/admin/noticias')
   await act(async () => container.querySelector<HTMLButtonElement>('.admin-edit-action')!.click())
-  const status = container.querySelector<HTMLSelectElement>('select[name="status"]')!
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(dom.window.HTMLSelectElement.prototype, 'value')!.set!.call(status, 'PUBLICADO')
-    status.dispatchEvent(new dom.window.Event('change', { bubbles: true }))
-  })
+  const status = container.querySelector<HTMLInputElement>('input[name="status"][value="PUBLICADO"]')!
+  await act(async () => status.click())
   const form = container.querySelector<HTMLFormElement>('[role="dialog"] form')!
   await act(async () => form.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })))
   assert.equal(writes.length, 0)
-  assert.match(container.querySelector('[role="alertdialog"]')?.textContent ?? '', /ficará visível no portal/)
+  assert.match(container.querySelector('[role="alertdialog"]')?.textContent ?? '', /ficará visível para todos/)
 })
 
 test('falha ao carregar o editor do portal oferece nova tentativa acessível', async t => {
