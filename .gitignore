@@ -12,6 +12,7 @@ vite.config.*.timestamp-*
 *-debug.log*
 logs/
 backend/uploads/
+docs/
 *.log
 .tmp-*
 ./prisma/demo-inserts.sql

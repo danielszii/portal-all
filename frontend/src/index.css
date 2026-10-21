@@ -2667,6 +2667,8 @@ h2 {
   line-height: 1.85;
   color: var(--graphite);
   margin: 0 0 18px;
+  white-space: pre-wrap;
+  tab-size: 4;
 }
 
 .membro-text p:last-child {
@@ -2678,6 +2680,8 @@ h2 {
   line-height: 1.85;
   color: var(--graphite);
   margin: 0;
+  white-space: pre-wrap;
+  tab-size: 4;
 }
 
 .membro-vaga-info .text-link {

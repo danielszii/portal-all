@@ -140,6 +140,19 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
   const dialog = useDialog(() => { if (!lock.current) onClose() })
   useEffect(() => () => { Object.values(previews.current).forEach(url => URL.revokeObjectURL(url)) }, [])
   const update = (name: string, value: string) => setValues(current => ({ ...current, [name]: value }))
+  const insertTextareaTab = (event: React.KeyboardEvent<HTMLTextAreaElement>, name: string) => {
+    if (event.key !== 'Tab' || event.shiftKey) return
+    event.preventDefault()
+    const textarea = event.currentTarget
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const next = `${textarea.value.slice(0, start)}\t${textarea.value.slice(end)}`
+    update(name, next)
+    requestAnimationFrame(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + 1, start + 1)
+    })
+  }
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (lock.current || readOnly) return
@@ -204,7 +217,12 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
             </fieldset>
             return <label className={field.type === 'textarea' ? 'admin-field admin-field-wide' : 'admin-field'} key={field.name}>
               <span>{field.label}{required ? ' *' : ''}</span>
-              {field.type === 'textarea' ? <textarea name={field.name} rows={5} disabled={disabled} required={required} maxLength={field.maxLength} value={values[field.name] ?? ''} onChange={event => update(field.name, event.target.value)} />
+              {field.type === 'textarea' ? <>
+                <textarea name={field.name} rows={5} disabled={disabled} required={required} maxLength={field.maxLength} value={values[field.name] ?? ''} onChange={event => update(field.name, event.target.value)} onKeyDown={event => {
+                  if (resource === 'cadeiras' && ['biografia', 'bioExtra', 'patronoBio'].includes(field.name)) insertTextareaTab(event, field.name)
+                }} />
+                {resource === 'cadeiras' && ['biografia', 'bioExtra', 'patronoBio'].includes(field.name) && <small>Enter cria uma nova linha. Tab insere uma tabulação; Shift + Tab muda o foco.</small>}
+              </>
                 : field.type === 'select' ? <select name={field.name} disabled={disabled} required={required} value={values[field.name] ?? ''} onChange={event => update(field.name, event.target.value)}>
                   <option value="" disabled>Selecione</option>
                   {values[field.name] && !options?.some(option => option.value === values[field.name]) && <option value={values[field.name]}>{values[field.name]}</option>}
