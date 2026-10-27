@@ -250,7 +250,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
           <span className="visually-hidden" role="status" aria-live="polite">{saving ? 'Salvando dados, aguarde.' : ''}</span>
           <p className="admin-form-guidance admin-field-wide">{readOnly ? 'Visualização somente para consulta.' : 'Preencha os campos marcados com * antes de salvar.'}</p>
           {resource === 'cadeiras' && fixedChairNumber && (
-            <select hidden name="status" value="Titular em exercício" readOnly aria-hidden="true" tabIndex={-1} onChange={() => undefined}>
+            <select hidden name="status" value="Titular em exercício" disabled aria-hidden="true" tabIndex={-1} onChange={() => undefined}>
               <option value="Titular em exercício">Titular em exercício</option>
             </select>
           )}
