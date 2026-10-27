@@ -4,25 +4,24 @@ import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 
 export default function AdminMembros() {
   return <AdminResourcePage
-    resource="cadeiras" defaults={{ status: 'Titular em exercício' }}
+    resource="cadeiras"
     title="Gerenciar" emphasis="membros"
     description="Atualize titulares, patronos, biografias e a situação das cadeiras."
     singular="Membro"
     relatedActions={[{ label: 'Cadastros sem vínculo', to: '/admin/pessoas' }]}
     fields={[
-      { name: 'nome', label: 'Nome completo', required: true },
+      { name: 'nome', label: 'Nome completo', requiredWhen: values => values.categoria !== 'Vaga' },
       { name: 'cadeira', label: 'Número da cadeira', type: 'number', required: true, min: 1, max: 3999, readOnlyOnEdit: true },
-      { name: 'status', label: 'Situação', type: 'select', required: true, options: ['Titular em exercício', 'In memoriam', 'Vaga'] },
+      { name: 'categoria', label: 'Categoria da cadeira', type: 'select', required: true, options: ['Titular', 'Honorário', 'In Memoriam', 'Vaga'], readOnlyOnEdit: true },
       { name: 'patrono', label: 'Patrono', required: true },
       { name: 'fundador', label: 'Fundador (se diferente do primeiro titular)' },
-      { name: 'posse', label: 'Data de posse', type: 'date', required: true },
-      { name: 'fimEm', label: 'Data de encerramento da ocupação', type: 'date', onlyEnd: true },
+      { name: 'posse', label: 'Data de posse', type: 'date', requiredWhen: values => values.categoria !== 'Vaga' },
       { name: 'biografia', label: 'Biografia', type: 'textarea' },
       { name: 'bioExtra', label: 'Informações biográficas adicionais', type: 'textarea' },
       { name: 'foto', label: 'Foto institucional (até 10 MB)', type: 'file', accept: imageAccept, urlField: 'fotoUrl' },
     ]}
     renderPreview={values => {
-      const status = values.status || 'Titular em exercício'
+      const status = values.categoria === 'In Memoriam' ? 'In memoriam' : values.categoria === 'Vaga' ? 'Vaga' : 'Titular em exercício'
       const photo = values.fotoPreview || values.fotoUrl
       return (
         <article className="admin-member-preview-card">

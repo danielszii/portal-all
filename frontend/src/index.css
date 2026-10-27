@@ -2464,6 +2464,62 @@ h2 {
   margin-top: 72px;
 }
 
+.contato-form-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 48px;
+  align-items: start;
+  margin-top: 72px;
+}
+
+.contato-form-layout .contato-form-wrap {
+  margin-top: 0;
+}
+
+.contato-redes {
+  min-height: 220px;
+  padding: 32px 28px;
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
+}
+
+.contato-redes h2 {
+  margin: 0 0 24px;
+  color: var(--heading-dark);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.contato-redes nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contato-redes nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--institutional-blue);
+  font: 700 10px 'Space Mono', monospace;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.contato-redes nav a:hover {
+  color: var(--secondary-blue);
+}
+
+.contato-redes-empty {
+  margin: 0;
+  color: var(--graphite);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
 .contato-form {
   display: flex;
   flex-direction: column;
@@ -3845,6 +3901,39 @@ button:disabled {
 
 .chair-grid-catalog {
   padding-block: 60px;
+}
+
+.chair-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.chair-filter {
+  margin-bottom: -1px;
+  padding: 12px 18px;
+  border: 1px solid transparent;
+  border-bottom-color: var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: 700 10px 'Space Mono', monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.chair-filter:hover,
+.chair-filter.active {
+  border-color: var(--line);
+  border-bottom-color: var(--surface-soft);
+  background: var(--surface-soft);
+  color: var(--institutional-blue);
+}
+
+.chair-filter span {
+  color: currentColor;
+  font-weight: 400;
 }
 
 .modal-eyebrow {
@@ -8142,6 +8231,11 @@ summary { cursor: pointer; }
 
 /* A busca permanece no cabecalho, ao lado do menu, em telas compactas. */
 @media (max-width: 800px) {
+  .contato-form-layout {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
   .site-header .header-top {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;

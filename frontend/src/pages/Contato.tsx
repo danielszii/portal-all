@@ -80,22 +80,23 @@ export default function Contato() {
         </div>
 
         {/* Formulário */}
-        <div className="contato-form-wrap">
-          <div className="section-heading contato-form-heading">
-            <h2>Envie uma <em>mensagem</em></h2>
-          </div>
-
-          {enviado ? (
-            <div className="form-sucesso" ref={successRef} tabIndex={-1} role="status" aria-live="polite">
-              <p className="eyebrow">Mensagem enviada</p>
-              <h2>Recebemos sua <em>mensagem</em></h2>
-              <p>Sua mensagem foi registrada para a secretaria. Obrigado pelo contato.</p>
-              <button type="button" className="text-link text-link-button" onClick={() => setEnviado(false)}>
-                Enviar outra mensagem <ArrowUpRight size={15} aria-hidden="true" />
-              </button>
+        <div className="contato-form-layout">
+          <div className="contato-form-wrap">
+            <div className="section-heading contato-form-heading">
+              <h2>Envie uma <em>mensagem</em></h2>
             </div>
-          ) : (
-            <form className="contato-form" onSubmit={submit} aria-busy={enviando} aria-describedby={erro ? 'contato-form-error' : undefined}>
+
+            {enviado ? (
+              <div className="form-sucesso" ref={successRef} tabIndex={-1} role="status" aria-live="polite">
+                <p className="eyebrow">Mensagem enviada</p>
+                <h2>Recebemos sua <em>mensagem</em></h2>
+                <p>Sua mensagem foi registrada para a secretaria. Obrigado pelo contato.</p>
+                <button type="button" className="text-link text-link-button" onClick={() => setEnviado(false)}>
+                  Enviar outra mensagem <ArrowUpRight size={15} aria-hidden="true" />
+                </button>
+              </div>
+            ) : (
+              <form className="contato-form" onSubmit={submit} aria-busy={enviando} aria-describedby={erro ? 'contato-form-error' : undefined}>
               {erro && <p id="contato-form-error" role="alert">{erro}</p>}
               <div className="form-row">
                 <div className="form-field">
@@ -121,8 +122,27 @@ export default function Contato() {
               <button type="submit" className="form-submit" disabled={enviando}>
                 {enviando ? 'Enviando mensagem…' : <>Enviar mensagem <ArrowUpRight size={15} aria-hidden="true" /></>}
               </button>
-            </form>
-          )}
+              </form>
+            )}
+          </div>
+
+          <aside className="contato-redes" aria-labelledby="contato-redes-title">
+            <p className="eyebrow">Acompanhe</p>
+            <h2 id="contato-redes-title">Nossas <em>redes</em></h2>
+            {info?.redesSociais?.length ? (
+              <nav aria-label="Redes sociais da Academia">
+                {info.redesSociais.map(rede => (
+                  <a key={`${rede.nome}-${rede.url}`} href={rede.url} target="_blank" rel="noopener noreferrer">
+                    <span>{rede.nome}</span>
+                    <ArrowUpRight size={15} aria-hidden="true" />
+                    <span className="visually-hidden"> (abre em nova aba)</span>
+                  </a>
+                ))}
+              </nav>
+            ) : (
+              <p className="contato-redes-empty">Em breve, nossos canais oficiais estarão disponíveis aqui.</p>
+            )}
+          </aside>
         </div>
       </section>
     </main>

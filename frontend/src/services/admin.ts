@@ -17,7 +17,7 @@ export type AuditRecord = {
 }
 type Pessoa = { id: string; nome: string; biografia: string | null; fotoUrl: string | null; bioExtra?: string | null; inMemoriam?: boolean }
 export type CadeiraAdmin = {
-  id: string; numero: number; patrono: Pessoa; versao: string
+  id: string; numero: number; categoria?: 'TITULAR' | 'HONORARIO' | 'IN_MEMORIAM' | 'VAGA'; patrono: Pessoa; versao: string
   ocupacoes: { id: string; academicoId: string; vigente: boolean; fundador: boolean; inicioEm: string | null; inicioAno: number | null; fimEm?: string | null; fimAno?: number | null; academico: Pessoa }[]
 }
 export type EditorialRecord = {
@@ -70,6 +70,12 @@ export function loadAdminRecord(resource: AdminResource, id: string, signal?: Ab
 export function deleteAdminRecord(resource: Exclude<AdminResource, 'cadeiras'>, id: string, csrfToken: string) {
   return adminRequest<void>(`/${resource}/${encodeURIComponent(id)}`, { method: 'DELETE', csrfToken })
 }
+export function endAdminChairOccupation(numero: string, ocupacaoAtualId: string, csrfToken: string) {
+  const fimEm = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Fortaleza', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+  return adminRequest<CadeiraAdmin>(`/cadeiras/${encodeURIComponent(numero)}/encerrar`, {
+    method: 'POST', csrfToken, body: { ocupacaoAtualId, fimEm, inMemoriam: false },
+  })
+}
 export function loadAdminGallery(page: number, eventoId: string, signal?: AbortSignal) {
   const query = new URLSearchParams({ page: String(page), pageSize: '20' })
   if (eventoId.trim()) query.set('eventoId', eventoId.trim())
@@ -120,7 +126,7 @@ export function adminItem(resource: AdminResource, record: AdminRecord): AdminLi
     const founder = ocupacoes.find(o => o.fundador)
     const occupant = current ?? (person ? ocupacoes.find(o => o.academicoId === person.id) : undefined)
     return { id: String(row.numero), title: person?.nome ?? `Cadeira ${row.numero} sem titular`, meta: `Cadeira ${row.numero} · Patrono: ${row.patrono.nome}`, status,
-      values: { nome: person?.nome ?? '', cadeira: String(row.numero), status, patrono: row.patrono.nome,
+      values: { nome: person?.nome ?? '', cadeira: String(row.numero), categoria: row.categoria === 'HONORARIO' ? 'Honorário' : row.categoria === 'IN_MEMORIAM' ? 'In Memoriam' : row.categoria === 'VAGA' ? 'Vaga' : row.categoria === 'TITULAR' ? 'Titular' : '', patrono: row.patrono.nome,
         fundador: founder?.academico.nome ?? '', posse: occupant?.inicioEm?.slice(0, 10) ?? '', inicioAno: str(occupant?.inicioAno),
         fimEm: occupant?.fimEm?.slice(0, 10) ?? '',
         biografia: person?.biografia ?? '', bioExtra: person?.bioExtra ?? '', fotoUrl: person?.fotoUrl ?? '',
@@ -145,6 +151,7 @@ export function adminPayload(resource: AdminResource, v: FormValues, editing: bo
   if (resource === 'acervo') return { titulo: v.titulo, categoria: v.categoria, autoriaTexto: v.autoriaTexto || null, edicao: v.edicao || null,
     ano: v.ano ? Number(v.ano) : null, paginas: v.paginas ? Number(v.paginas) : null, cor: v.cor || 'navy', descricao: v.descricao || '', pdfUrl: v.pdfUrl || '', ...(v.capaUrl === undefined ? {} : { capaUrl: v.capaUrl || null }), ...(v.autorAlterado === 'true' && v.autorId ? { autorId: v.autorId } : {}), status }
   if (resource === 'agenda') return { titulo: v.titulo, tipo: v.tipo, inicioEm: isoDateTime(v.inicioEm), fimEm: isoDateTime(v.fimEm), local: v.local, descricao: v.descricao || '', foto: v.foto || null, status }
+  const isVaga = v.categoria === 'Vaga'
   const academico = { nome: v.nome, biografia: v.biografia || null, bioExtra: v.bioExtra || null, fotoUrl: v.fotoUrl || null }
   const patrono = { nome: v.patrono, biografia: v.patronoBio || null, fotoUrl: v.patronoFoto || null }
   if (editing) return {
@@ -153,16 +160,17 @@ export function adminPayload(resource: AdminResource, v: FormValues, editing: bo
     ...(v.ocupacaoAtualId ? {
       academico,
       ocupacaoAtualId: v.ocupacaoAtualId,
-      ...(v.status !== 'Titular em exercício' ? { encerramento: { fimEm: v.fimEm, inMemoriam: v.status === 'In memoriam' } } : {}),
+      ...(v.fimEm ? { encerramento: { fimEm: v.fimEm, inMemoriam: false } } : {}),
     } : v.academicoId ? {
       academico,
       academicoId: v.academicoId,
-      ...(v.status !== 'Titular em exercício' && v.fimEm ? { encerramento: { fimEm: v.fimEm, inMemoriam: v.status === 'In memoriam' } } : {}),
+      ...(v.fimEm ? { encerramento: { fimEm: v.fimEm, inMemoriam: false } } : {}),
     } : {}),
     ...(v.posse ? { inicioEm: v.posse } : {}),
     ...(v.fundador?.trim() ? { fundador: { nome: v.fundador.trim() } } : {}),
   }
-  return { numero: Number(v.cadeira), patrono, academico, inicioEm: v.posse,
+  const categoria = v.categoria === 'Titular' ? 'TITULAR' : v.categoria === 'Honorário' ? 'HONORARIO' : v.categoria === 'In Memoriam' ? 'IN_MEMORIAM' : 'VAGA'
+  return { numero: Number(v.cadeira), categoria, patrono, ...(isVaga ? {} : { academico, inicioEm: v.posse }),
     ...(v.fundador?.trim() ? { fundador: { nome: v.fundador.trim() } } : {}) }
 }
 

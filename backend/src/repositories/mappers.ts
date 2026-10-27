@@ -10,7 +10,9 @@ export const cadeiraInclude = {
   ocupacoes: { include: { academico: { include: { obras: true, producoes: { where: { status: 'PUBLICADO' as const } },
     autorias: { where: { acervo: { status: 'PUBLICADO' as const } }, include: { acervo: true }, orderBy: { ordem: 'asc' as const } } } } } },
 } satisfies Prisma.CadeiraInclude
-type CadeiraRow = Prisma.CadeiraGetPayload<{ include: typeof cadeiraInclude }>
+type CadeiraRow = Omit<Prisma.CadeiraGetPayload<{ include: typeof cadeiraInclude }>, 'categoria'> & {
+  categoria?: Prisma.CadeiraGetPayload<{ include: typeof cadeiraInclude }>['categoria']
+}
 
 export function mapCadeira(row: CadeiraRow): Cadeira {
   const { ocupacoes, atual, membro, status } = situacaoCadeira(row.ocupacoes)
@@ -19,7 +21,9 @@ export function mapCadeira(row: CadeiraRow): Cadeira {
   const obras = membro?.obras.filter(obra => !titles.has(obra.titulo.trim().toLocaleLowerCase('pt-BR')))
     .map(obra => ({ titulo: obra.titulo, ano: obra.ano ?? undefined, tipo: obra.tipo ?? undefined })) ?? []
   return {
-    number: romano(row.numero), patron: row.patrono.nome,
+    number: romano(row.numero),
+    category: row.categoria === 'HONORARIO' ? 'Honorário' : row.categoria === 'IN_MEMORIAM' ? 'In Memoriam' : row.categoria === 'VAGA' ? 'Vaga' : 'Titular',
+    patron: row.patrono.nome,
     founder: ocupacoes.find(o => o.fundador)?.academico.nome ?? '',
     holder: membro?.nome ?? 'Vaga', image: membro?.fotoUrl ?? '',
     status,

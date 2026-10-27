@@ -19,6 +19,7 @@ export type ProducaoLiteraria = {
 
 export type Cadeira = {
   number: string
+  category?: 'Titular' | 'Honorário' | 'In Memoriam' | 'Vaga'
   patron: string
   founder: string
   holder: string

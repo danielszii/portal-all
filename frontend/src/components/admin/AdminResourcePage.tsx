@@ -11,7 +11,7 @@ import FormattedTextarea from '@/components/admin/FormattedTextarea'
 import { convertCoverImage } from '@/utils/cover-image'
 const PdfCoverPicker = lazy(() => import('@/components/admin/PdfCoverPicker'))
 import { canOpenAdminPage } from '@/services/admin-permissions'
-import { adminItem, deleteAdminRecord, loadAdminPage, loadAdminRecord, saveAdminForm, uploadAdminFile, AdminApiError,
+import { adminItem, deleteAdminRecord, endAdminChairOccupation, loadAdminPage, loadAdminRecord, saveAdminForm, uploadAdminFile, AdminApiError,
   type AdminResource, type FormValues, type AdminListItem, type AdminPage, type AdminRecord } from '@/services/admin'
 
 export type AdminField = {
@@ -19,6 +19,7 @@ export type AdminField = {
   options?: (string | { value: string; label: string })[]; required?: boolean; placeholder?: string; accept?: string
   publishedRequired?: boolean; urlField?: string; readOnlyOnEdit?: boolean; onlyEnd?: boolean
   allowCustom?: boolean
+  requiredWhen?: (values: FormValues) => boolean
   min?: number; max?: number; maxLength?: number
 }
 type Props = {
@@ -61,7 +62,7 @@ export default function AdminResourcePage(props: Props) {
       const values = adminItem(resource, await loadAdminRecord(resource, item.id)).values
       if (resource === 'cadeiras' && item.status === 'Vaga') {
         setEditor({ id: null, fixedChairNumber: true, values: {
-          ...values, nome: '', status: 'Titular em exercício', posse: '', fimEm: '',
+          ...values, nome: '', posse: '', fimEm: '',
           biografia: '', bioExtra: '', fotoUrl: '',
         } })
       } else setEditor({ id: item.id, values })
@@ -83,6 +84,23 @@ export default function AdminResourcePage(props: Props) {
     try {
       await deleteAdminRecord(resource, item.id, csrfToken)
       setFeedback(`${singular} ${singular.endsWith('a') ? 'excluída' : 'excluído'} com sucesso.`); state.retry()
+    } catch (err) { handleError(err) }
+    finally { setBusy(false) }
+  }
+  const endOccupation = async (item: AdminListItem) => {
+    const ocupacaoAtualId = item.values.ocupacaoAtualId
+    if (!csrfToken || resource !== 'cadeiras' || !ocupacaoAtualId || !canEdit) return
+    const accepted = await confirmation.confirm({
+      title: 'Encerrar ocupação?',
+      message: `A ocupação de “${item.title}” será encerrada hoje e a pessoa permanecerá no histórico da cadeira. A cadeira ficará vaga.`,
+      confirmLabel: 'Encerrar ocupação',
+      tone: 'warning',
+    })
+    if (!accepted) return
+    setBusy(true); setError(''); setFeedback('')
+    try {
+      await endAdminChairOccupation(item.id, ocupacaoAtualId, csrfToken)
+      setFeedback('Ocupação encerrada e enviada para o histórico.'); state.retry()
     } catch (err) { handleError(err) }
     finally { setBusy(false) }
   }
@@ -115,6 +133,7 @@ export default function AdminResourcePage(props: Props) {
             <span className={item.status === 'Somente no painel' ? 'draft' : item.status === 'Visível no site' ? 'is-published' : item.status === 'Retirado do site' ? 'is-inactive' : ''}>{item.status}</span>
             <div className="admin-record-actions">
               <button className="admin-edit-action" type="button" disabled={busy} onClick={() => void edit(item)}>{canEdit ? <Pencil size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />} {canEdit && resource === 'cadeiras' && item.status === 'Vaga' ? 'Adicionar titular' : canEdit ? 'Editar' : 'Visualizar'}</button>
+              {canEdit && resource === 'cadeiras' && item.values.ocupacaoAtualId && <button className="admin-delete-action" type="button" disabled={busy} onClick={() => void endOccupation(item)}>Encerrar ocupação</button>}
               {resource !== 'cadeiras' && can('registros:excluir') && <button className="admin-delete-action" type="button" disabled={busy} title="Excluir definitivamente" onClick={() => void remove(item)}><Trash2 size={14} aria-hidden="true" /> Excluir</button>}
             </div>
           </article>)}
@@ -230,14 +249,19 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
         <form onSubmit={submit} aria-busy={saving}>
           <span className="visually-hidden" role="status" aria-live="polite">{saving ? 'Salvando dados, aguarde.' : ''}</span>
           <p className="admin-form-guidance admin-field-wide">{readOnly ? 'Visualização somente para consulta.' : 'Preencha os campos marcados com * antes de salvar.'}</p>
-          {fields.filter(field => !(field.onlyEnd && (!editing || values.status === 'Titular em exercício'))).map(field => {
+          {resource === 'cadeiras' && fixedChairNumber && (
+            <select hidden name="status" value="Titular em exercício" readOnly aria-hidden="true" tabIndex={-1} onChange={() => undefined}>
+              <option value="Titular em exercício">Titular em exercício</option>
+            </select>
+          )}
+          {fields.filter(field => !(field.onlyEnd && (!editing || !values.ocupacaoAtualId))).map(field => {
             const hasMember = Boolean(values.ocupacaoAtualId || values.academicoId || values.nome?.trim())
             const isCadeiraSemMembro = resource === 'cadeiras' && editing && !hasMember
             const disabled = readOnly || saving || (editing && field.readOnlyOnEdit)
               || (fixedChairNumber && field.name === 'cadeira')
               || (isCadeiraSemMembro && ['nome', 'biografia', 'bioExtra', 'foto', 'status', 'posse', 'fimEm'].includes(field.name))
 
-            const required = (field.name === 'posse' && editing && !values.posse && values.inicioAno ? false : field.required) || (field.publishedRequired && values.status === 'PUBLICADO') || field.onlyEnd
+            const required = (field.requiredWhen ? field.requiredWhen(values) : field.required) || (field.publishedRequired && values.status === 'PUBLICADO')
             const options = field.options?.map(option => typeof option === 'string' ? { value: option, label: option } : option)
             const stored = field.urlField ? values[field.urlField] : ''
             if (field.type === 'publication') return <fieldset className='admin-publication-choice admin-field-wide' key={field.name}>
