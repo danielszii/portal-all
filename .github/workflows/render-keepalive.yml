@@ -1,8 +1,14 @@
 name: Manter API do Render ativa
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/render-keepalive.yml'
   schedule:
-    - cron: '*/10 * * * *'
+    # Evita os minutos mais congestionados do agendador do GitHub Actions.
+    - cron: '7,17,27,37,47,57 * * * *'
   workflow_dispatch:
 
 permissions:
