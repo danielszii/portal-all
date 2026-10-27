@@ -41,10 +41,22 @@ test('eventos usam Fortaleza e calculam passado pela data', () => {
   assert.equal(mapEvento({ ...base, inicioEm: new Date('2099-01-01T12:00:00Z') }).passado, false)
 })
 test('cadeira conserva autor das obras e a ordem da sucessão', () => {
-  const a = (id: string, nome: string) => ({ id, nome, biografia: null, bioExtra: null, fotoUrl: null, inMemoriam: false, criadoEm: new Date(), atualizadoEm: new Date(), obras: [], producoes: [] })
+  const a = (id: string, nome: string) => ({ id, nome, biografia: null, bioExtra: null, fotoUrl: null, inMemoriam: false, criadoEm: new Date(), atualizadoEm: new Date(), obras: [], producoes: [], autorias: [] })
   const ocupacao = (id: string, inicioAno: number, fundador: boolean, vigente: boolean) => ({ id, cadeiraId: 'c', academicoId: id, inicioAno, fimAno: vigente ? null : 2003, inicioEm: null, fimEm: null, periodoTexto: null, fundador, vigente, academico: a(id, id) })
   const result = mapCadeira({ id: 'c', numero: 1, patronoId: 'p', criadoEm: new Date(), atualizadoEm: new Date(), patrono: { id: 'p', nome: 'Patrono', biografia: null, fotoUrl: null }, ocupacoes: [ocupacao('atual', 2004, false, true), ocupacao('fundador', 1998, true, false)] })
   assert.equal(result.holder, 'atual')
   assert.equal(result.founder, 'fundador')
   assert.deepEqual(result.sucessao?.map(s => s.nome), ['fundador', 'atual'])
+})
+
+test('perfil inclui publicação vinculada ao titular e evita repetir obra de mesmo título', () => {
+  const now = new Date()
+  const book = { id: 'livro', titulo: 'Livro da Academia', categoria: 'Livro', ano: 2026, status: 'PUBLICADO' as const,
+    edicao: null, cor: 'navy', autoriaTexto: 'Autora', paginas: null, descricao: '', pdfUrl: '/livro.pdf', capaUrl: null, criadoEm: now, atualizadoEm: now }
+  const member = { id: 'a', nome: 'Autora', biografia: null, bioExtra: null, fotoUrl: null, inMemoriam: false, criadoEm: now, atualizadoEm: now,
+    obras: [{ id: 'o', academicoId: 'a', titulo: book.titulo, ano: '2026', tipo: 'Livro', criadoEm: now, atualizadoEm: now }], producoes: [],
+    autorias: [{ acervoId: book.id, academicoId: 'a', papel: 'Autor', ordem: 0, acervo: book }] }
+  const row = { id: 'c', numero: 1, patronoId: 'p', criadoEm: now, atualizadoEm: now, patrono: { id: 'p', nome: 'Patrono', biografia: null, fotoUrl: null },
+    ocupacoes: [{ id: 'oc', cadeiraId: 'c', academicoId: 'a', inicioAno: 2020, fimAno: null, inicioEm: null, fimEm: null, periodoTexto: null, fundador: false, vigente: true, academico: member }] }
+  assert.deepEqual(mapCadeira(row).obras, [{ titulo: 'Livro da Academia', ano: '2026', tipo: 'Livro', acervoId: 'livro' }])
 })

@@ -8712,7 +8712,16 @@ summary { cursor: pointer; }
 .book-cover.has-image img, .archive-cover.has-image img, .admin-preview-book-cover.has-image img { display: block; width: 100%; height: 100%; object-fit: contain; background: #fff; }
 .pdf-cover-picker { display: grid; gap: .5rem; }
 .pdf-cover-picker img { width: min(160px, 100%); height: auto; border: 1px solid var(--line); }
+.cover-choice { display: grid; gap: .75rem; padding: 1rem; border: 1px solid var(--line); border-radius: 8px; }
+.cover-choice legend { padding: 0 .3rem; color: var(--ink); font-weight: 600; }
+.cover-choice p { margin: 0; }
+.cover-choice-options { display: flex; flex-wrap: wrap; gap: .6rem 1rem; }
+.cover-choice-options label { display: flex; align-items: center; gap: .4rem; cursor: pointer; }
+.cover-choice-options input { accent-color: var(--institutional-blue); }
+.pdf-viewer:has(.publication-image) { overflow: auto; text-align: center; }
+.publication-image { display: block; max-width: 100%; height: auto; margin: 0 auto; }
 .formatted-text { white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; }
+.formatted-aligned { display: inline-block; width: 100%; }
 .formatted-editor { display: grid; gap: .45rem; width: 100%; }
 .formatted-editor-toolbar { display: flex; gap: .35rem; }
 .formatted-editor-toolbar button { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--institutional-blue); cursor: pointer; }

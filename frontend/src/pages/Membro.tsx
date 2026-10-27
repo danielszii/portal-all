@@ -142,8 +142,8 @@ export default function Membro() {
               <p className="eyebrow">Obras publicadas</p>
               <ul className="membro-obras">
                 {chair.obras.map(obra => (
-                  <li key={obra.titulo}>
-                    <strong>{obra.titulo}</strong>
+                  <li key={`${obra.acervoId ?? 'obra'}-${obra.titulo}`}>
+                    <strong>{obra.acervoId ? <NavLink to={`/acervo?ler=${encodeURIComponent(obra.acervoId)}`}>{obra.titulo}</NavLink> : obra.titulo}</strong>
                     {obra.ano && <span>{obra.ano}</span>}
                     {obra.tipo && <em>{obra.tipo}</em>}
                   </li>

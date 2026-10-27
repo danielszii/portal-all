@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { pdfViewerUrl } from '../../frontend/src/utils/pdf.js'
+import { pdfViewerUrl, publicationImageUrl } from '../../frontend/src/utils/pdf.js'
 
 test('PDF local usa URL do portal e PDF externo mantém o visualizador existente', () => {
   const origin = 'http://localhost:5173'
@@ -11,4 +11,12 @@ test('PDF local usa URL do portal e PDF externo mantém o visualizador existente
   for (const invalid of ['', 'http://[', 'javascript:alert(1)', 'data:text/html,example']) {
     assert.equal(pdfViewerUrl(invalid, origin), undefined)
   }
+})
+
+test('publicações em imagem são reconhecidas sem aceitar URLs executáveis', () => {
+  const origin = 'http://localhost:5173'
+  assert.equal(publicationImageUrl('/uploads/materia.PNG?versao=1', origin), `${origin}/uploads/materia.PNG?versao=1`)
+  assert.equal(publicationImageUrl('https://example.org/materia.webp', origin), 'https://example.org/materia.webp')
+  assert.equal(publicationImageUrl('/uploads/livro.pdf', origin), undefined)
+  assert.equal(publicationImageUrl('javascript:alert(1)', origin), undefined)
 })

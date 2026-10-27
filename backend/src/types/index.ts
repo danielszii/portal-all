@@ -2,6 +2,7 @@ export type Obra = {
   titulo: string
   ano?: string
   tipo?: string
+  acervoId?: string
 }
 
 export type Sucessor = {

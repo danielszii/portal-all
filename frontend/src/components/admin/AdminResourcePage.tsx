@@ -8,6 +8,7 @@ import Pagination from '@/components/Pagination'
 import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import { useAdminConfirm } from '@/components/admin/AdminConfirmDialog'
 import FormattedTextarea from '@/components/admin/FormattedTextarea'
+import { convertCoverImage } from '@/utils/cover-image'
 const PdfCoverPicker = lazy(() => import('@/components/admin/PdfCoverPicker'))
 import { canOpenAdminPage } from '@/services/admin-permissions'
 import { adminItem, deleteAdminRecord, loadAdminPage, loadAdminRecord, saveAdminForm, uploadAdminFile, AdminApiError,
@@ -17,6 +18,7 @@ export type AdminField = {
   name: string; label: string; type?: 'text' | 'date' | 'datetime-local' | 'number' | 'textarea' | 'select' | 'file' | 'publication'
   options?: (string | { value: string; label: string })[]; required?: boolean; placeholder?: string; accept?: string
   publishedRequired?: boolean; urlField?: string; readOnlyOnEdit?: boolean; onlyEnd?: boolean
+  allowCustom?: boolean
   min?: number; max?: number; maxLength?: number
 }
 type Props = {
@@ -134,14 +136,17 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
   const [values, setValues] = useState(editor.values)
   const [files, setFiles] = useState<Record<string, File>>({})
   const [coverPending, setCoverPending] = useState(false)
+  const [coverMode, setCoverMode] = useState<'keep' | 'pdf' | 'image' | 'none'>('keep')
+  const [coverError, setCoverError] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [previewViewport, setPreviewViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const confirmation = useAdminConfirm()
   const lock = useRef(false)
   const previews = useRef<Record<string, string>>({})
+  const coverGeneration = useRef(0)
   const dialog = useDialog(() => { if (!lock.current) onClose() })
-  useEffect(() => () => { Object.values(previews.current).forEach(url => URL.revokeObjectURL(url)) }, [])
+  useEffect(() => () => { coverGeneration.current++; Object.values(previews.current).forEach(url => URL.revokeObjectURL(url)) }, [])
   const update = (name: string, value: string) => setValues(current => ({ ...current, [name]: value }))
   const setPdfCover = useCallback((file: File) => {
     if (previews.current.capa) URL.revokeObjectURL(previews.current.capa)
@@ -155,6 +160,24 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
     setCoverPending(true)
     setFiles(current => { const next = { ...current }; delete next.capa; return next })
   }, [])
+  const changeCoverMode = (mode: 'keep' | 'pdf' | 'image' | 'none') => {
+    coverGeneration.current++
+    setCoverMode(mode); setCoverError('')
+    setCoverPending(mode === 'pdf' || mode === 'image')
+    if (previews.current.capa) { URL.revokeObjectURL(previews.current.capa); delete previews.current.capa }
+    setFiles(current => { const next = { ...current }; delete next.capa; return next })
+    setValues(current => ({ ...current, capaPreview: '', capaUrl: mode === 'none' ? '' : editor.values.capaUrl ?? '' }))
+  }
+  const selectCoverImage = async (file: File) => {
+    const generation = ++coverGeneration.current
+    setCoverError(''); setCoverPending(true)
+    try {
+      const converted = await convertCoverImage(file)
+      if (generation === coverGeneration.current) setPdfCover(converted)
+    } catch (error) {
+      if (generation === coverGeneration.current) setCoverError(error instanceof Error ? error.message : 'Não foi possível carregar a imagem.')
+    }
+  }
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (lock.current || readOnly || coverPending) return
@@ -174,7 +197,10 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
       for (const field of fields) {
         const file = files[field.name]
         if (file && field.urlField) {
-          next[field.urlField] = (await uploadAdminFile(file, csrfToken, field.urlField === 'pdfUrl' ? 'pdf' : 'image')).url
+          const isPublication = resource === 'acervo' && field.urlField === 'pdfUrl'
+          const upload = isPublication && file.type.startsWith('image/') && !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)
+            ? await convertCoverImage(file, 40_000_000) : file
+          next[field.urlField] = (await uploadAdminFile(upload, csrfToken, isPublication ? 'publication' : 'image')).url
           update(field.urlField, next[field.urlField])
           if (!(resource === 'acervo' && field.name === 'arquivo')) setFiles(current => { const remaining = { ...current }; delete remaining[field.name]; return remaining })
         }
@@ -222,6 +248,21 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
                 <span><strong>{option.label}</strong><small>{publicationHelp[option.value]}</small></span>
               </label>)}</div>
             </fieldset>
+            if (field.type === 'select' && field.allowCustom) {
+              const custom = values[`${field.name}Modo`] === 'custom' || (!!values[field.name] && !options?.some(option => option.value === values[field.name]))
+              return <div className="admin-field" key={field.name}>
+                <label htmlFor={`admin-${field.name}`}>{field.label}{required ? ' *' : ''}</label>
+                <select id={`admin-${field.name}`} name={`${field.name}Selecao`} disabled={disabled} required={required} value={custom ? '__custom__' : values[field.name] ?? ''} onChange={event => {
+                  const selection = event.target.value
+                  setValues(current => ({ ...current, [field.name]: selection === '__custom__' ? '' : selection, [`${field.name}Modo`]: selection === '__custom__' ? 'custom' : '' }))
+                }}>
+                  <option value="" disabled>Selecione</option>
+                  {options?.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  <option value="__custom__">Personalizado</option>
+                </select>
+                {custom && <label className="admin-field"><span>Tipo personalizado *</span><input name={field.name} type="text" maxLength={100} required disabled={disabled} value={values[field.name] ?? ''} placeholder="Digite o tipo da publicação" onChange={event => update(field.name, event.target.value)} /></label>}
+              </div>
+            }
             const FieldContainer = field.type === 'textarea' ? 'div' : 'label'
             return <FieldContainer className={field.type === 'textarea' ? 'admin-field admin-field-wide' : 'admin-field'} key={field.name}>
               <span>{field.label}{required ? ' *' : ''}</span>
@@ -240,7 +281,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
                   : field.type === 'file' ? <>
                     <input name={field.name} type="file" disabled={disabled} required={required && !stored} accept={field.accept} onChange={event => {
                       const file = event.target.files?.[0]
-                      if (resource === 'acervo' && field.name === 'arquivo' && file) {
+                      if (resource === 'acervo' && field.name === 'arquivo' && file && coverMode === 'pdf') {
                         setCoverPending(true)
                         if (previews.current.capa) { URL.revokeObjectURL(previews.current.capa); delete previews.current.capa }
                         setValues(current => ({ ...current, capaUrl: '', capaPreview: '' }))
@@ -257,7 +298,24 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
               {field.name === 'posse' && editing && !values.posse && values.inicioAno && <small>Registro histórico informa somente o ano {values.inicioAno}; nenhuma data foi inventada.</small>}
             </FieldContainer>
           })}
-          {resource === 'acervo' && files.arquivo && <Suspense fallback={<p role="status">Carregando visualizador de PDF…</p>}><PdfCoverPicker file={files.arquivo} disabled={readOnly || saving} onCover={setPdfCover} onPending={pendingPdfCover} /></Suspense>}
+          {resource === 'acervo' && <fieldset className="admin-field-wide cover-choice" disabled={readOnly || saving}>
+            <legend>Capa da publicação</legend>
+            <p>Escolha como deseja apresentar a capa no site.</p>
+            <div className="cover-choice-options">
+              <label><input type="radio" name="coverMode" checked={coverMode === 'keep'} onChange={() => changeCoverMode('keep')} /> {editor.values.capaUrl ? 'Manter capa atual' : 'Usar capa colorida'}</label>
+              <label><input type="radio" name="coverMode" checked={coverMode === 'pdf'} onChange={() => changeCoverMode('pdf')} /> Escolher página do PDF</label>
+              <label><input type="radio" name="coverMode" checked={coverMode === 'image'} onChange={() => changeCoverMode('image')} /> Enviar imagem de capa</label>
+              {editor.values.capaUrl && <label><input type="radio" name="coverMode" checked={coverMode === 'none'} onChange={() => changeCoverMode('none')} /> Usar capa colorida</label>}
+            </div>
+            {coverMode === 'pdf' && (files.arquivo?.type === 'application/pdf'
+              ? <Suspense fallback={<p role="status">Carregando visualizador de PDF…</p>}><PdfCoverPicker file={files.arquivo} disabled={readOnly || saving} onCover={setPdfCover} onPending={pendingPdfCover} /></Suspense>
+              : <small>Anexe um PDF acima para escolher uma página. Para imagens, escolha uma capa própria ou colorida.</small>)}
+            {coverMode === 'image' && <label className="admin-field"><span>Imagem da capa</span>
+              <input type="file" accept="image/*" onChange={event => { const file = event.target.files?.[0]; if (file) void selectCoverImage(file) }} />
+              <small>Até 10 MB. Formatos que o navegador conseguir abrir serão convertidos em PNG.</small>
+            </label>}
+            {coverError && <p className="admin-state-error" role="alert">{coverError}</p>}
+          </fieldset>}
           {!readOnly && resource === 'cadeiras' && <p className="admin-field-wide">Para trocar o titular, use “Novo membro” e informe o número da cadeira. A confirmação preservará o anterior no histórico.</p>}
           {error && <p className="admin-field-wide admin-state-error" role="alert">{error}</p>}
           <div className="admin-form-actions">

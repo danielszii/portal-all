@@ -4,7 +4,7 @@ import { ordenarOcupacoes, situacaoCadeira } from '../src/domain/ocupacoes.js'
 import { adminItem, type CadeiraAdmin } from '../../frontend/src/services/admin.js'
 import { mapCadeira } from '../src/repositories/mappers.js'
 
-const person = (nome: string, inMemoriam = false) => ({ id: nome, nome, inMemoriam, fotoUrl: null, biografia: null, bioExtra: null, criadoEm: new Date(), atualizadoEm: new Date(), obras: [], producoes: [] })
+const person = (nome: string, inMemoriam = false) => ({ id: nome, nome, inMemoriam, fotoUrl: null, biografia: null, bioExtra: null, criadoEm: new Date(), atualizadoEm: new Date(), obras: [], producoes: [], autorias: [] })
 const occupation = (id: string, date: string | null, founder: boolean, inMemoriam: boolean) => ({
   id, cadeiraId: 'c', academicoId: id, fundador: founder, vigente: false,
   inicioEm: date ? new Date(date) : null, inicioAno: date ? Number(date.slice(0, 4)) : null,

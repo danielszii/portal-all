@@ -9,13 +9,14 @@ import PortalText from '@/components/PortalText'
 import FormattedText from '@/components/FormattedText'
 import { useState, useCallback, useEffect } from 'react'
 import { ArrowUpRight, Search, X, Download } from 'lucide-react'
-import { pdfViewerUrl } from '@/utils/pdf'
+import { pdfViewerUrl, publicationImageUrl } from '@/utils/pdf'
 
 type Pub = AcervoItem
 
 function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
   const dialog = useDialog(onClose)
-  const viewerUrl = pdfViewerUrl(pub.pdf, window.location.origin)
+  const imageUrl = publicationImageUrl(pub.pdf, window.location.origin)
+  const viewerUrl = imageUrl ? undefined : pdfViewerUrl(pub.pdf, window.location.origin)
   return (
     <div ref={dialog} tabIndex={-1} className="pdf-overlay" role="dialog" aria-modal="true" aria-labelledby="pdf-modal-title" onClick={onClose}>
       <div className="pdf-modal" onClick={e => e.stopPropagation()}>
@@ -26,7 +27,7 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
           </div>
           <div className="pdf-modal-actions">
             <a className="pdf-download-btn" href={pub.pdf} download target="_blank" rel="noopener noreferrer">
-              <Download size={13} aria-hidden="true" /> Baixar PDF <span className="visually-hidden">(abre em nova aba)</span>
+              <Download size={13} aria-hidden="true" /> Baixar {imageUrl ? 'imagem' : 'PDF'} <span className="visually-hidden">(abre em nova aba)</span>
             </a>
             <button type="button" className="pdf-close" onClick={onClose} aria-label="Fechar visualizador">
               <X size={18} aria-hidden="true" />
@@ -34,13 +35,13 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
           </div>
         </div>
         <div className="pdf-viewer">
-          <iframe
+          {imageUrl ? <img className="publication-image" src={imageUrl} alt={`Publicação ${pub.title}`} /> : <iframe
             src={viewerUrl}
             title={`${pub.title} — ${pub.tomo}`}
             width="100%"
             height="100%"
             className="pdf-frame"
-          />
+          />}
         </div>
         <div className="pdf-modal-footer">
           <span>{pub.pages} páginas · {pub.author}</span>

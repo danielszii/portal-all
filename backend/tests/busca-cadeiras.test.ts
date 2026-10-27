@@ -12,9 +12,9 @@ async function searchApp(t: TestContext) {
     numero, patrono: { nome: numero === 12 ? 'Álvaro da Academia' : 'Patrono da Academia' },
     ocupacoes: numero === 12 ? [
       { id: 'fundador', fundador: true, vigente: false, inicioAno: 2000, fimAno: 2010,
-        academico: { nome: 'Conceição', inMemoriam: false, obras: [], producoes: [] } },
+        academico: { nome: 'Conceição', inMemoriam: false, obras: [], producoes: [], autorias: [] } },
       { id: 'titular', fundador: false, vigente: true, inicioAno: 2011,
-        academico: { nome: 'João', inMemoriam: false, obras: [], producoes: [] } },
+        academico: { nome: 'João', inMemoriam: false, obras: [], producoes: [], autorias: [] } },
     ] : [],
   })))
   mockMethod(t, prisma, '$transaction', async callback => callback({

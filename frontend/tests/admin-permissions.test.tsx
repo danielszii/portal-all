@@ -97,6 +97,37 @@ test('editor tem criação e edição, mas nunca exclusão definitiva', async t 
   assert.equal(container.querySelector('.admin-delete-action'), null)
 })
 
+test('publicação oferece capa colorida, página do PDF e envio de imagem', async t => {
+  const { container } = await mount(t, ['EDITOR'], '/admin/acervo')
+  await act(async () => container.querySelector<HTMLButtonElement>('.admin-primary-action')!.click())
+  const choices = [...container.querySelectorAll<HTMLLabelElement>('.cover-choice-options label')]
+  assert.deepEqual(choices.map(choice => choice.textContent?.trim()), ['Usar capa colorida', 'Escolher página do PDF', 'Enviar imagem de capa'])
+  await act(async () => choices[2].querySelector('input')!.click())
+  assert.equal(container.querySelector<HTMLInputElement>('input[accept="image/*"]')?.type, 'file')
+  assert.equal(container.querySelector<HTMLButtonElement>('.admin-form-actions button[type="submit"]')?.disabled, true)
+  await act(async () => choices[0].querySelector('input')!.click())
+  assert.equal(container.querySelector<HTMLInputElement>('input[accept="image/*"]'), null)
+  assert.equal(container.querySelector<HTMLButtonElement>('.admin-form-actions button[type="submit"]')?.disabled, false)
+})
+
+test('tipo de publicação permite selecionar matéria ou digitar um tipo personalizado', async t => {
+  const { container } = await mount(t, ['EDITOR'], '/admin/acervo')
+  await act(async () => container.querySelector<HTMLButtonElement>('.admin-primary-action')!.click())
+  const select = container.querySelector<HTMLSelectElement>('select[name="categoriaSelecao"]')!
+  assert.ok([...select.options].some(option => option.value === 'Matéria'))
+  await act(async () => { select.value = '__custom__'; select.dispatchEvent(new dom.window.Event('change', { bubbles: true })) })
+  const input = container.querySelector<HTMLInputElement>('input[name="categoria"]')!
+  assert.ok(input.required)
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!.call(input, 'Manuscrito')
+    input.dispatchEvent(new dom.window.Event('input', { bubbles: true }))
+  })
+  assert.match(container.querySelector('.admin-preview-meta')?.textContent ?? '', /Manuscrito/)
+  await act(async () => { select.value = 'Matéria'; select.dispatchEvent(new dom.window.Event('change', { bubbles: true })) })
+  assert.equal(container.querySelector('input[name="categoria"]'), null)
+  assert.match(container.querySelector('.admin-preview-meta')?.textContent ?? '', /Matéria/)
+})
+
 test('novos conteúdos começam publicados e exigem confirmação antes de serem enviados', async t => {
   for (const resource of ['noticias', 'agenda', 'acervo']) {
     await t.test(resource, async child => {

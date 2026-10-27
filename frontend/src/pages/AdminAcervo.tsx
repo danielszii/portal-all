@@ -32,14 +32,14 @@ export default function AdminAcervo() {
     fields={[
       { name: 'titulo', label: 'Título', required: true },
       { name: 'autorId', label: 'Autor cadastrado', type: 'select', options: authors.data.map(author => ({ value: author.id, label: author.nome })) },
-      { name: 'categoria', label: 'Tipo', type: 'select', required: true, options: ['Livro', 'Caderno', 'Antologia', 'Revista', 'Discurso', 'Estatuto'] },
+      { name: 'categoria', label: 'Tipo', type: 'select', required: true, allowCustom: true, options: ['Livro', 'Caderno', 'Antologia', 'Revista', 'Discurso', 'Estatuto', 'Matéria'] },
       { name: 'edicao', label: 'Edição / tomo' },
       { name: 'ano', label: 'Ano', type: 'number', min: 1, max: 9999 },
       { name: 'paginas', label: 'Páginas', type: 'number', min: 1, max: 100000 },
       { name: 'cor', label: 'Cor da capa', type: 'select', options: [{ value: 'navy', label: 'Azul' }, { value: 'ochre', label: 'Ocre' }, { value: 'ink', label: 'Preto' }] },
       editorialStatus,
       { name: 'descricao', label: 'Descrição', type: 'textarea' },
-      { name: 'arquivo', label: 'Arquivo PDF (até 10 MB)', type: 'file', accept: 'application/pdf', urlField: 'pdfUrl', publishedRequired: true },
+      { name: 'arquivo', label: 'Arquivo da publicação: PDF ou imagem (até 10 MB)', type: 'file', accept: 'application/pdf,image/*', urlField: 'pdfUrl', publishedRequired: true },
     ]}
     renderPreview={values => <article className="admin-content-preview admin-book-preview">
       <div className={`admin-preview-book-cover ${values.cor || 'navy'} ${values.capaPreview || values.capaUrl ? 'has-image' : ''}`}>

@@ -59,3 +59,12 @@ test('URLs de upload respeitam o tipo do campo, inclusive com query, fragmento e
   assert.equal(mediaUrl(null, 'foto', 'image'), '')
   assert.throws(() => mediaUrl(null, 'pdfUrl', 'pdf', true))
 })
+
+test('publicações aceitam PDFs e imagens, mas recusam arquivos executáveis e SVG', () => {
+  for (const path of ['/uploads/livro.pdf', '/uploads/materia.png', '/uploads/foto.jpg', '/uploads/arquivo.webp']) {
+    assert.equal(mediaUrl(path, 'arquivo', 'publication', true), path)
+  }
+  for (const path of ['/uploads/arquivo.svg', '/uploads/arquivo.html', '/uploads/arquivo.exe']) {
+    assert.throws(() => mediaUrl(path, 'arquivo', 'publication', true))
+  }
+})

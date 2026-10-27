@@ -98,7 +98,7 @@ export function loadAdminAudit(page: number, filters: AuditFilters, signal?: Abo
   return adminRequest<AdminPage<AuditRecord>>(`/auditoria?${query}`, { signal })
 }
 export function uploadAdminFile(file: Blob, csrfToken: string, kind: MediaKind) {
-  if (!mediaMimeTypes[kind].includes(file.type)) throw new AdminApiError(kind === 'pdf' ? 'Escolha um arquivo PDF.' : 'Escolha uma imagem PNG, JPEG ou WebP.', 400)
+  if (!mediaMimeTypes[kind].includes(file.type)) throw new AdminApiError(kind === 'pdf' ? 'Escolha um arquivo PDF.' : kind === 'publication' ? 'Escolha um PDF ou uma imagem PNG, JPEG ou WebP.' : 'Escolha uma imagem PNG, JPEG ou WebP.', 400)
   if (!file.size || file.size > maxUploadBytes) throw new AdminApiError('O arquivo deve ter conteúdo e no máximo 10 MB.', 400)
   return adminRequest<{ url: string }>('/uploads', { method: 'POST', file, csrfToken })
 }

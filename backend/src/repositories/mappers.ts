@@ -7,12 +7,17 @@ export { numeroCadeira, romano } from '../domain/numero-cadeira.js'
 
 export const cadeiraInclude = {
   patrono: true,
-  ocupacoes: { include: { academico: { include: { obras: true, producoes: { where: { status: 'PUBLICADO' as const } } } } } },
+  ocupacoes: { include: { academico: { include: { obras: true, producoes: { where: { status: 'PUBLICADO' as const } },
+    autorias: { where: { acervo: { status: 'PUBLICADO' as const } }, include: { acervo: true }, orderBy: { ordem: 'asc' as const } } } } } },
 } satisfies Prisma.CadeiraInclude
 type CadeiraRow = Prisma.CadeiraGetPayload<{ include: typeof cadeiraInclude }>
 
 export function mapCadeira(row: CadeiraRow): Cadeira {
   const { ocupacoes, atual, membro, status } = situacaoCadeira(row.ocupacoes)
+  const catalogo = membro?.autorias.map(({ acervo }) => ({ titulo: acervo.titulo, ano: acervo.ano?.toString(), tipo: acervo.categoria, acervoId: acervo.id })) ?? []
+  const titles = new Set(catalogo.map(obra => obra.titulo.trim().toLocaleLowerCase('pt-BR')))
+  const obras = membro?.obras.filter(obra => !titles.has(obra.titulo.trim().toLocaleLowerCase('pt-BR')))
+    .map(obra => ({ titulo: obra.titulo, ano: obra.ano ?? undefined, tipo: obra.tipo ?? undefined })) ?? []
   return {
     number: romano(row.numero), patron: row.patrono.nome,
     founder: ocupacoes.find(o => o.fundador)?.academico.nome ?? '',
@@ -20,7 +25,7 @@ export function mapCadeira(row: CadeiraRow): Cadeira {
     status,
     bio: membro?.biografia ?? undefined, bioExtra: membro?.bioExtra ?? undefined,
     posse: atual?.inicioAno?.toString(), patronoBio: row.patrono.biografia ?? undefined,
-    obras: membro?.obras.map(o => ({ titulo: o.titulo, ano: o.ano ?? undefined, tipo: o.tipo ?? undefined })) ?? [],
+    obras: [...catalogo, ...obras],
     producao: membro?.producoes.map(p => ({ titulo: p.titulo, tipo: p.tipo as ProducaoLiteraria['tipo'], texto: p.texto })) ?? [],
     sucessao: ocupacoes.map(o => ({ nome: o.academico.nome, periodo: o.periodoTexto ?? `${o.inicioAno ?? '?'}–${o.vigente ? 'presente' : o.fimAno ?? '?'}`, status: o.academico.inMemoriam ? 'In memoriam' : 'Titular' })),
   }

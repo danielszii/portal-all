@@ -98,11 +98,13 @@ test('uploads validados por HTTP e associados aos campos corretos no PostgreSQL'
     assert.ok(gallery.some(row => row.src === photo && row.legenda === bodies.agenda.titulo))
   })
 
-  await t.test('acervo recusa imagem como PDF e preserva o PDF válido após edição inválida', async () => {
+  await t.test('acervo aceita PDF e imagem e preserva o arquivo após edição inválida', async () => {
     const data = { titulo: 'PDF validado no acervo', categoria: 'Livro', pdfUrl: pdf, status: 'PUBLICADO' }
-    await request('/acervo', 'POST', { ...data, pdfUrl: photo }, 400)
+    const image = await (await request('/acervo', 'POST', { ...data, pdfUrl: photo }, 201)).json() as { id: string }
+    const imageVisible = await (await fetch(base + '/api/acervo/' + image.id)).json() as { pdf: string }
+    assert.equal(imageVisible.pdf, photo)
     const created = await (await request('/acervo', 'POST', data, 201)).json() as { id: string; atualizadoEm: string }
-    await request('/acervo/' + created.id, 'PUT', { ...data, atualizadoEm: created.atualizadoEm, pdfUrl: photo }, 400)
+    await request('/acervo/' + created.id, 'PUT', { ...data, atualizadoEm: created.atualizadoEm, pdfUrl: '/uploads/invalido.svg' }, 400)
     const visible = await (await fetch(base + '/api/acervo/' + created.id)).json() as { pdf: string }
     assert.equal(visible.pdf, pdf)
   })

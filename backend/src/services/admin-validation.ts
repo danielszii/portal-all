@@ -72,13 +72,13 @@ export function mediaUrl(value: unknown, name: string, kind: MediaKind, required
   catch { throw new ValidationError(`${name}: URL inválida.`) }
   const extension = extname(pathname).toLowerCase()
   const images = ['.png', '.jpg', '.jpeg', '.webp']
-  const allowed = kind === 'image' ? images : ['.pdf']
+  const allowed = kind === 'image' ? images : kind === 'publication' ? [...images, '.pdf'] : ['.pdf']
   // Uploads do portal têm extensão controlada pelo servidor. Links externos
   // podem usar endpoints sem extensão; não os consultamos para evitar SSRF.
   const localUpload = pathname.startsWith('/uploads/')
   const knownMedia = [...images, '.pdf', '.gif', '.svg', '.avif', '.bmp', '.tiff'].includes(extension)
   if ((localUpload || knownMedia) && !allowed.includes(extension)) {
-    throw new ValidationError(`${name}: informe ${kind === 'pdf' ? 'um arquivo PDF' : 'uma imagem PNG, JPEG ou WebP'}.`)
+    throw new ValidationError(`${name}: informe ${kind === 'pdf' ? 'um arquivo PDF' : kind === 'publication' ? 'um PDF ou uma imagem PNG, JPEG ou WebP' : 'uma imagem PNG, JPEG ou WebP'}.`)
   }
   return result
 }

@@ -26,7 +26,7 @@ export function acervoInput(input: unknown) {
   return { titulo: v.text(b.titulo, 'titulo'), categoria: v.text(b.categoria, 'categoria', 100),
     edicao: v.optionalText(b.edicao, 'edicao', 200), ano: b.ano == null ? null : v.integer(b.ano, 'ano', 1, 9999), cor,
     autoriaTexto: v.optionalText(b.autoriaTexto, 'autoriaTexto', 1000), paginas: b.paginas == null ? null : v.integer(b.paginas, 'paginas', 1, 100000),
-    descricao: v.optionalFormattedText(b.descricao, 'descricao') ?? '', pdfUrl: v.mediaUrl(b.pdfUrl, 'pdfUrl', 'pdf', status === 'PUBLICADO'),
+    descricao: v.optionalFormattedText(b.descricao, 'descricao') ?? '', pdfUrl: v.mediaUrl(b.pdfUrl, 'pdfUrl', 'publication', status === 'PUBLICADO'),
     ...(b.capaUrl === undefined ? {} : { capaUrl: v.mediaUrl(b.capaUrl, 'capaUrl', 'image') || null }), status }
 }
 
