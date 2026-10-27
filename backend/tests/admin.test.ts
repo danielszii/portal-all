@@ -7,6 +7,13 @@ import { noticiaInput, acervoInput, eventoInput } from '../src/services/admin-co
 import { prisma } from '../src/db/prisma.js'
 import { mockMethod } from './mock-method.js'
 import { envConfig } from '../src/config/env.config.js'
+import { formattedText } from '../src/services/admin-validation.js'
+
+test('textos formatados preservam tabulações e parágrafos sem aceitar controles inválidos', () => {
+  assert.equal(formattedText('\tPrimeiro\r\n\r\n\t**Segundo**', 'texto'), '\tPrimeiro\n\n\t**Segundo**')
+  assert.throws(() => formattedText('   ', 'texto'))
+  assert.throws(() => formattedText('texto\u0000', 'texto'))
+})
 
 test('senhas usam salt individual e não aceitam uma senha incorreta', async () => {
   const password = 'uma senha longa de teste'
@@ -76,4 +83,12 @@ test('acervo aceita todas as cores já utilizadas e mantém o padrão sem aceita
   for (const cor of ['navy', 'ochre', 'ink', 'green', 'red']) assert.equal(acervoInput({ ...book, cor }).cor, cor)
   assert.equal(acervoInput(book).cor, 'navy')
   for (const cor of ['', 'blue', '#000', null]) assert.throws(() => acervoInput({ ...book, cor }))
+})
+
+test('capa do acervo aceita imagem e não modifica capa quando o campo é omitido', () => {
+  const book = { titulo: 'Livro', categoria: 'Livro' }
+  assert.equal(acervoInput({ ...book, capaUrl: '/uploads/capa.png' }).capaUrl, '/uploads/capa.png')
+  assert.equal(acervoInput({ ...book, capaUrl: null }).capaUrl, null)
+  assert.equal('capaUrl' in acervoInput(book), false)
+  assert.throws(() => acervoInput({ ...book, capaUrl: '/uploads/livro.pdf' }))
 })

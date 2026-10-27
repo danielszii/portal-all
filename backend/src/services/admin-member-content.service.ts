@@ -17,7 +17,7 @@ function productionInput(input: unknown) {
   const b = v.object(input); v.keys(b, ['academicoId', 'titulo', 'tipo', 'texto', 'status', 'publicadoEm', 'atualizadoEm'])
   const status = v.status(b.status), publicadoEm = b.publicadoEm == null ? null : v.date(b.publicadoEm, 'publicadoEm')
   if (status === 'PUBLICADO' && !publicadoEm) throw new ValidationError('Informe a data para publicar a produção.')
-  return { academicoId: v.text(b.academicoId, 'academicoId', 100), titulo: v.text(b.titulo, 'titulo', 500), tipo: v.text(b.tipo, 'tipo', 100), texto: v.text(b.texto, 'texto', 100000), status, publicadoEm }
+  return { academicoId: v.text(b.academicoId, 'academicoId', 100), titulo: v.text(b.titulo, 'titulo', 500), tipo: v.text(b.tipo, 'tipo', 100), texto: v.formattedText(b.texto, 'texto', 100000), status, publicadoEm }
 }
 async function academic(tx: Prisma.TransactionClient, id: string) {
   if (!await tx.academico.findUnique({ where: { id }, select: { id: true } })) throw new AppError('Acadêmico não encontrado.', 404)

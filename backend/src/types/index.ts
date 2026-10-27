@@ -70,6 +70,7 @@ export type AcervoItem = {
   pages: string
   desc: string
   pdf: string
+  cover?: string | null
 }
 
 export type ContatoMensagem = {

@@ -4,6 +4,7 @@ import type { Noticia } from '@/types'
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import PortalText from '@/components/PortalText'
+import FormattedText from '@/components/FormattedText'
 import { useCallback } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { NavLink, useSearchParams } from 'react-router'
@@ -66,8 +67,8 @@ function NoticiasConteudo() {
             <img src={noticia.img} alt={noticia.titulo} loading="eager" fetchPriority="high" />
           </div>
           <div className="noticia-body">
-            <p className="lead">{noticia.lede}</p>
-            {(noticia.conteudo ?? '').split('\n\n').map((par, i) => <p key={i}>{par}</p>)}
+            <p className="lead formatted-text"><FormattedText text={noticia.lede} /></p>
+            {(noticia.conteudo ?? '').split('\n\n').map((par, i) => <p className="formatted-text" key={i}><FormattedText text={par} /></p>)}
           </div>
         </article>
       </main>
@@ -92,7 +93,7 @@ function NoticiasConteudo() {
               <span className="noticia-cat">{lista[0].categoria}</span>
               <time>{lista[0].data}</time>
               <h2><NavLink className="noticia-title-link" to={noticiaHref(lista[0].id)}>{lista[0].titulo}</NavLink></h2>
-              <p>{lista[0].lede}</p>
+              <p className="formatted-text"><FormattedText text={lista[0].lede} /></p>
             </div>
           </article>
         )}
@@ -111,7 +112,7 @@ function NoticiasConteudo() {
                     <time>{n.data}</time>
                   </div>
                   <h3><NavLink className="noticia-title-link" to={noticiaHref(n.id)}>{n.titulo}</NavLink></h3>
-                  <p>{n.lede}</p>
+                  <p className="formatted-text"><FormattedText text={n.lede} /></p>
                 </div>
               </article>
             ))}

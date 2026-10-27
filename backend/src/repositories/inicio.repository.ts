@@ -27,11 +27,11 @@ export async function findInicioAcervo() {
     prisma.acervoItem.count({ where: { status: 'PUBLICADO' } }),
     prisma.acervoItem.findMany({ where: { status: 'PUBLICADO' }, take: 3,
       orderBy: [{ ano: { sort: 'desc', nulls: 'last' } }, { titulo: 'asc' }],
-      select: { id: true, titulo: true, edicao: true, ano: true, cor: true, autoriaTexto: true },
+      select: { id: true, titulo: true, edicao: true, ano: true, cor: true, autoriaTexto: true, capaUrl: true },
     }),
   ])
   return { total, items: rows.map(row => ({ id: row.id, title: row.titulo,
-    tomo: row.edicao ?? '', year: row.ano?.toString() ?? '', color: row.cor, author: row.autoriaTexto ?? '',
+    tomo: row.edicao ?? '', year: row.ano?.toString() ?? '', color: row.cor, author: row.autoriaTexto ?? '', cover: row.capaUrl,
   })) }
 }
 

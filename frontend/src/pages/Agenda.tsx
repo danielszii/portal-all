@@ -2,6 +2,7 @@ import GalleryModal from '@/components/GalleryModal'
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import PortalText from '@/components/PortalText'
+import FormattedText from '@/components/FormattedText'
 import { useState, useCallback } from 'react'
 import { NavLink } from 'react-router'
 import { ArrowUpRight } from 'lucide-react'
@@ -52,7 +53,7 @@ export default function Agenda() {
                   <h2 className="agenda-titulo">{ev.titulo}</h2>
                   <p className="agenda-meta">{formatData(ev.data)} · {ev.hora}</p>
                   <p className="agenda-local">{ev.local}</p>
-                  <p className="agenda-desc">{ev.descricao}</p>
+                  <p className="agenda-desc formatted-text"><FormattedText text={ev.descricao} /></p>
                 </div>
                 {ev.foto && (
                   <div className="agenda-thumb">

@@ -99,6 +99,17 @@ router.delete('/gestoes/:id/mandatos/:mandatoId', handle(async (req, res) => {
   res.json(await institutionAdmin.deleteMandato(v.text(req.params.id, 'id', 100), v.text(req.params.mandatoId, 'mandatoId', 100), req.body, actor(res)))
 }))
 
+// Lista somente dados necessários à seleção, acessível aos perfis do acervo.
+router.get('/acervo/autores', handle(async (req, res) => {
+  const { page, pageSize } = parsePagination(req.query) ?? { page: 1, pageSize: 50 }
+  const total = await prisma.academico.count()
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const current = Math.min(page, totalPages)
+  const items = await prisma.academico.findMany({ select: { id: true, nome: true }, skip: (current - 1) * pageSize,
+    take: pageSize, orderBy: [{ nome: 'asc' }, { id: 'asc' }] })
+  res.json({ items, total, page: current, pageSize, totalPages })
+}))
+
 for (const [name, resource] of Object.entries(contentResources)) {
   router.get(`/${name}`, handle(async (req, res) => {
     const { page, pageSize } = parsePagination(req.query) ?? { page: 1, pageSize: 20 }

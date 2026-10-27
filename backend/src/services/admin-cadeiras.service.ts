@@ -53,13 +53,13 @@ export class CadeiraConflict extends AppError {
 function pessoa(input: unknown) {
   const b = v.object(input)
   v.keys(b, ['nome', 'biografia', 'fotoUrl', 'bioExtra'])
-  return { nome: v.text(b.nome, 'nome', 200), biografia: v.optionalText(b.biografia, 'biografia'),
-    fotoUrl: v.mediaUrl(b.fotoUrl, 'fotoUrl', 'image') || null, bioExtra: v.optionalText(b.bioExtra, 'bioExtra') }
+  return { nome: v.text(b.nome, 'nome', 200), biografia: v.optionalFormattedText(b.biografia, 'biografia'),
+    fotoUrl: v.mediaUrl(b.fotoUrl, 'fotoUrl', 'image') || null, bioExtra: v.optionalFormattedText(b.bioExtra, 'bioExtra') }
 }
 function patrono(input: unknown) {
   const b = v.object(input)
   v.keys(b, ['nome', 'biografia', 'fotoUrl'])
-  return { nome: v.text(b.nome, 'nome', 200), biografia: v.optionalText(b.biografia, 'biografia'), fotoUrl: v.mediaUrl(b.fotoUrl, 'fotoUrl', 'image') || null }
+  return { nome: v.text(b.nome, 'nome', 200), biografia: v.optionalFormattedText(b.biografia, 'biografia'), fotoUrl: v.mediaUrl(b.fotoUrl, 'fotoUrl', 'image') || null }
 }
 async function lock(tx: Prisma.TransactionClient, numero: number) {
   // Número reservado na transação, inclusive quando a cadeira ainda não existe.

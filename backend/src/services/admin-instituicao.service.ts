@@ -25,11 +25,11 @@ export function institutionInput(input: unknown) {
     })
   })()
   return {
-    nome: v.text(b.nome, 'nome'), historia: v.text(b.historia, 'historia', 100000), missao: v.text(b.missao, 'missao', 20000),
+    nome: v.text(b.nome, 'nome'), historia: v.formattedText(b.historia, 'historia', 100000), missao: v.formattedText(b.missao, 'missao', 20000),
     endereco: v.optionalText(b.endereco, 'endereco', 1000), email: email ? v.email(email) : null,
     telefone: v.optionalText(b.telefone, 'telefone', 50),
     fundacaoAno: b.fundacaoAno == null ? null : v.integer(b.fundacaoAno, 'fundacaoAno', 1, dataInstitucional().getUTCFullYear()),
-    sedeTexto: v.optionalText(b.sedeTexto, 'sedeTexto'), trajetoriaTexto: v.optionalText(b.trajetoriaTexto, 'trajetoriaTexto'),
+    sedeTexto: v.optionalFormattedText(b.sedeTexto, 'sedeTexto'), trajetoriaTexto: v.optionalFormattedText(b.trajetoriaTexto, 'trajetoriaTexto'),
     horarioAtendimento: v.optionalText(b.horarioAtendimento, 'horarioAtendimento', 500),
     emailImprensa: b.emailImprensa ? v.email(b.emailImprensa) : null,
     mapaUrl: b.mapaUrl ? v.webUrl(b.mapaUrl, 'mapaUrl') : null,

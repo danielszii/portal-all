@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { fetchInicioCadeiras, fetchInicioAcervo, fetchInicioEventos, fetchInicioNoticias, fetchInstituicao, fetchPortalContent } from '@/services/api'
 import { ArrowUpRight, Clock3, MapPin } from 'lucide-react'
 import { NavLink } from 'react-router'
+import FormattedText from '@/components/FormattedText'
 import heroImg from '@/imports/academialetters.jpg'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 import { formatData, formatDia, formatMes, formatNumeroCadeira } from '@/utils/formatters'
@@ -67,7 +68,7 @@ export default function Home() {
         <div className="hero-copy">
           <div className="hero-message" key={currentHero} aria-live={heroPaused ? 'polite' : 'off'} aria-atomic="true">
             <h1>{slides[currentHero].title}<br /><em>{slides[currentHero].emphasis}</em></h1>
-            <p className="hero-intro">{slides[currentHero].description}</p>
+            <p className="hero-intro formatted-text"><FormattedText text={slides[currentHero].description} /></p>
           </div>
         </div>
         <div className="hero-index" role="group" aria-label="Selecionar mensagem em destaque">
@@ -92,10 +93,10 @@ export default function Home() {
         <div className="wrap intro-z-wrap">
           <div className="intro-z-main">
             <div className="intro-z-title">
-              <h2>{portal.data?.inicioTitulo}</h2>
+              <h2 className="formatted-text"><FormattedText text={portal.data?.inicioTitulo} /></h2>
             </div>
             <div className="intro-z-story">
-              <p className="lead">{portal.data?.inicioTexto}</p>
+              <p className="lead formatted-text"><FormattedText text={portal.data?.inicioTexto} /></p>
             </div>
           </div>
 
@@ -160,11 +161,12 @@ export default function Home() {
             <LoadState {...acervo} />
             {publications.map((book) => (
               <article className="book-entry" key={book.id}>
-                <div className={`book-cover ${book.color}`}>
+                <div className={`book-cover ${book.color} ${book.cover ? 'has-image' : ''}`}>
+                  {book.cover ? <img src={book.cover} alt={`Capa de ${book.title}`} /> : <>
                   <span>A.L.L.</span>
                   <strong>{book.title}</strong>
                   <small>{book.tomo}</small>
-                  <i>❧</i>
+                  <i>❧</i></>}
                 </div>
                 <div className="book-details">
                   <p className="meta">Publicação · {book.year}</p>

@@ -91,7 +91,7 @@ export function subscribeInstituicao(listener: () => void) {
 }
 
 type InicioCadeira = Pick<Cadeira, 'number' | 'patron' | 'holder' | 'image' | 'status'>
-type InicioAcervo = Pick<AcervoItem, 'id' | 'title' | 'tomo' | 'year' | 'color' | 'author'>
+type InicioAcervo = Pick<AcervoItem, 'id' | 'title' | 'tomo' | 'year' | 'color' | 'author' | 'cover'>
 type InicioEvento = Pick<Evento, 'id' | 'titulo' | 'tipo' | 'data' | 'hora' | 'local' | 'foto'>
 export const fetchInicioCadeiras = (signal: AbortSignal) => request<{ total: number; items: InicioCadeira[] }>('/inicio/cadeiras', { signal })
 export const fetchInicioAcervo = (signal: AbortSignal) => request<{ total: number; items: InicioAcervo[] }>('/inicio/acervo', { signal })

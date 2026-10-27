@@ -16,6 +16,15 @@ export function text(value: unknown, name: string, max = 300): string {
 export function optionalText(value: unknown, name: string, max = 20000) {
   return value === null || value === undefined || value === '' ? null : text(value, name, max)
 }
+export function formattedText(value: unknown, name: string, max = 20000): string {
+  if (typeof value !== 'string' || !value.trim() || value.length > max || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)) {
+    throw new ValidationError(`${name}: texto obrigatório, até ${max} caracteres.`)
+  }
+  return value.replace(/\r\n?/g, '\n')
+}
+export function optionalFormattedText(value: unknown, name: string, max = 20000) {
+  return value === null || value === undefined || value === '' ? null : formattedText(value, name, max)
+}
 export function integer(value: unknown, name: string, min: number, max: number): number {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < min || value > max) throw new ValidationError(`${name}: inteiro entre ${min} e ${max}.`)
   return value

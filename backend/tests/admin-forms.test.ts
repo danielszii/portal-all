@@ -21,7 +21,11 @@ test('formulário preserva instante, arquivo e campos opcionais ao editar', () =
   assert.equal(payload.conteudo, news.conteudo)
   const book = { id: 'book', titulo: 'Livro', categoria: 'Livro', status: 'RASCUNHO', autoriaTexto: 'Autoria', edicao: '2ª edição', ano: 2000, paginas: 123, cor: 'ochre', descricao: 'Descrição', pdfUrl: '/livro.pdf' }
   const { id: _id, ...expected } = book
-  assert.deepEqual(adminPayload('acervo', adminItem('acervo', book).values, true), expected)
+  assert.deepEqual(adminPayload('acervo', adminItem('acervo', book).values, true), { ...expected, capaUrl: null })
+  const withCover = adminItem('acervo', { ...book, capaUrl: '/uploads/capa.png' }).values
+  assert.equal(adminPayload('acervo', withCover, true).capaUrl, '/uploads/capa.png')
+  assert.equal(adminPayload('acervo', { ...withCover, autorId: 'academico-1', autorAlterado: 'true', autoriaTexto: 'Autora' }, true).autorId, 'academico-1')
+  assert.equal(adminPayload('acervo', withCover, true).autorId, undefined)
 })
 
 test('edição de cadeira não inventa data de posse e preserva campos ocultos', () => {

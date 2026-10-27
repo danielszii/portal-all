@@ -6,6 +6,7 @@ import { useDialog } from '@/hooks/useDialog'
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import PortalText from '@/components/PortalText'
+import FormattedText from '@/components/FormattedText'
 import { useState, useCallback, useEffect } from 'react'
 import { ArrowUpRight, Search, X, Download } from 'lucide-react'
 import { pdfViewerUrl } from '@/utils/pdf'
@@ -110,11 +111,12 @@ function AcervoConteudo() {
           <div className="archive-grid">
             {lista.map(book => (
               <article className="archive-book" key={book.id}>
-                <div className={`archive-cover ${book.color}`}>
+                <div className={`archive-cover ${book.color} ${book.cover ? 'has-image' : ''}`}>
+                  {book.cover ? <img src={book.cover} alt={`Capa de ${book.title}`} /> : <>
                   <span>A.L.L.</span>
                   <strong>{book.title}</strong>
                   <small>{book.tomo}</small>
-                  <i>❧</i>
+                  <i>❧</i></>}
                 </div>
                 <div className="archive-book-info">
                   <div className="archive-book-top">
@@ -122,7 +124,7 @@ function AcervoConteudo() {
                     <span>{book.year}</span>
                   </div>
                   <h3>{book.title}</h3>
-                  <p>{book.desc}</p>
+                  <p className="formatted-text"><FormattedText text={book.desc} /></p>
                   <p className="archive-book-pages">{book.pages} páginas · {book.author}</p>
                   <div className="archive-book-actions">
                     <button type="button" className="archive-book-link archive-book-link-primary" onClick={() => setPdfAberto(book)}>

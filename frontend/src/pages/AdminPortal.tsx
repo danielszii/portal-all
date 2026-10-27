@@ -4,6 +4,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import { useAuth } from '@/contexts/AuthContext'
 import { useResource } from '@/hooks/useResource'
 import { loadAdminPortal, saveAdminPortal, type AdminPortalContent } from '@/services/admin-portal'
+import FormattedTextarea from '@/components/admin/FormattedTextarea'
 
 export default function AdminPortal() { return <PortalPage /> }
 
@@ -83,11 +84,11 @@ function PortalForm({ initial, onSaved }: { initial: AdminPortalContent; onSaved
         <legend>Destaque {index + 1}</legend>
         <label><span>Título</span><input name={`heroSlides.${index}.title`} required value={item.title} onChange={event => { event.currentTarget.setCustomValidity(''); slide(index, 'title', event.target.value) }} /></label>
         <label><span>Ênfase</span><input name={`heroSlides.${index}.emphasis`} required value={item.emphasis} onChange={event => { event.currentTarget.setCustomValidity(''); slide(index, 'emphasis', event.target.value) }} /></label>
-        <label><span>Descrição</span><textarea name={`heroSlides.${index}.description`} required rows={3} value={item.description} onChange={event => { event.currentTarget.setCustomValidity(''); slide(index, 'description', event.target.value) }} /></label>
+        <div><span>Descrição</span><FormattedTextarea aria-label={`Descrição do destaque ${index + 1}`} name={`heroSlides.${index}.description`} required rows={3} value={item.description} onChange={text => slide(index, 'description', text)} /></div>
       </fieldset>)}</>}
-      {page > 1 && visibleFields.map(([name, label]) => <label className='admin-field admin-field-wide' key={name}><span>{label}</span>
-        <textarea name={name} required rows={name === 'inicioTitulo' ? 2 : 4} value={value[name]} onChange={event => { event.currentTarget.setCustomValidity(''); setValue(current => ({ ...current, [name]: event.target.value })) }} />
-      </label>)}
+      {page > 1 && visibleFields.map(([name, label]) => <div className='admin-field admin-field-wide' key={name}><span>{label}</span>
+        <FormattedTextarea aria-label={label} name={name} required rows={name === 'inicioTitulo' ? 2 : 4} value={value[name]} onChange={text => setValue(current => ({ ...current, [name]: text }))} />
+      </div>)}
       {page === 3 && <label className='admin-field admin-field-wide'><span>Assuntos do contato (um por linha)</span><small>Essas opções aparecem para o visitante no formulário público.</small><textarea name='contatoAssuntos' required rows={6} value={subjects} onChange={event => { event.currentTarget.setCustomValidity(''); setSubjects(event.target.value) }} /></label>}
       {status && <p className='admin-field-wide admin-feedback' role='status'>{status}</p>}
       </div>

@@ -3,6 +3,7 @@ import LoadState from '@/components/LoadState'
 import { NavLink } from 'react-router'
 import { ArrowUpRight } from 'lucide-react'
 import PortalText from '@/components/PortalText'
+import FormattedText from '@/components/FormattedText'
 
 
 export default function Academia() {
@@ -11,7 +12,7 @@ export default function Academia() {
   const info = state.data.info
   const gestao = state.data.gestao
   const diretoria = gestao?.diretoria ?? []
-  const paragraphs = (value: string | null | undefined) => value ? value.split('\n\n').map((text, i) => <p key={i}>{text}</p>) : <p>Informação ainda não disponibilizada.</p>
+  const paragraphs = (value: string | null | undefined) => value ? value.split('\n\n').map((text, i) => <p className="formatted-text" key={i}><FormattedText text={text} /></p>) : <p>Informação ainda não disponibilizada.</p>
 
   return (
     <main>

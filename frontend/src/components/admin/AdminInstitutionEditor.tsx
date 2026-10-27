@@ -5,6 +5,7 @@ import { useDialog } from '@/hooks/useDialog'
 import { useResource } from '@/hooks/useResource'
 import { AdminApiError } from '@/services/admin'
 import { institutionValues, loadAdminInstitution, saveAdminInstitution, type AdminInstitution, type InstitutionValues } from '@/services/admin-instituicao'
+import FormattedTextarea from '@/components/admin/FormattedTextarea'
 
 type Field = { name: Exclude<keyof InstitutionValues, 'redesSociais'>; label: string; type?: 'text' | 'email' | 'tel' | 'number' | 'textarea'; required?: boolean; maxLength?: number }
 const fields: Field[] = [
@@ -69,12 +70,12 @@ function InstitutionForm({ info, onClose, onSaved, onSaving }: {
   }
   return <div className="admin-form-content"><form onSubmit={submit} aria-busy={saving}>
     <p className="admin-field-wide">As alterações serão publicadas no portal ao salvar. Nome, história e missão são obrigatórios.</p>
-    {fields.map(field => <label className={field.type === 'textarea' ? 'admin-field admin-field-wide' : 'admin-field'} key={field.name}>
+    {fields.map(field => { const FieldContainer = field.type === 'textarea' ? 'div' : 'label'; return <FieldContainer className={field.type === 'textarea' ? 'admin-field admin-field-wide' : 'admin-field'} key={field.name}>
       <span>{field.label}{field.required ? ' *' : ''}</span>
       {field.type === 'textarea'
-        ? <textarea name={field.name} rows={5} required={field.required} maxLength={field.maxLength} disabled={saving || !allowed} value={values[field.name]} onChange={event => setValues(current => ({ ...current, [field.name]: event.target.value }))} />
+        ? <FormattedTextarea aria-label={field.label} name={field.name} rows={5} required={field.required} maxLength={field.maxLength} disabled={saving || !allowed} value={values[field.name]} onChange={text => setValues(current => ({ ...current, [field.name]: text }))} />
         : <input name={field.name} type={field.type ?? 'text'} required={field.required} maxLength={field.maxLength} min={field.type === 'number' ? 1 : undefined} max={field.type === 'number' ? year : undefined} step={field.type === 'number' ? 1 : undefined} disabled={saving || !allowed} value={values[field.name]} onChange={event => setValues(current => ({ ...current, [field.name]: event.target.value }))} />}
-    </label>)}
+    </FieldContainer> })}
     <fieldset className="admin-institution-socials admin-field-wide" disabled={saving || !allowed}>
       <legend>Redes sociais</legend>
       {values.redesSociais.map((link, index) => <div className="admin-institution-social-row" key={index}>

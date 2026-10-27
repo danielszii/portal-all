@@ -23,7 +23,8 @@ export type CadeiraAdmin = {
 export type EditorialRecord = {
   atualizadoEm?: string
   id: string | number; titulo: string; status: string; categoria?: string; lede?: string; img?: string; conteudo?: string; publicadoEm?: string | null
-  autoriaTexto?: string | null; edicao?: string | null; ano?: number | null; paginas?: number | null; cor?: string; descricao?: string; pdfUrl?: string
+  autoriaTexto?: string | null; edicao?: string | null; ano?: number | null; paginas?: number | null; cor?: string; descricao?: string; pdfUrl?: string; capaUrl?: string | null
+  autorias?: { academicoId: string }[]
   tipo?: string; inicioEm?: string; fimEm?: string | null; local?: string; foto?: string | null
 }
 export type AdminRecord = EditorialRecord | CadeiraAdmin
@@ -131,8 +132,8 @@ export function adminItem(resource: AdminResource, record: AdminRecord): AdminLi
   const values: FormValues = {
     atualizadoEm: row.atualizadoEm ?? '',
     titulo: row.titulo, status: row.status, categoria: row.categoria ?? '', lede: row.lede ?? '', conteudo: row.conteudo ?? '', img: row.img ?? '',
-    publicadoEm: localDateTime(row.publicadoEm), autoriaTexto: row.autoriaTexto ?? '', edicao: row.edicao ?? '', ano: str(row.ano),
-    paginas: str(row.paginas), cor: row.cor ?? 'navy', descricao: row.descricao ?? '', pdfUrl: row.pdfUrl ?? '',
+    publicadoEm: localDateTime(row.publicadoEm), autoriaTexto: row.autoriaTexto ?? '', autorId: row.autorias?.[0]?.academicoId ?? '', autorCount: str(row.autorias?.length ?? 0), edicao: row.edicao ?? '', ano: str(row.ano),
+    paginas: str(row.paginas), cor: row.cor ?? 'navy', descricao: row.descricao ?? '', pdfUrl: row.pdfUrl ?? '', capaUrl: row.capaUrl ?? '',
     tipo: row.tipo ?? '', inicioEm: localDateTime(row.inicioEm), fimEm: localDateTime(row.fimEm), local: row.local ?? '', foto: row.foto ?? '',
   }
   return { id: String(row.id), title: row.titulo, meta: resource === 'agenda' ? `${row.tipo} · ${values.inicioEm.replace('T', ' ').slice(0, 16)}` : `${row.categoria} ${row.autoriaTexto ? '· ' + row.autoriaTexto : ''}`, status: editorialLabel(row.status), values }
@@ -142,7 +143,7 @@ export function adminPayload(resource: AdminResource, v: FormValues, editing: bo
   const status = v.status || 'RASCUNHO'
   if (resource === 'noticias') return { titulo: v.titulo, categoria: v.categoria, lede: v.lede, conteudo: v.conteudo, img: v.img || '', status, publicadoEm: isoDateTime(v.publicadoEm) }
   if (resource === 'acervo') return { titulo: v.titulo, categoria: v.categoria, autoriaTexto: v.autoriaTexto || null, edicao: v.edicao || null,
-    ano: v.ano ? Number(v.ano) : null, paginas: v.paginas ? Number(v.paginas) : null, cor: v.cor || 'navy', descricao: v.descricao || '', pdfUrl: v.pdfUrl || '', status }
+    ano: v.ano ? Number(v.ano) : null, paginas: v.paginas ? Number(v.paginas) : null, cor: v.cor || 'navy', descricao: v.descricao || '', pdfUrl: v.pdfUrl || '', ...(v.capaUrl === undefined ? {} : { capaUrl: v.capaUrl || null }), ...(v.autorAlterado === 'true' && v.autorId ? { autorId: v.autorId } : {}), status }
   if (resource === 'agenda') return { titulo: v.titulo, tipo: v.tipo, inicioEm: isoDateTime(v.inicioEm), fimEm: isoDateTime(v.fimEm), local: v.local, descricao: v.descricao || '', foto: v.foto || null, status }
   const academico = { nome: v.nome, biografia: v.biografia || null, bioExtra: v.bioExtra || null, fotoUrl: v.fotoUrl || null }
   const patrono = { nome: v.patrono, biografia: v.patronoBio || null, fotoUrl: v.patronoFoto || null }

@@ -18,15 +18,15 @@ export function portalInput(input: unknown) {
   if (!Array.isArray(b.heroSlides) || b.heroSlides.length < 1 || b.heroSlides.length > 8) throw new ValidationError('heroSlides: informe de 1 a 8 destaques.')
   const heroSlides = b.heroSlides.map((item, index) => {
     const slide = v.object(item); v.keys(slide, ['title', 'emphasis', 'description'])
-    return { title: v.text(slide.title, `heroSlides[${index}].title`, 120), emphasis: v.text(slide.emphasis, `heroSlides[${index}].emphasis`, 120), description: v.text(slide.description, `heroSlides[${index}].description`, 500) }
+    return { title: v.text(slide.title, `heroSlides[${index}].title`, 120), emphasis: v.text(slide.emphasis, `heroSlides[${index}].emphasis`, 120), description: v.formattedText(slide.description, `heroSlides[${index}].description`, 500) }
   })
   return {
     heroSlides, heroImagem: v.mediaUrl(b.heroImagem, 'heroImagem', 'image') || null,
-    inicioTitulo: v.text(b.inicioTitulo, 'inicioTitulo', 200), inicioTexto: v.text(b.inicioTexto, 'inicioTexto', 1000),
-    academiaIntroducao: v.text(b.academiaIntroducao, 'academiaIntroducao', 2000), cadeirasIntroducao: v.text(b.cadeirasIntroducao, 'cadeirasIntroducao', 2000),
-    acervoIntroducao: v.text(b.acervoIntroducao, 'acervoIntroducao', 2000), agendaIntroducao: v.text(b.agendaIntroducao, 'agendaIntroducao', 2000),
-    agendaAviso: v.text(b.agendaAviso, 'agendaAviso', 2000), noticiasIntroducao: v.text(b.noticiasIntroducao, 'noticiasIntroducao', 2000),
-    contatoIntroducao: v.text(b.contatoIntroducao, 'contatoIntroducao', 2000), contatoAssuntos: stringList(b.contatoAssuntos, 'contatoAssuntos', 20, 100),
+    inicioTitulo: v.formattedText(b.inicioTitulo, 'inicioTitulo', 200), inicioTexto: v.formattedText(b.inicioTexto, 'inicioTexto', 1000),
+    academiaIntroducao: v.formattedText(b.academiaIntroducao, 'academiaIntroducao', 2000), cadeirasIntroducao: v.formattedText(b.cadeirasIntroducao, 'cadeirasIntroducao', 2000),
+    acervoIntroducao: v.formattedText(b.acervoIntroducao, 'acervoIntroducao', 2000), agendaIntroducao: v.formattedText(b.agendaIntroducao, 'agendaIntroducao', 2000),
+    agendaAviso: v.formattedText(b.agendaAviso, 'agendaAviso', 2000), noticiasIntroducao: v.formattedText(b.noticiasIntroducao, 'noticiasIntroducao', 2000),
+    contatoIntroducao: v.formattedText(b.contatoIntroducao, 'contatoIntroducao', 2000), contatoAssuntos: stringList(b.contatoAssuntos, 'contatoAssuntos', 20, 100),
   }
 }
 

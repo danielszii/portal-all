@@ -4488,7 +4488,7 @@ body {
   gap: 9px;
 }
 
-.login-field label {
+.login-field > label:not(.login-input-wrap) {
   color: var(--muted);
   font: 700 8px/1 'Space Mono', monospace;
   letter-spacing: .11em;
@@ -4506,6 +4506,7 @@ body {
   background: var(--surface-soft);
   color: var(--institutional-blue);
   transition: border-color .2s, background .2s, box-shadow .2s;
+  cursor: text;
 }
 
 .login-input-wrap:focus-within {
@@ -8707,3 +8708,13 @@ summary { cursor: pointer; }
     line-height: 1.02;
   }
 }
+.book-cover.has-image, .archive-cover.has-image, .admin-preview-book-cover.has-image { padding: 0; overflow: hidden; }
+.book-cover.has-image img, .archive-cover.has-image img, .admin-preview-book-cover.has-image img { display: block; width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.pdf-cover-picker { display: grid; gap: .5rem; }
+.pdf-cover-picker img { width: min(160px, 100%); height: auto; border: 1px solid var(--line); }
+.formatted-text { white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; }
+.formatted-editor { display: grid; gap: .45rem; width: 100%; }
+.formatted-editor-toolbar { display: flex; gap: .35rem; }
+.formatted-editor-toolbar button { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--institutional-blue); cursor: pointer; }
+.formatted-editor-toolbar button:disabled { opacity: .5; cursor: not-allowed; }
+.formatted-editor small { color: var(--muted); line-height: 1.4; }

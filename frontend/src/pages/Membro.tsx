@@ -8,6 +8,7 @@ import type { ProducaoLiteraria } from '@/types'
 import { fetchCadeiraByNumber } from '@/services/api'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
 import { formatNumeroCadeira } from '@/utils/formatters'
+import FormattedText from '@/components/FormattedText'
 
 function TextoLiterario({ item }: { item: ProducaoLiteraria }) {
   const [aberto, setAberto] = useState(false)
@@ -24,7 +25,7 @@ function TextoLiterario({ item }: { item: ProducaoLiteraria }) {
       {aberto && (
         <div className="producao-texto" id={panelId}>
           {item.texto.split('\n\n').map((par, i) => (
-            <p key={i}>{par}</p>
+            <p className="formatted-text" key={i}><FormattedText text={par} /></p>
           ))}
         </div>
       )}
@@ -104,8 +105,8 @@ export default function Membro() {
             <div className="membro-section">
               <p className="eyebrow">Biografia</p>
               <div className="membro-text">
-                <p>{chair.bio}</p>
-                {chair.bioExtra && <p>{chair.bioExtra}</p>}
+                <p className="formatted-text"><FormattedText text={chair.bio} /></p>
+                {chair.bioExtra && <p className="formatted-text"><FormattedText text={chair.bioExtra} /></p>}
               </div>
             </div>
           )}
@@ -176,7 +177,7 @@ export default function Membro() {
           <div className="membro-section membro-patrono">
             <p className="eyebrow">Patrono da cadeira</p>
             <h2 className="membro-patrono-nome">{chair.patron}</h2>
-            {chair.patronoBio && <p className="membro-text-p">{chair.patronoBio}</p>}
+            {chair.patronoBio && <p className="membro-text-p formatted-text"><FormattedText text={chair.patronoBio} /></p>}
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Eye, Monitor, Pencil, Plus, Search, Smartphone, Tablet, Trash2, X } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
@@ -7,6 +7,8 @@ import { useDialog } from '@/hooks/useDialog'
 import Pagination from '@/components/Pagination'
 import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import { useAdminConfirm } from '@/components/admin/AdminConfirmDialog'
+import FormattedTextarea from '@/components/admin/FormattedTextarea'
+const PdfCoverPicker = lazy(() => import('@/components/admin/PdfCoverPicker'))
 import { canOpenAdminPage } from '@/services/admin-permissions'
 import { adminItem, deleteAdminRecord, loadAdminPage, loadAdminRecord, saveAdminForm, uploadAdminFile, AdminApiError,
   type AdminResource, type FormValues, type AdminListItem, type AdminPage, type AdminRecord } from '@/services/admin'
@@ -131,6 +133,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
   const readOnly = !can(resource === 'cadeiras' ? 'instituicao:editar' : 'conteudo:editar')
   const [values, setValues] = useState(editor.values)
   const [files, setFiles] = useState<Record<string, File>>({})
+  const [coverPending, setCoverPending] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [previewViewport, setPreviewViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
@@ -140,22 +143,21 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
   const dialog = useDialog(() => { if (!lock.current) onClose() })
   useEffect(() => () => { Object.values(previews.current).forEach(url => URL.revokeObjectURL(url)) }, [])
   const update = (name: string, value: string) => setValues(current => ({ ...current, [name]: value }))
-  const insertTextareaTab = (event: React.KeyboardEvent<HTMLTextAreaElement>, name: string) => {
-    if (event.key !== 'Tab' || event.shiftKey) return
-    event.preventDefault()
-    const textarea = event.currentTarget
-    const start = textarea.selectionStart
-    const end = textarea.selectionEnd
-    const next = `${textarea.value.slice(0, start)}\t${textarea.value.slice(end)}`
-    update(name, next)
-    requestAnimationFrame(() => {
-      textarea.focus()
-      textarea.setSelectionRange(start + 1, start + 1)
-    })
-  }
+  const setPdfCover = useCallback((file: File) => {
+    if (previews.current.capa) URL.revokeObjectURL(previews.current.capa)
+    const preview = URL.createObjectURL(file)
+    previews.current.capa = preview
+    setFiles(current => ({ ...current, capa: file }))
+    setValues(current => ({ ...current, capaPreview: preview }))
+    setCoverPending(false)
+  }, [])
+  const pendingPdfCover = useCallback(() => {
+    setCoverPending(true)
+    setFiles(current => { const next = { ...current }; delete next.capa; return next })
+  }, [])
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (lock.current || readOnly) return
+    if (lock.current || readOnly || coverPending) return
     if (!csrfToken) { setError('Entre novamente para salvar.'); return }
     lock.current = true; setSaving(true); setError('')
     try {
@@ -174,8 +176,13 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
         if (file && field.urlField) {
           next[field.urlField] = (await uploadAdminFile(file, csrfToken, field.urlField === 'pdfUrl' ? 'pdf' : 'image')).url
           update(field.urlField, next[field.urlField])
-          setFiles(current => { const remaining = { ...current }; delete remaining[field.name]; return remaining })
+          if (!(resource === 'acervo' && field.name === 'arquivo')) setFiles(current => { const remaining = { ...current }; delete remaining[field.name]; return remaining })
         }
+      }
+      if (files.capa && resource === 'acervo') {
+        next.capaUrl = (await uploadAdminFile(files.capa, csrfToken, 'image')).url
+        update('capaUrl', next.capaUrl)
+        setFiles(current => { const remaining = { ...current }; delete remaining.capa; return remaining })
       }
       if (await saveAdminForm(resource, next, editor.id, csrfToken, message => confirmation.confirm({
         title: 'Confirmar alteração?', message, confirmLabel: 'Confirmar alteração', tone: 'warning',
@@ -215,22 +222,30 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
                 <span><strong>{option.label}</strong><small>{publicationHelp[option.value]}</small></span>
               </label>)}</div>
             </fieldset>
-            return <label className={field.type === 'textarea' ? 'admin-field admin-field-wide' : 'admin-field'} key={field.name}>
+            const FieldContainer = field.type === 'textarea' ? 'div' : 'label'
+            return <FieldContainer className={field.type === 'textarea' ? 'admin-field admin-field-wide' : 'admin-field'} key={field.name}>
               <span>{field.label}{required ? ' *' : ''}</span>
-              {field.type === 'textarea' ? <>
-                <textarea name={field.name} rows={5} disabled={disabled} required={required} maxLength={field.maxLength} value={values[field.name] ?? ''} onChange={event => update(field.name, event.target.value)} onKeyDown={event => {
-                  if (resource === 'cadeiras' && ['biografia', 'bioExtra', 'patronoBio'].includes(field.name)) insertTextareaTab(event, field.name)
-                }} />
-                {resource === 'cadeiras' && ['biografia', 'bioExtra', 'patronoBio'].includes(field.name) && <small>Enter cria uma nova linha. Tab insere uma tabulação; Shift + Tab muda o foco.</small>}
-              </>
-                : field.type === 'select' ? <select name={field.name} disabled={disabled} required={required} value={values[field.name] ?? ''} onChange={event => update(field.name, event.target.value)}>
+              {field.type === 'textarea' ? <FormattedTextarea aria-label={field.label} name={field.name} rows={5} disabled={disabled} required={required} maxLength={field.maxLength} value={values[field.name] ?? ''} onChange={value => update(field.name, value)} />
+                  : field.type === 'select' ? <><select name={field.name} disabled={disabled} required={required} value={values[field.name] ?? ''} onChange={event => {
+                    if (resource === 'acervo' && field.name === 'autorId') {
+                      const selected = options?.find(option => option.value === event.target.value)
+                      setValues(current => ({ ...current, autorId: event.target.value, autorAlterado: 'true', autoriaTexto: selected?.label ?? '' }))
+                    } else update(field.name, event.target.value)
+                  }}>
                   <option value="" disabled>Selecione</option>
                   {values[field.name] && !options?.some(option => option.value === values[field.name]) && <option value={values[field.name]}>{values[field.name]}</option>}
                   {options?.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
+                </select>{resource === 'acervo' && field.name === 'autorId' && values.autoriaTexto && !values.autorId && <small>Autoria atual: {values.autoriaTexto}. Selecione um acadêmico para criar ou alterar o vínculo.</small>}
+                {resource === 'acervo' && field.name === 'autorId' && Number(values.autorCount) > 1 && <small>Esta publicação possui mais de um autor vinculado. Selecionar outro substituirá os vínculos atuais.</small>}</>
                   : field.type === 'file' ? <>
                     <input name={field.name} type="file" disabled={disabled} required={required && !stored} accept={field.accept} onChange={event => {
                       const file = event.target.files?.[0]
+                      if (resource === 'acervo' && field.name === 'arquivo' && file) {
+                        setCoverPending(true)
+                        if (previews.current.capa) { URL.revokeObjectURL(previews.current.capa); delete previews.current.capa }
+                        setValues(current => ({ ...current, capaUrl: '', capaPreview: '' }))
+                        setFiles(current => { const next = { ...current }; delete next.capa; return next })
+                      }
                       if (previews.current[field.name]) { URL.revokeObjectURL(previews.current[field.name]); delete previews.current[field.name] }
                       setFiles(current => { const next = { ...current }; if (file) next[field.name] = file; else delete next[field.name]; return next })
                       const preview = file && file.type.startsWith('image/') ? URL.createObjectURL(file) : ''
@@ -240,13 +255,14 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
                     {stored && <small>Arquivo atual preservado se nenhum novo for escolhido.</small>}
                   </> : <input name={field.name} type={field.type || 'text'} disabled={disabled} required={required} min={field.min} max={field.max} maxLength={field.maxLength} step={field.type === 'datetime-local' ? '0.001' : undefined} placeholder={field.placeholder} value={values[field.name] ?? ''} onChange={event => update(field.name, event.target.value)} />}
               {field.name === 'posse' && editing && !values.posse && values.inicioAno && <small>Registro histórico informa somente o ano {values.inicioAno}; nenhuma data foi inventada.</small>}
-            </label>
+            </FieldContainer>
           })}
+          {resource === 'acervo' && files.arquivo && <Suspense fallback={<p role="status">Carregando visualizador de PDF…</p>}><PdfCoverPicker file={files.arquivo} disabled={readOnly || saving} onCover={setPdfCover} onPending={pendingPdfCover} /></Suspense>}
           {!readOnly && resource === 'cadeiras' && <p className="admin-field-wide">Para trocar o titular, use “Novo membro” e informe o número da cadeira. A confirmação preservará o anterior no histórico.</p>}
           {error && <p className="admin-field-wide admin-state-error" role="alert">{error}</p>}
           <div className="admin-form-actions">
             <button type="button" disabled={saving} onClick={onClose}>{readOnly ? 'Fechar' : 'Cancelar'}</button>
-            {!readOnly && <button type="submit" disabled={saving}>{saving ? 'Salvando…' : saveLabel}</button>}
+            {!readOnly && <button type="submit" disabled={saving || coverPending}>{saving ? 'Salvando…' : coverPending ? 'Aguardando capa…' : saveLabel}</button>}
           </div>
         </form>
         {renderPreview && <aside className={`admin-live-preview preview-${previewViewport}`} aria-label="Pré-visualização do conteúdo">

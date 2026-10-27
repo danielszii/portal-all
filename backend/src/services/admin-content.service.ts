@@ -14,19 +14,32 @@ export function noticiaInput(input: unknown) {
   const publicadoEm = b.publicadoEm == null ? null : v.date(b.publicadoEm, 'publicadoEm')
   if (status === 'PUBLICADO' && !publicadoEm) throw new ValidationError('Informe publicadoEm para publicar a notícia.')
   return { titulo: v.text(b.titulo, 'titulo'), categoria: v.text(b.categoria, 'categoria', 100),
-    lede: v.text(b.lede, 'lede', 2000), conteudo: v.text(b.conteudo, 'conteudo', 100000),
+    lede: v.formattedText(b.lede, 'lede', 2000), conteudo: v.formattedText(b.conteudo, 'conteudo', 100000),
     img: v.mediaUrl(b.img, 'img', 'image'), status, publicadoEm }
 }
 export function acervoInput(input: unknown) {
   const b = v.object(input)
-  v.keys(b, ['titulo', 'categoria', 'edicao', 'ano', 'cor', 'autoriaTexto', 'paginas', 'descricao', 'pdfUrl', 'status'])
+  v.keys(b, ['titulo', 'categoria', 'edicao', 'ano', 'cor', 'autoriaTexto', 'paginas', 'descricao', 'pdfUrl', 'capaUrl', 'autorId', 'status'])
   const status = v.status(b.status)
   const cor = b.cor === undefined ? 'navy' : v.text(b.cor, 'cor', 20)
   if (!acervoColors.includes(cor)) throw new ValidationError('Cor inválida.')
   return { titulo: v.text(b.titulo, 'titulo'), categoria: v.text(b.categoria, 'categoria', 100),
     edicao: v.optionalText(b.edicao, 'edicao', 200), ano: b.ano == null ? null : v.integer(b.ano, 'ano', 1, 9999), cor,
     autoriaTexto: v.optionalText(b.autoriaTexto, 'autoriaTexto', 1000), paginas: b.paginas == null ? null : v.integer(b.paginas, 'paginas', 1, 100000),
-    descricao: v.optionalText(b.descricao, 'descricao') ?? '', pdfUrl: v.mediaUrl(b.pdfUrl, 'pdfUrl', 'pdf', status === 'PUBLICADO'), status }
+    descricao: v.optionalFormattedText(b.descricao, 'descricao') ?? '', pdfUrl: v.mediaUrl(b.pdfUrl, 'pdfUrl', 'pdf', status === 'PUBLICADO'),
+    ...(b.capaUrl === undefined ? {} : { capaUrl: v.mediaUrl(b.capaUrl, 'capaUrl', 'image') || null }), status }
+}
+
+function acervoAuthorInput(input: unknown) {
+  const { autorId, ...fields } = v.object(input)
+  return { data: acervoInput(fields), autorId: autorId === undefined ? undefined : autorId === null ? null : v.text(autorId, 'autorId', 100) }
+}
+
+async function acervoAuthor(tx: Prisma.TransactionClient, autorId: string | null) {
+  if (autorId === null) return null
+  const author = await tx.academico.findUnique({ where: { id: autorId }, select: { id: true, nome: true } })
+  if (!author) throw new ValidationError('O autor selecionado não foi encontrado. Atualize a lista e tente novamente.')
+  return author
 }
 export function eventoInput(input: unknown) {
   const b = v.object(input)
@@ -35,7 +48,7 @@ export function eventoInput(input: unknown) {
   const fimEm = b.fimEm == null ? null : v.date(b.fimEm, 'fimEm')
   if (fimEm && fimEm < inicioEm) throw new ValidationError('fimEm não pode preceder inicioEm.')
   return { titulo: v.text(b.titulo, 'titulo'), tipo: v.text(b.tipo, 'tipo', 100), inicioEm, fimEm,
-    local: v.text(b.local, 'local', 500), descricao: v.optionalText(b.descricao, 'descricao') ?? '',
+    local: v.text(b.local, 'local', 500), descricao: v.optionalFormattedText(b.descricao, 'descricao') ?? '',
     foto: v.mediaUrl(b.foto, 'foto', 'image') || null, status: v.status(b.status) }
 }
 
@@ -86,11 +99,28 @@ export const contentResources = {
   acervo: {
     list: (skip: number, take: number, q = '') => prisma.acervoItem.findMany({ skip, take, where: { OR: [{ titulo: search(q) }, { autoriaTexto: search(q) }, { categoria: search(q) }] }, orderBy: [{ criadoEm: 'desc' }, { id: 'asc' }] }),
     count: (q = '') => prisma.acervoItem.count({ where: { OR: [{ titulo: search(q) }, { autoriaTexto: search(q) }, { categoria: search(q) }] } }),
-    get: (id: string) => prisma.acervoItem.findUnique({ where: { id } }),
-    create: (b: unknown, actor: AuditActor) => createEditorial(acervoInput(b), actor, 'ACERVO', (tx, data) => tx.acervoItem.create({ data })),
-    update: (id: string, b: unknown, actor: AuditActor) => updateVersioned(b, acervoInput, actor, 'ACERVO',
+    get: (id: string) => prisma.acervoItem.findUnique({ where: { id }, include: { autorias: { orderBy: { ordem: 'asc' }, select: { academicoId: true } } } }),
+    create: (b: unknown, actor: AuditActor) => {
+      const { data, autorId } = acervoAuthorInput(b)
+      return createEditorial(data, actor, 'ACERVO', async (tx, fields) => {
+        const author = autorId === undefined ? undefined : await acervoAuthor(tx, autorId)
+        return tx.acervoItem.create({ data: { ...fields, ...(author !== undefined ? { autoriaTexto: author?.nome ?? null } : {}),
+          ...(author ? { autorias: { create: { academicoId: author.id } } } : {}) } })
+      })
+    },
+    update: (id: string, b: unknown, actor: AuditActor) => updateVersioned(b, acervoAuthorInput, actor, 'ACERVO',
       tx => tx.acervoItem.findUnique({ where: { id } }),
-      (tx, expected, next, data) => tx.acervoItem.update({ where: { id, atualizadoEm: expected }, data: { ...data, atualizadoEm: next } })),
+      async (tx, expected, next, input) => {
+        const author = input.autorId === undefined ? undefined : await acervoAuthor(tx, input.autorId)
+        const updated = await tx.acervoItem.update({ where: { id, atualizadoEm: expected }, data: {
+          ...input.data, ...(author !== undefined ? { autoriaTexto: author?.nome ?? null } : {}), atualizadoEm: next,
+        } })
+        if (author !== undefined) {
+          await tx.autoriaAcervo.deleteMany({ where: { acervoId: id } })
+          if (author) await tx.autoriaAcervo.create({ data: { acervoId: id, academicoId: author.id } })
+        }
+        return updated
+      }),
     delete: deleteAcervo,
   },
   agenda: {

@@ -237,6 +237,7 @@ model AcervoItem {
   paginas     Int?
   descricao   String
   pdfUrl      String
+  capaUrl     String?
   status      StatusEditorial @default(RASCUNHO)
   autorias    AutoriaAcervo[]
   criadoEm    DateTime         @default(now())

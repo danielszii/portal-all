@@ -1,6 +1,7 @@
 import AdminResourcePage from '@/components/admin/AdminResourcePage'
 import { editorialStatus, imageAccept } from '@/components/admin/fields'
 import { ImageIcon } from 'lucide-react'
+import FormattedText from '@/components/FormattedText'
 
 export default function AdminNoticias() {
   return <AdminResourcePage
@@ -25,7 +26,7 @@ export default function AdminNoticias() {
         <div className="admin-preview-copy">
           <div className="admin-preview-meta"><span>{values.categoria || 'Categoria'}</span><time>{date}</time></div>
           <h3>{values.titulo || 'Título da notícia'}</h3>
-          <p>{values.lede || 'O resumo da notícia aparecerá aqui conforme você digitar.'}</p>
+          <p className="formatted-text"><FormattedText text={values.lede || 'O resumo da notícia aparecerá aqui conforme você digitar.'} /></p>
         </div>
       </article>
     }}

@@ -51,18 +51,18 @@ export default function Login() {
             <form className="login-form" onSubmit={handleSubmit} aria-busy={isSubmitting || loading}>
             <div className="login-field">
               <label htmlFor="login-email">E-mail institucional</label>
-              <div className="login-input-wrap">
+              <label className="login-input-wrap" htmlFor="login-email">
                 <Mail size={17} strokeWidth={1.5} aria-hidden="true" />
                 <input id="login-email" name="email" type="email" autoComplete="username" maxLength={254} disabled={isSubmitting} required placeholder="nome@academia.org.br" />
-              </div>
+              </label>
             </div>
 
             <div className="login-field">
               <label htmlFor="login-password">Senha</label>
-              <div className="login-input-wrap">
+              <label className="login-input-wrap" htmlFor="login-password">
                 <LockKeyhole size={17} strokeWidth={1.5} aria-hidden="true" />
                 <input id="login-password" name="password" type="password" autoComplete="current-password" minLength={6} maxLength={128} disabled={isSubmitting} required placeholder="Digite sua senha" />
-              </div>
+              </label>
             </div>
 
             <label className="login-remember">
