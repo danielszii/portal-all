@@ -134,13 +134,14 @@ model Academico {
 
 model Cadeira {
   id           String            @id @default(uuid())
-  numero       Int               @unique
+  numero       Int
   categoria    CategoriaCadeira @default(TITULAR)
   patronoId    String
   patrono      Patrono           @relation(fields: [patronoId], references: [id], onDelete: Restrict)
   ocupacoes    OcupacaoCadeira[]
   criadoEm     DateTime          @default(now())
   atualizadoEm DateTime          @updatedAt
+  @@unique([numero, categoria])
 }
 
 model OcupacaoCadeira {

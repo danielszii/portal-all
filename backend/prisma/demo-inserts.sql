@@ -49,16 +49,6 @@ VALUES (
 )
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'teste-obra-001',
-  'teste-academico-001',
-  'Livro Demonstrativo',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
-
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
 )

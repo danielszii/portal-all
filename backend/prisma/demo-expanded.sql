@@ -46,15 +46,6 @@ VALUES (
 )
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-001',
-  'demo-extra-academico-001',
-  'Memórias do Vale — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
@@ -214,15 +205,6 @@ VALUES (
 )
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-002',
-  'demo-extra-academico-002',
-  'Vozes do Sertão — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
@@ -382,15 +364,6 @@ VALUES (
 )
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-003',
-  'demo-extra-academico-003',
-  'Poesia na Praça — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
@@ -550,15 +523,6 @@ VALUES (
 )
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-004',
-  'demo-extra-academico-004',
-  'Caminhos da Leitura — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
@@ -718,15 +682,6 @@ VALUES (
 )
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-005',
-  'demo-extra-academico-005',
-  'Cartas do Rio — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
@@ -886,15 +841,6 @@ VALUES (
 )
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-006',
-  'demo-extra-academico-006',
-  'Retratos da Cidade — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
@@ -1054,15 +1000,6 @@ VALUES (
 )
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-007',
-  'demo-extra-academico-007',
-  'Encontro de Gerações — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
@@ -1222,15 +1159,6 @@ VALUES (
 )
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-008',
-  'demo-extra-academico-008',
-  'Biblioteca Aberta — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
@@ -1390,15 +1318,6 @@ VALUES (
 )
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-009',
-  'demo-extra-academico-009',
-  'Histórias da Infância — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
@@ -1558,15 +1477,6 @@ VALUES (
 )
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-010',
-  'demo-extra-academico-010',
-  'Cultura e Educação — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
@@ -1708,15 +1618,6 @@ INSERT INTO public."Cadeira" ("id", "numero", "patronoId", "criadoEm", "atualiza
 VALUES ('demo-extra-cadeira-011', 11, 'demo-extra-patrono-011', NOW(), NOW())
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-011',
-  'demo-extra-academico-011',
-  'Palavras ao Vento — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"
@@ -1858,15 +1759,6 @@ INSERT INTO public."Cadeira" ("id", "numero", "patronoId", "criadoEm", "atualiza
 VALUES ('demo-extra-cadeira-012', 12, 'demo-extra-patrono-012', NOW(), NOW())
 ON CONFLICT ("id") DO NOTHING;
 
-INSERT INTO public."Obra" ("id", "academicoId", "titulo", "ano", "tipo")
-VALUES (
-  'demo-extra-obra-012',
-  'demo-extra-academico-012',
-  'Caderno de Viagens — demonstração',
-  '2026',
-  'Livro'
-)
-ON CONFLICT ("id") DO NOTHING;
 
 INSERT INTO public."ProducaoLiteraria" (
   "id", "academicoId", "titulo", "tipo", "texto", "status", "publicadoEm"

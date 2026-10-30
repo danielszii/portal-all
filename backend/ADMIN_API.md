@@ -322,7 +322,6 @@ ao administrador antes de chamar essa rota.
   pessoas existentes. Use IDs para evitar duplicar a mesma pessoa.
 - POST `/cadeiras`: cria cadeira ou substitui titular após confirmação.
 - PUT `/cadeiras/:numero`: corrige dados, sem substituir titular.
-- POST `/cadeiras/:numero/encerrar`: encerra ocupação por vacância ou falecimento.
 
 As consultas de acadêmicos e patronos retornam todas as pessoas por padrão,
 inclusive as vinculadas, para permitir reutilizar cadastros. O filtro opcional
@@ -364,7 +363,7 @@ Quando o número já existe, a primeira tentativa retorna **409**, sem gravar na
 ```json
 {
   "code": "CONFIRMACAO_CADEIRA",
-  "error": "O número já existe. Confirme a substituição com a ocupação atual exibida.",
+  "error": "Já existe uma cadeira com este número e categoria. Confirme a troca de posse com os dados atuais.",
   "ocupacaoAtualId": "ID_DA_OCUPACAO_ATUAL",
   "cadeira": { "numero": 12, "ocupacoes": [] }
 }
@@ -386,10 +385,14 @@ repita o cadastro com:
 
 Para cadeira vaga, envie `ocupacaoAtualId: null`. Em cadeira existente os campos
 de patrono do POST são ignorados, preservando o cadastro anterior. A data da troca
-não pode preceder a posse anterior. A API encerra a ocupação antiga, registra o novo
+não pode preceder a posse anterior. Em uma troca de posse, a data pode ser futura;
+a API encerra a ocupação antiga, registra o novo
 titular e mantém o acadêmico antigo, obras e histórico. Não marca o anterior como
 falecido automaticamente. Se outro administrador trocar o titular antes da
 confirmação, responde novamente 409; o frontend deve reapresentar os dados atuais.
+Ao confirmar a troca, `fimEm` e `fimAno` da ocupação anterior recebem,
+respectivamente, a mesma data e o mesmo ano informados em `inicioEm` da nova
+posse.
 
 Para corrigir dados do titular atual, use PUT com `academico` e `ocupacaoAtualId`;
 para corrigir patrono, use `patrono`. Cada objeto enviado exige nome e substitui
@@ -406,25 +409,12 @@ de tentar novamente; não busque uma versão nova apenas para reenviar dados ant
 Essa proteção também se aplica à edição do patrono de uma cadeira vaga. A versão
 é calculada a partir dos dados existentes, sem migration ou mudança na API pública.
 
-O PUT também aceita `encerramento: { "fimEm": "2026-09-23", "inMemoriam": false }`
-junto dos dados do formulário e de `ocupacaoAtualId`, aplicando edição e encerramento
-na mesma transação. Na tela, mudar a situação do titular exige data e confirmação.
 Datas históricas de posse conhecidas apenas pelo ano não são convertidas em datas
-completas fictícias; o formulário preserva a informação existente.
-
-Para encerrar uma ocupação sem empossar sucessor:
-
-```json
-{
-  "ocupacaoAtualId": "ID_DA_OCUPACAO_ATUAL",
-  "fimEm": "2026-09-23",
-  "inMemoriam": false
-}
-```
-
-`inMemoriam: true` também marca o acadêmico como falecido. Ninguém pode ocupar
-duas cadeiras vigentes, e um acadêmico in memoriam não pode assumir uma cadeira.
-Não existe DELETE de cadeira ou histórico.
+completas fictícias; o formulário preserva a informação existente. A troca de
+titular encerra automaticamente a ocupação anterior, registra o novo titular e
+mantém o acadêmico antigo, obras e histórico. Ninguém pode ocupar duas cadeiras
+vigentes, e um acadêmico in memoriam não pode assumir uma cadeira. Não existe
+DELETE de cadeira ou histórico.
 
 ## Informações institucionais e diretoria
 
@@ -618,7 +608,7 @@ O usuário é obtido da sessão; não pode ser informado no corpo da requisiçã
 | `EDITAR` | Edição de conteúdo, cadeira/pessoas, instituição, gestão ou mandato. Inclui retorno a rascunho e encerramento de mandato da diretoria. |
 | `PUBLICAR` / `ARQUIVAR` | Mudança de estado editorial em uma edição. |
 | `TROCAR_TITULAR` | Posse em cadeira já cadastrada, após confirmação. |
-| `ENCERRAR_OCUPACAO` | Encerramento por rota própria ou pelo formulário de edição. |
+| `ENCERRAR_OCUPACAO` | Ação histórica mantida apenas para consulta de auditorias antigas. |
 | `EXCLUIR` | Exclusão de notícia, acervo, evento, acadêmico, patrono, foto da galeria, gestão vazia ou mandato incorreto. |
 | `ENVIAR_ARQUIVO` | Upload concluído, com URL, tipo e tamanho; sem os bytes do arquivo. |
 | `LOGIN` / `LOGOUT` | Entrada e saída administrativas concluídas. |

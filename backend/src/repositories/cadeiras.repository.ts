@@ -17,7 +17,7 @@ class PrismaCadeirasRepository implements ICadeirasRepository {
   async findByNumber(number: string): Promise<Cadeira | null> {
     const numero = numeroCadeira(number)
     if (!numero) return null
-    const row = await prisma.cadeira.findUnique({ where: { numero }, include: cadeiraInclude })
+    const row = await prisma.cadeira.findFirst({ where: { numero }, orderBy: { categoria: 'asc' }, include: cadeiraInclude })
     return row ? mapCadeira(row) : null
   }
 }

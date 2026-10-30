@@ -29,7 +29,7 @@ export async function importData(prisma: PrismaClient, source: LegacyData, names
       if (!numero) throw new Error(`Número de cadeira inválido: ${c.number}`)
       const patronoId = key('patrono', c.patron)
       await tx.patrono.upsert({ where: { id: patronoId }, update: {}, create: { id: patronoId, nome: c.patron, biografia: c.patronoBio } })
-      const cadeira = await tx.cadeira.upsert({ where: { numero }, update: {}, create: { id: key('cadeira', String(numero)), numero, patronoId } })
+      const cadeira = await tx.cadeira.upsert({ where: { numero_categoria: { numero, categoria: 'TITULAR' } }, update: {}, create: { id: key('cadeira', String(numero)), numero, categoria: 'TITULAR', patronoId } })
       // Se a cadeira já foi importada ou editada, preserve sua história integralmente.
       if (await tx.ocupacaoCadeira.count({ where: { cadeiraId: cadeira.id } })) continue
       const historico = [...(c.sucessao ?? [])]

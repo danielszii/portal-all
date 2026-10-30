@@ -70,12 +70,6 @@ export function loadAdminRecord(resource: AdminResource, id: string, signal?: Ab
 export function deleteAdminRecord(resource: Exclude<AdminResource, 'cadeiras'>, id: string, csrfToken: string) {
   return adminRequest<void>(`/${resource}/${encodeURIComponent(id)}`, { method: 'DELETE', csrfToken })
 }
-export function endAdminChairOccupation(numero: string, ocupacaoAtualId: string, csrfToken: string) {
-  const fimEm = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Fortaleza', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
-  return adminRequest<CadeiraAdmin>(`/cadeiras/${encodeURIComponent(numero)}/encerrar`, {
-    method: 'POST', csrfToken, body: { ocupacaoAtualId, fimEm, inMemoriam: false },
-  })
-}
 export function loadAdminGallery(page: number, eventoId: string, signal?: AbortSignal) {
   const query = new URLSearchParams({ page: String(page), pageSize: '20' })
   if (eventoId.trim()) query.set('eventoId', eventoId.trim())
@@ -125,7 +119,7 @@ export function adminItem(resource: AdminResource, record: AdminRecord): AdminLi
     const { atual: current, membro: person, ocupacoes, status } = situacaoCadeira(row.ocupacoes)
     const founder = ocupacoes.find(o => o.fundador)
     const occupant = current ?? (person ? ocupacoes.find(o => o.academicoId === person.id) : undefined)
-    return { id: String(row.numero), title: person?.nome ?? `Cadeira ${row.numero} sem titular`, meta: `Cadeira ${row.numero} · Patrono: ${row.patrono.nome}`, status,
+    return { id: `${row.numero}:${row.categoria}:${row.id}`, title: person?.nome ?? `Cadeira ${row.numero} sem titular`, meta: `Cadeira ${row.numero} · Patrono: ${row.patrono.nome}`, status,
       values: { nome: person?.nome ?? '', cadeira: String(row.numero), categoria: row.categoria === 'HONORARIO' ? 'Honorário' : row.categoria === 'IN_MEMORIAM' ? 'In Memoriam' : row.categoria === 'VAGA' ? 'Vaga' : row.categoria === 'TITULAR' ? 'Titular' : '', patrono: row.patrono.nome,
         fundador: founder?.academico.nome ?? '', posse: occupant?.inicioEm?.slice(0, 10) ?? '', inicioAno: str(occupant?.inicioAno),
         fimEm: occupant?.fimEm?.slice(0, 10) ?? '',
@@ -155,16 +149,16 @@ export function adminPayload(resource: AdminResource, v: FormValues, editing: bo
   const academico = { nome: v.nome, biografia: v.biografia || null, bioExtra: v.bioExtra || null, fotoUrl: v.fotoUrl || null }
   const patrono = { nome: v.patrono, biografia: v.patronoBio || null, fotoUrl: v.patronoFoto || null }
   if (editing) return {
+    numero: Number(v.cadeira),
+    categoria: v.categoria === 'Titular' ? 'TITULAR' : v.categoria === 'Honorário' ? 'HONORARIO' : v.categoria === 'In Memoriam' ? 'IN_MEMORIAM' : 'VAGA',
     versao: v.versao,
     patrono,
     ...(v.ocupacaoAtualId ? {
       academico,
       ocupacaoAtualId: v.ocupacaoAtualId,
-      ...(v.fimEm ? { encerramento: { fimEm: v.fimEm, inMemoriam: false } } : {}),
     } : v.academicoId ? {
       academico,
       academicoId: v.academicoId,
-      ...(v.fimEm ? { encerramento: { fimEm: v.fimEm, inMemoriam: false } } : {}),
     } : {}),
     ...(v.posse ? { inicioEm: v.posse } : {}),
     ...(v.fundador?.trim() ? { fundador: { nome: v.fundador.trim() } } : {}),
@@ -178,7 +172,6 @@ export async function saveAdminForm(resource: AdminResource, values: FormValues,
   confirm: (message: string) => boolean | Promise<boolean>) {
   const body = adminPayload(resource, values, id !== null)
   if (id !== null && resource !== 'cadeiras') body.atualizadoEm = values.atualizadoEm
-  if (resource === 'cadeiras' && body.encerramento && body.ocupacaoAtualId && !await confirm(`Encerrar a ocupação de ${values.nome} e preservá-la no histórico?`)) return false
   const resolvedPeople = new Set<string>()
   for (;;) {
     try {
@@ -190,7 +183,8 @@ export async function saveAdminForm(resource: AdminResource, values: FormValues,
         if (body.confirmarSubstituicao) throw new AdminApiError('A cadeira foi alterada por outra pessoa. Confira os dados e salve novamente para uma nova confirmação.', 409)
         const { cadeira, ocupacaoAtualId } = error.confirmation
         const atual = cadeira.ocupacoes.find(o => o.id === ocupacaoAtualId)?.academico.nome
-        if (!await confirm(`A cadeira ${cadeira.numero} já existe${atual ? ` e pertence a ${atual}` : ' e está vaga'}. Confirmar a posse de ${values.nome}? O titular anterior ficará no histórico; o patrono e o fundador serão preservados.`)) return false
+        const categoria = values.categoria ? ` na categoria ${values.categoria}` : ''
+        if (!await confirm(`A cadeira ${cadeira.numero}${categoria} já existe${atual ? ` e pertence a ${atual}` : ' e está vaga'}. Confirmar a troca de posse para ${values.nome}? O titular anterior ficará no histórico; o patrono e o fundador serão preservados.`)) return false
         Object.assign(body, { confirmarSubstituicao: true, ocupacaoAtualId })
       } else if (error.personConfirmation) {
         const { role, candidates } = error.personConfirmation

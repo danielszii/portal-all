@@ -1,11 +1,11 @@
 import { Router, raw, json, type RequestHandler, type ErrorRequestHandler, type Response } from 'express'
-import { Prisma } from '@prisma/client'
+import { Prisma, type CategoriaCadeira } from '@prisma/client'
 import { prisma } from '../db/prisma.js'
 import { createRequestLimit } from '../middlewares/contato-limit.middleware.js'
 import { cookieName, cookieOptions, requireAdmin, requireOrigin } from '../middlewares/admin-auth.middleware.js'
 import { login, logout, minimumPasswordLength, maximumPasswordLength } from '../services/admin-auth.service.js'
 import { contentResources } from '../services/admin-content.service.js'
-import { adminCadeiraInclude, CadeiraConflict, createOrReplaceCadeira, editCadeira, endOcupacao, withCadeiraVersion } from '../services/admin-cadeiras.service.js'
+import { adminCadeiraInclude, CadeiraConflict, createOrReplaceCadeira, editCadeira, withCadeiraVersion } from '../services/admin-cadeiras.service.js'
 import { saveUpload } from '../services/admin-upload.service.js'
 import { parsePagination } from '../repositories/catalog-query.js'
 import { numeroCadeira } from '../repositories/mappers.js'
@@ -152,8 +152,16 @@ function chairNumber(value: unknown) {
   if (!numero) throw new ValidationError('Número de cadeira inválido.')
   return numero
 }
+function chairReference(value: unknown, body?: Record<string, unknown>) {
+  const raw = v.text(value, 'numero', 100)
+  const [number, category] = raw.split(':', 2)
+  const numero = chairNumber(number)
+  const categoria = category ?? (typeof body?.categoria === 'string' ? body.categoria : undefined)
+  return { numero, ...(categoria ? { categoria } : {}) }
+}
 router.get('/cadeiras/:numero', handle(async (req, res) => {
-  const value = await prisma.cadeira.findUnique({ where: { numero: chairNumber(req.params.numero) }, include: adminCadeiraInclude })
+  const ref = chairReference(req.params.numero, req.query as Record<string, unknown>)
+  const value = await prisma.cadeira.findFirst({ where: ref.categoria ? { numero: ref.numero, categoria: ref.categoria as CategoriaCadeira } : { numero: ref.numero }, include: adminCadeiraInclude })
   if (!value) throw new AppError('Cadeira não encontrada.', 404)
   res.json(withCadeiraVersion(value))
 }))
@@ -161,8 +169,7 @@ router.post('/cadeiras', handle(async (req, res) => {
   const result = await createOrReplaceCadeira(req.body, actor(res))
   res.status(result.created ? 201 : 200).json(withCadeiraVersion(result.cadeira))
 }))
-router.put('/cadeiras/:numero', handle(async (req, res) => { res.json(withCadeiraVersion(await editCadeira(chairNumber(req.params.numero), req.body, actor(res)))) }))
-router.post('/cadeiras/:numero/encerrar', handle(async (req, res) => { res.json(withCadeiraVersion(await endOcupacao(chairNumber(req.params.numero), req.body, actor(res)))) }))
+router.put('/cadeiras/:numero', handle(async (req, res) => { const ref = chairReference(req.params.numero, req.body); res.json(withCadeiraVersion(await editCadeira(ref.numero, req.body, actor(res)))) }))
 // Lookup de pessoas existentes evita duplicações durante cadastro de cadeiras.
 for (const name of ['academicos', 'patronos'] as const) {
   router.delete(`/${name}/:id`, handle(async (req, res) => {

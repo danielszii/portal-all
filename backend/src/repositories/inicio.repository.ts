@@ -6,13 +6,13 @@ export async function findInicioCadeiras() {
   // Apenas os campos dos cartões; biografias e textos literários ficam no perfil.
   const rows = await prisma.cadeira.findMany({
     orderBy: { numero: 'asc' },
-    select: { numero: true, patrono: { select: { nome: true } }, ocupacoes: {
+    select: { numero: true, categoria: true, patrono: { select: { nome: true } }, ocupacoes: {
       select: { id: true, fundador: true, vigente: true, inicioAno: true, inicioEm: true, fimAno: true, fimEm: true, academico: {
         select: { nome: true, fotoUrl: true, inMemoriam: true },
       } },
     } },
   })
-  const items = rows.map(row => {
+  const items = rows.filter(row => row.categoria === 'TITULAR').map(row => {
     const { membro, status } = situacaoCadeira(row.ocupacoes)
     return { number: romano(row.numero), patron: row.patrono.nome,
       holder: membro?.nome ?? 'Vaga', image: membro?.fotoUrl ?? '',

@@ -11,9 +11,10 @@ export default function AdminMembros() {
     relatedActions={[{ label: 'Cadastros sem vínculo', to: '/admin/pessoas' }]}
     fields={[
       { name: 'nome', label: 'Nome completo', requiredWhen: values => values.categoria !== 'Vaga' },
-      { name: 'cadeira', label: 'Número da cadeira', type: 'number', required: true, min: 1, max: 3999, readOnlyOnEdit: true },
-      { name: 'categoria', label: 'Categoria da cadeira', type: 'select', required: true, options: ['Titular', 'Honorário', 'In Memoriam', 'Vaga'], readOnlyOnEdit: true },
+      { name: 'cadeira', label: 'Número da cadeira', type: 'number', required: true, min: 1, max: 3999 },
+      { name: 'categoria', label: 'Categoria da cadeira', type: 'select', required: true, options: ['Titular', 'Honorário', 'In Memoriam', 'Vaga'] },
       { name: 'patrono', label: 'Patrono', required: true },
+      { name: 'patronoBio', label: 'Texto do patrono', type: 'textarea' },
       { name: 'fundador', label: 'Fundador (se diferente do primeiro titular)' },
       { name: 'posse', label: 'Data de posse', type: 'date', requiredWhen: values => values.categoria !== 'Vaga' },
       { name: 'biografia', label: 'Biografia', type: 'textarea' },

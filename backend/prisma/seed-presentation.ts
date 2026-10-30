@@ -114,19 +114,12 @@ try {
         id: academicoId, nome: memberNames[index], fotoUrl: photo(index),
         biografia: `Membro demonstrativo da cadeira ${numero}, com atuação dedicada à literatura, à cultura e à preservação da memória regional.`,
       } })
-      const cadeira = await tx.cadeira.upsert({ where: { numero }, update: {}, create: { id: cadeiraId, numero, patronoId } })
+      const cadeira = await tx.cadeira.upsert({ where: { numero_categoria: { numero, categoria: 'TITULAR' } }, update: {}, create: { id: cadeiraId, numero, categoria: 'TITULAR', patronoId } })
       if (cadeira.id !== cadeiraId) continue
       await tx.ocupacaoCadeira.upsert({ where: { id: `apresentacao-ocupacao-${numero}` }, update: {}, create: {
         id: `apresentacao-ocupacao-${numero}`, cadeiraId, academicoId, fundador: true, vigente: true,
         inicioAno: 1997 + numero, periodoTexto: `${1997 + numero}–presente`,
       } })
-      for (let work = 1; work <= 2; work++) {
-        await tx.obra.upsert({ where: { id: `apresentacao-obra-${numero}-${work}` }, update: {}, create: {
-          id: `apresentacao-obra-${numero}-${work}`, academicoId,
-          titulo: work === 1 ? `Caminhos da Palavra ${numero}` : `Memórias do Vale ${numero}`,
-          ano: String(2010 + ((numero + work) % 16)), tipo: work === 1 ? 'Poesia' : 'Crônica',
-        } })
-      }
       if (numero <= 12) await tx.producaoLiteraria.upsert({ where: { id: `apresentacao-texto-${numero}` }, update: {}, create: {
         id: `apresentacao-texto-${numero}`, academicoId, titulo: `Palavras do Vale ${numero}`, tipo: numero % 2 ? 'Poema' : 'Crônica',
         texto: 'Entre a memória e o rio, a palavra encontra seu caminho. Este texto demonstrativo apresenta como a produção literária dos membros será organizada no portal.',
