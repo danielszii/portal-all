@@ -256,8 +256,17 @@ export async function editCadeira(numero: number, input: unknown, actor: AuditAc
       }
     }
 
+    const encerraOcupacao = categoria === 'VAGA' && atual
+    if (encerraOcupacao) {
+      const fimEm = new Date(`${dateInFortaleza()}T00:00:00.000Z`)
+      await tx.ocupacaoCadeira.update({
+        where: { id: atual.id },
+        data: { vigente: false, fimEm, fimAno: fimEm.getUTCFullYear(), periodoTexto: null },
+      })
+    }
+
     const saved = await tx.cadeira.update({ where: { id: cadeira.id }, data: { numero: novoNumero, categoria }, include: adminCadeiraInclude })
-    await auditCadeira(tx, actor, 'EDITAR', saved, cadeira)
+    await auditCadeira(tx, actor, encerraOcupacao ? 'ENCERRAR_OCUPACAO' : 'EDITAR', saved, cadeira)
     return saved
   }, { isolationLevel: 'Serializable' })
 }

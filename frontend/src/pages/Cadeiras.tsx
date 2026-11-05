@@ -20,7 +20,7 @@ const filtros: { id: CadeiraFiltro; label: string }[] = [
 function categoriaCadeira(chair: Cadeira): CadeiraFiltro | null {
   if (chair.category === 'Honorário') return 'honorarios'
   if (chair.category === 'In Memoriam') return 'memoriam'
-  if (chair.category === 'Titular') return 'titulares'
+  if (chair.category === 'Titular' || chair.category === 'Vaga') return 'titulares'
   const status = chair.status.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
   if (status === 'in memoriam') return 'memoriam'
   if (status.includes('honorari') || status.includes('emerit')) return 'honorarios'
