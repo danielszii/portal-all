@@ -6,7 +6,7 @@ import { dataInstitucional } from '../repositories/instituicao.repository.js'
 import { changedFields, recordAudit, type AuditActor } from './admin-audit.service.js'
 import * as v from './admin-validation.js'
 
-const institutionFields = ['nome', 'historia', 'missao', 'endereco', 'email', 'telefone', 'fundacaoAno', 'sedeTexto', 'trajetoriaTexto', 'horarioAtendimento', 'emailImprensa', 'mapaUrl', 'redesSociais']
+const institutionFields = ['nome', 'historia', 'missao', 'endereco', 'email', 'telefone', 'fundacaoAno', 'sedeTexto', 'trajetoriaTexto', 'hinoTitulo', 'hinoLetra', 'hinoAutoria', 'horarioAtendimento', 'emailImprensa', 'mapaUrl', 'redesSociais']
 const mandateFields = ['academicoId', 'cargo', 'inicioEm', 'fimEm']
 const boardInclude = {
   mandatos: { orderBy: [{ cargo: 'asc' }, { inicioEm: 'asc' }, { id: 'asc' }],
@@ -30,6 +30,9 @@ export function institutionInput(input: unknown) {
     telefone: v.optionalText(b.telefone, 'telefone', 50),
     fundacaoAno: b.fundacaoAno == null ? null : v.integer(b.fundacaoAno, 'fundacaoAno', 1, dataInstitucional().getUTCFullYear()),
     sedeTexto: v.optionalFormattedText(b.sedeTexto, 'sedeTexto'), trajetoriaTexto: v.optionalFormattedText(b.trajetoriaTexto, 'trajetoriaTexto'),
+    hinoTitulo: v.optionalText(b.hinoTitulo, 'hinoTitulo', 300),
+    hinoLetra: v.optionalFormattedText(b.hinoLetra, 'hinoLetra', 20000),
+    hinoAutoria: v.optionalText(b.hinoAutoria, 'hinoAutoria', 500),
     horarioAtendimento: v.optionalText(b.horarioAtendimento, 'horarioAtendimento', 500),
     emailImprensa: b.emailImprensa ? v.email(b.emailImprensa) : null,
     mapaUrl: b.mapaUrl ? v.webUrl(b.mapaUrl, 'mapaUrl') : null,

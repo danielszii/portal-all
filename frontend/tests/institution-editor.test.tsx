@@ -20,7 +20,7 @@ const original: AdminInstitution = {
   id: 'all', nome: 'Academia teste', historia: 'História original', missao: 'Missão original', fundacaoAno: 1964,
   email: 'contato@example.test', telefone: '(88) 1234-5678', endereco: 'Endereço original', horarioAtendimento: 'Segunda a sexta',
   emailImprensa: '', mapaUrl: '', redesSociais: [],
-  sedeTexto: 'Texto da sede', trajetoriaTexto: 'Texto da trajetória', atualizadoEm: '2026-10-01T12:00:00.000Z',
+  sedeTexto: 'Texto da sede', trajetoriaTexto: 'Texto da trajetória', hinoTitulo: '', hinoLetra: '', hinoAutoria: '', atualizadoEm: '2026-10-01T12:00:00.000Z',
 }
 function InstitutionObserver() {
   const state = useInstituicao()

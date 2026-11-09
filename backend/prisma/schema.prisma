@@ -275,6 +275,9 @@ model Instituicao {
   fundacaoAno Int?
   sedeTexto   String?
   trajetoriaTexto String?
+  hinoTitulo String?
+  hinoLetra String?
+  hinoAutoria String?
   horarioAtendimento String?
   emailImprensa String?
   mapaUrl String?

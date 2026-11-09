@@ -113,7 +113,7 @@ test('uploads validados por HTTP e associados aos campos corretos no PostgreSQL'
     const data = { numero: 3650, inicioEm: '2020-01-01', patrono: { nome: 'Patrono do upload' }, academico: { nome: 'Titular do upload', fotoUrl: photo }, fundador: { nome: 'Fundador do upload' } }
     for (const role of ['academico', 'fundador', 'patrono'] as const) {
       await request('/cadeiras', 'POST', { ...data, [role]: { ...data[role], fotoUrl: pdf } }, 400)
-      assert.equal(await prisma.cadeira.findUnique({ where: { numero: data.numero } }), null)
+      assert.equal(await prisma.cadeira.findFirst({ where: { numero: data.numero } }), null)
     }
     const chair = await (await request('/cadeiras', 'POST', data, 201)).json() as { versao: string; ocupacoes: { id: string; vigente: boolean }[] }
     const ocupacaoAtualId = chair.ocupacoes.find(row => row.vigente)!.id

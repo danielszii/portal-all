@@ -21,6 +21,9 @@ const fields: Field[] = [
   { name: 'missao', label: 'Missão', type: 'textarea', required: true, maxLength: 20000 },
   { name: 'sedeTexto', label: 'Sede', type: 'textarea', maxLength: 20000 },
   { name: 'trajetoriaTexto', label: 'Trajetória', type: 'textarea', maxLength: 20000 },
+  { name: 'hinoTitulo', label: 'Título do hino', maxLength: 300 },
+  { name: 'hinoAutoria', label: 'Autoria do hino', maxLength: 500 },
+  { name: 'hinoLetra', label: 'Letra do hino', type: 'textarea', maxLength: 20000 },
 ]
 
 export default function AdminInstitutionEditor({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {

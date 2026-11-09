@@ -15,8 +15,10 @@ test('informações institucionais validam campos, limites e dados opcionais', (
   assert.equal(result.nome, 'Academia')
   assert.equal(result.email, 'contato@example.test')
   assert.equal(result.telefone, null)
+  const hymn = institutionInput({ ...institution, hinoTitulo: 'Hino da Academia', hinoLetra: 'Primeira estrofe\n\nSegunda estrofe', hinoAutoria: 'Autoria institucional' })
+  assert.equal(hymn.hinoLetra, 'Primeira estrofe\n\nSegunda estrofe')
   for (const fields of [{ nome: '' }, { historia: ' ' }, { missao: 4 }, { email: 'invalido' }, { telefone: 'x'.repeat(51) },
-    { fundacaoAno: 0 }, { fundacaoAno: 9999 }, { id: 'outra-instituicao' }, { historia: 'x'.repeat(100001) }]) {
+    { fundacaoAno: 0 }, { fundacaoAno: 9999 }, { id: 'outra-instituicao' }, { historia: 'x'.repeat(100001) }, { hinoLetra: 'x'.repeat(20001) }]) {
     assert.throws(() => institutionInput({ ...institution, ...fields }))
   }
 })

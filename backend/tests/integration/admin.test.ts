@@ -121,7 +121,7 @@ test('administração com sessão e PostgreSQL real', async t => {
     await request('/cadeiras', 'POST', { numero: 3003, academico: { nome: 'Sem patrono' }, inicioEm: '2020-01-01' }, 400)
     await request('/cadeiras', 'POST', { numero: 3003, academicoId: current.academicoId, patronoId: chair.patronoId, inicioEm: '2020-01-01' }, 409)
     assert.equal(await prisma.academico.count(), before)
-    assert.equal(await prisma.cadeira.findUnique({ where: { numero: 3003 } }), null)
+    assert.equal(await prisma.cadeira.findFirst({ where: { numero: 3003 } }), null)
     const replaced = await prisma.ocupacaoCadeira.findUniqueOrThrow({ where: { id: current.id } })
     assert.equal(replaced.vigente, true)
     assert.equal(replaced.fimEm, null)

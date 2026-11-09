@@ -2114,6 +2114,39 @@ h2 {
   margin-bottom: 0;
 }
 
+.academia-hino-autoria {
+  color: var(--muted) !important;
+  font: 700 10px/1.5 'Space Mono', monospace !important;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.academia-hino-letra {
+  position: relative;
+  max-width: 640px;
+  margin-top: 26px;
+}
+
+.academia-hino-letra.is-preview {
+  padding-bottom: 38px;
+}
+
+.academia-hino-letra.is-preview::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 70px;
+  background: linear-gradient(to bottom, transparent, var(--surface-soft));
+  content: '';
+  pointer-events: none;
+}
+
+.academia-hino-toggle {
+  margin-top: 24px;
+  cursor: pointer;
+}
+
 .academia-endereco {
   margin-top: 32px;
   padding: 24px;
@@ -3905,30 +3938,53 @@ button:disabled {
 
 .chair-filters {
   display: flex;
-  flex-wrap: wrap;
+  max-width: 100%;
   gap: 8px;
+  overflow-x: auto;
   border-bottom: 1px solid var(--line);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.chair-filters::-webkit-scrollbar {
+  display: none;
 }
 
 .chair-filter {
+  min-height: 44px;
+  flex: 0 0 auto;
   margin-bottom: -1px;
-  padding: 12px 18px;
   border: 1px solid transparent;
   border-bottom-color: var(--line);
+  border-radius: 18px 18px 0 0;
+  padding: 0 22px;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
   font: 700 10px 'Space Mono', monospace;
   letter-spacing: .08em;
   text-transform: uppercase;
+  white-space: nowrap;
+  transition: background .2s, color .2s, box-shadow .2s, transform .2s;
 }
 
-.chair-filter:hover,
+.chair-filter:hover {
+  border-color: var(--line);
+  border-bottom-color: var(--surface-soft);
+  background: var(--surface-soft);
+  color: var(--institutional-blue);
+}
+
 .chair-filter.active {
   border-color: var(--line);
   border-bottom-color: var(--surface-soft);
   background: var(--surface-soft);
   color: var(--institutional-blue);
+  box-shadow: 0 -5px 16px rgba(2, 43, 80, .04);
+}
+
+.chair-filter:active {
+  transform: translateY(1px);
 }
 
 .chair-filter span {
