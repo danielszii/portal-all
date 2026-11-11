@@ -26,7 +26,7 @@ test('API bloqueia todos os módulos não autorizados antes de ler corpos ou exe
   mockMethod(t, prisma.sessaoAdmin, 'findUnique', async () => ({ administrador: { id: 'test', email: 'test@example.test', ativo: true, perfis }, csrfToken: 'teste', expiraEm: new Date(Date.now() + 60000) }))
   const base = await serve(t, createApp())
   const cases: [string, string, readonly string[]][] = [
-    ['POST', '/noticias', ['SECRETARIA', 'CONSULTA']], ['PUT', '/acervo/1', ['SECRETARIA', 'CONSULTA']],
+    ['POST', '/noticias', ['SECRETARIA', 'CONSULTA']], ['PUT', '/acervo/1', ['SECRETARIA', 'CONSULTA']], ['PUT', '/biblioteca/1', ['SECRETARIA', 'CONSULTA']],
     ['GET', '/agenda', ['SECRETARIA']], ['GET', '/galeria', ['SECRETARIA']],
     ['POST', '/cadeiras', ['EDITOR', 'CONSULTA']], ['PUT', '/cadeiras/1', ['EDITOR', 'CONSULTA']],
     ['POST', '/cadeiras/1/encerrar', ['EDITOR', 'CONSULTA']], ['GET', '/academicos', ['EDITOR']], ['GET', '/patronos', ['EDITOR']],
@@ -34,7 +34,7 @@ test('API bloqueia todos os módulos não autorizados antes de ler corpos ou exe
     ['PUT', '/gestoes/1/mandatos/1', ['EDITOR', 'CONSULTA']], ['GET', '/auditoria', ['EDITOR', 'SECRETARIA']],
     ['GET', '/contas', ['EDITOR', 'SECRETARIA', 'CONSULTA']], ['POST', '/contas', ['EDITOR', 'SECRETARIA', 'CONSULTA']],
     ['PUT', '/contas/1', ['EDITOR', 'SECRETARIA', 'CONSULTA']],
-    ...['noticias/1', 'acervo/1', 'agenda/1', 'galeria/1', 'academicos/1', 'patronos/1', 'gestoes/1', 'gestoes/1/mandatos/1'].map(path => ['DELETE', '/' + path, ['EDITOR', 'SECRETARIA', 'CONSULTA']] as [string, string, string[]]),
+    ...['noticias/1', 'acervo/1', 'biblioteca/1', 'agenda/1', 'galeria/1', 'academicos/1', 'patronos/1', 'gestoes/1', 'gestoes/1/mandatos/1'].map(path => ['DELETE', '/' + path, ['EDITOR', 'SECRETARIA', 'CONSULTA']] as [string, string, string[]]),
   ]
   for (const profile of adminProfiles) {
     perfis = [profile]

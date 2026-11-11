@@ -1,10 +1,11 @@
-import { ArrowUpRight, BookOpen, Building2, CalendarDays, History, LayoutDashboard, Newspaper, Users, UserCog, PanelsTopLeft } from 'lucide-react'
+import { ArrowUpRight, BookOpen, Building2, CalendarDays, History, LayoutDashboard, LibraryBig, Newspaper, Users, UserCog, PanelsTopLeft } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { NavLink } from 'react-router'
 import { canOpenAdminPage } from '@/services/admin-permissions'
 
 const modules = [
   { title: 'Acervo', description: 'Cadastre livros, edições e arquivos digitais.', action: 'Gerenciar acervo', to: '/admin/acervo', icon: BookOpen },
+  { title: 'Biblioteca', description: 'Mantenha a listagem dos livros físicos disponíveis na sede.', action: 'Gerenciar biblioteca', to: '/admin/biblioteca', icon: LibraryBig },
   { title: 'Notícias', description: 'Prepare e publique novidades da Academia.', action: 'Gerenciar notícias', to: '/admin/noticias', icon: Newspaper },
   { title: 'Agenda', description: 'Organize eventos, solenidades e encontros.', action: 'Gerenciar agenda', to: '/admin/agenda', icon: CalendarDays },
   { title: 'Membros', description: 'Atualize informações das cadeiras e seus titulares.', action: 'Gerenciar membros', to: '/admin/membros', icon: Users },

@@ -28,6 +28,10 @@ test('formulário preserva instante, arquivo e campos opcionais ao editar', () =
   assert.equal(adminPayload('acervo', withCover, true).autorId, undefined)
   const forSale = adminItem('acervo', { ...book, compraUrl: 'https://loja.example/livro' }).values
   assert.equal(adminPayload('acervo', forSale, true).compraUrl, 'https://loja.example/livro')
+  const physical = { id: 'physical', titulo: 'Livro físico', status: 'PUBLICADO', autor: 'Autora', editora: 'Editora', ano: 2024, tombo: 'T-01', localizacao: 'Estante 1', quantidade: 2, observacoes: 'Consulta local' }
+  assert.deepEqual(adminPayload('biblioteca', adminItem('biblioteca', physical).values, true), {
+    titulo: 'Livro físico', autor: 'Autora', editora: 'Editora', ano: 2024, tombo: 'T-01', localizacao: 'Estante 1', quantidade: 2, observacoes: 'Consulta local', status: 'PUBLICADO',
+  })
 })
 
 test('edição de cadeira não inventa data de posse e preserva campos ocultos', () => {
@@ -40,6 +44,8 @@ test('edição de cadeira não inventa data de posse e preserva campos ocultos',
   assert.equal(payload.inicioEm, undefined)
   assert.deepEqual(payload.patrono, { nome: 'Patrono', biografia: 'Biografia preservada', fotoUrl: '/patrono.jpg' })
   assert.equal((payload.academico as { bioExtra: string }).bioExtra, 'Informações adicionais')
+  const patronUpdated = adminPayload('cadeiras', { ...values, patronoBio: 'Biografia atualizada no painel' }, true)
+  assert.deepEqual(patronUpdated.patrono, { nome: 'Patrono', biografia: 'Biografia atualizada no painel', fotoUrl: '/patrono.jpg' })
   const exact = structuredClone(chair)
   exact.ocupacoes[0].inicioEm = '1998-06-17T00:00:00.000Z'
   assert.equal(adminItem('cadeiras', exact).values.posse, '1998-06-17')

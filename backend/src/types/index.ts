@@ -76,6 +76,18 @@ export type AcervoItem = {
   purchaseUrl?: string | null
 }
 
+export type LivroBiblioteca = {
+  id: string
+  titulo: string
+  autor?: string | null
+  editora?: string | null
+  ano?: number | null
+  tombo?: string | null
+  localizacao?: string | null
+  quantidade: number
+  observacoes?: string | null
+}
+
 export type ContatoMensagem = {
   id?: string
   nome: string

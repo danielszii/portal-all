@@ -255,6 +255,23 @@ model AcervoItem {
   @@index([status, categoria, ano])
 }
 
+model LivroBiblioteca {
+  id          String          @id @default(uuid())
+  titulo      String
+  autor       String?
+  editora     String?
+  ano         Int?
+  tombo       String?
+  localizacao String?
+  quantidade Int             @default(1)
+  observacoes String?
+  status      StatusEditorial @default(RASCUNHO)
+  criadoEm    DateTime        @default(now())
+  atualizadoEm DateTime       @updatedAt
+
+  @@index([status, titulo])
+}
+
 model AutoriaAcervo {
   acervoId    String
   academicoId String

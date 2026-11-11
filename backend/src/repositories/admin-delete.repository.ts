@@ -4,10 +4,10 @@ import { AppError } from '../errors/app.error.js'
 import { recordAudit, type AuditActor } from '../services/admin-audit.service.js'
 
 const tables = {
-  Noticia: Prisma.sql`"Noticia"`, AcervoItem: Prisma.sql`"AcervoItem"`, Evento: Prisma.sql`"Evento"`,
+  Noticia: Prisma.sql`"Noticia"`, AcervoItem: Prisma.sql`"AcervoItem"`, LivroBiblioteca: Prisma.sql`"LivroBiblioteca"`, Evento: Prisma.sql`"Evento"`,
   Academico: Prisma.sql`"Academico"`, Patrono: Prisma.sql`"Patrono"`, GaleriaFoto: Prisma.sql`"GaleriaFoto"`,
 } as const
-const resources = { Noticia: 'NOTICIA', AcervoItem: 'ACERVO', Evento: 'EVENTO', Academico: 'ACADEMICO', Patrono: 'PATRONO', GaleriaFoto: 'GALERIA' } as const
+const resources = { Noticia: 'NOTICIA', AcervoItem: 'ACERVO', LivroBiblioteca: 'ACERVO', Evento: 'EVENTO', Academico: 'ACADEMICO', Patrono: 'PATRONO', GaleriaFoto: 'GALERIA' } as const
 
 export async function deleteRecord(table: keyof typeof tables, id: string | number, actor: AuditActor, db?: Prisma.TransactionClient): Promise<void> {
   if (!db) return prisma.$transaction(tx => deleteRecord(table, id, actor, tx))

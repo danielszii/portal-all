@@ -3,7 +3,7 @@ export { adminProfiles, profileLabels, permissionsFor, validProfiles } from '../
 export type { AdminProfile, AdminPermission } from '../../../backend/src/domain/admin-permissions.js'
 
 const pages: Record<string, AdminPermission> = {
-  acervo: 'conteudo:ler', noticias: 'conteudo:ler', agenda: 'conteudo:ler', galeria: 'conteudo:ler',
+  acervo: 'conteudo:ler', biblioteca: 'conteudo:ler', noticias: 'conteudo:ler', agenda: 'conteudo:ler', galeria: 'conteudo:ler',
   membros: 'instituicao:ler', pessoas: 'instituicao:ler', instituicao: 'instituicao:ler', portal: 'instituicao:ler',
   auditoria: 'auditoria:ler', contas: 'contas:gerenciar',
 }

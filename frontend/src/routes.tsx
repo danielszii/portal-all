@@ -15,6 +15,7 @@ import Login from './pages/Login'
 import Admin from './pages/Admin'
 import RequireAuth from './components/RequireAuth'
 import AdminAcervo from './pages/AdminAcervo'
+import AdminBiblioteca from './pages/AdminBiblioteca'
 import AdminNoticias from './pages/AdminNoticias'
 import AdminAgenda from './pages/AdminAgenda'
 import AdminMembros from './pages/AdminMembros'
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
         children: [
           { path: 'admin', Component: Admin },
           { path: 'admin/acervo', Component: AdminAcervo },
+          { path: 'admin/biblioteca', Component: AdminBiblioteca },
           { path: 'admin/noticias', Component: AdminNoticias },
           { path: 'admin/agenda', Component: AdminAgenda },
           { path: 'admin/membros', Component: AdminMembros },

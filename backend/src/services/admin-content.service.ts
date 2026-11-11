@@ -31,6 +31,22 @@ export function acervoInput(input: unknown) {
     compraUrl: b.compraUrl === undefined || b.compraUrl === null || b.compraUrl === '' ? null : v.webUrl(b.compraUrl, 'compraUrl'), status }
 }
 
+export function bibliotecaInput(input: unknown) {
+  const b = v.object(input)
+  v.keys(b, ['titulo', 'autor', 'editora', 'ano', 'tombo', 'localizacao', 'quantidade', 'observacoes', 'status'])
+  return {
+    titulo: v.text(b.titulo, 'titulo'),
+    autor: v.optionalText(b.autor, 'autor', 500),
+    editora: v.optionalText(b.editora, 'editora', 300),
+    ano: b.ano == null ? null : v.integer(b.ano, 'ano', 1, 9999),
+    tombo: v.optionalText(b.tombo, 'tombo', 100),
+    localizacao: v.optionalText(b.localizacao, 'localizacao', 300),
+    quantidade: b.quantidade == null ? 1 : v.integer(b.quantidade, 'quantidade', 1, 100000),
+    observacoes: v.optionalFormattedText(b.observacoes, 'observacoes', 5000),
+    status: v.status(b.status),
+  }
+}
+
 function acervoAuthorInput(input: unknown) {
   const { autorId, ...fields } = v.object(input)
   return { data: acervoInput(fields), autorId: autorId === undefined ? undefined : autorId === null ? null : v.text(autorId, 'autorId', 100) }
@@ -123,6 +139,19 @@ export const contentResources = {
         return updated
       }),
     delete: deleteAcervo,
+  },
+  biblioteca: {
+    list: (skip: number, take: number, q = '') => prisma.livroBiblioteca.findMany({ skip, take,
+      where: { OR: [{ titulo: search(q) }, { autor: search(q) }, { editora: search(q) }, { tombo: search(q) }] },
+      orderBy: [{ titulo: 'asc' }, { autor: 'asc' }, { id: 'asc' }] }),
+    count: (q = '') => prisma.livroBiblioteca.count({ where: { OR: [{ titulo: search(q) }, { autor: search(q) }, { editora: search(q) }, { tombo: search(q) }] } }),
+    get: (id: string) => prisma.livroBiblioteca.findUnique({ where: { id } }),
+    create: (b: unknown, actor: AuditActor) => createEditorial(bibliotecaInput(b), actor, 'ACERVO',
+      (tx, data) => tx.livroBiblioteca.create({ data })),
+    update: (id: string, b: unknown, actor: AuditActor) => updateVersioned(b, bibliotecaInput, actor, 'ACERVO',
+      tx => tx.livroBiblioteca.findUnique({ where: { id } }),
+      (tx, expected, next, data) => tx.livroBiblioteca.update({ where: { id, atualizadoEm: expected }, data: { ...data, atualizadoEm: next } })),
+    delete: (id: string, actor: AuditActor) => deleteRecord('LivroBiblioteca', id, actor),
   },
   agenda: {
     list: (skip: number, take: number, q = '') => prisma.evento.findMany({ skip, take, where: { OR: [{ titulo: search(q) }, { tipo: search(q) }, { local: search(q) }] }, orderBy: [{ inicioEm: 'desc' }, { id: 'asc' }] }),

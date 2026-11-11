@@ -1664,6 +1664,206 @@ h2 {
   box-shadow: var(--shadow-sm);
 }
 
+/* Catálogo dos livros físicos da Academia. */
+.library-section {
+  padding-block: 76px 100px;
+  border-top: 1px solid var(--line);
+  background: var(--linen);
+}
+
+.library-heading {
+  align-items: flex-end;
+}
+
+.library-heading h2 {
+  margin: 7px 0 12px;
+}
+
+.library-heading p:last-child {
+  max-width: 620px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.library-heading > svg {
+  color: var(--institutional-blue);
+}
+
+.library-search {
+  display: flex;
+  max-width: 760px;
+  align-items: center;
+  gap: 14px;
+  margin: 36px 0 42px;
+}
+
+.library-search .search-control {
+  flex: 1;
+}
+
+.library-clear {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 8px;
+  background: transparent;
+  color: var(--institutional-blue);
+  cursor: pointer;
+  font: 700 8px/1 'Space Mono', monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.library-list {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--paper);
+  box-shadow: 0 18px 50px rgb(7 54 94 / 6%);
+}
+
+.library-book {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.25fr) minmax(380px, 1fr);
+  gap: 30px;
+  padding: 26px 30px;
+  border-bottom: 1px solid var(--line);
+}
+
+.library-book:last-child {
+  border-bottom: 0;
+}
+
+.library-book-main {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.library-book-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--institutional-blue);
+  place-items: center;
+}
+
+.library-book h3 {
+  margin: 0 0 7px;
+  color: var(--navy);
+  font-size: 25px;
+  line-height: 1.05;
+}
+
+.library-book-main p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.library-book dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 24px;
+  margin: 0;
+}
+
+.library-book dl div {
+  min-width: 0;
+}
+
+.library-book dt {
+  margin-bottom: 5px;
+  color: var(--muted);
+  font: 700 7px/1 'Space Mono', monospace;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.library-book dd {
+  margin: 0;
+  color: var(--graphite);
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.library-book-note {
+  grid-column: 2;
+  margin: -8px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.library-empty {
+  display: grid;
+  min-height: 180px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  color: var(--muted);
+  place-content: center;
+  place-items: center;
+  text-align: center;
+}
+
+.library-empty p {
+  margin: 14px 0 0;
+}
+
+@media (max-width: 800px) {
+  .library-book {
+    grid-template-columns: 1fr;
+  }
+
+  .library-book-note {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .library-section {
+    padding-block: 56px 72px;
+  }
+
+  .library-heading > svg {
+    display: none;
+  }
+
+  .library-search {
+    align-items: stretch;
+    flex-direction: column;
+    margin-block: 28px 32px;
+  }
+
+  .library-clear {
+    align-self: flex-start;
+  }
+
+  .library-list,
+  .library-empty {
+    border-radius: 18px;
+  }
+
+  .library-book {
+    gap: 20px;
+    padding: 22px 18px;
+  }
+
+  .library-book dl {
+    grid-template-columns: 1fr 1fr;
+    gap: 13px 18px;
+  }
+
+  .library-book h3 {
+    font-size: 22px;
+  }
+}
+
 .archive-book:hover,
 .noticia-destaque:hover,
 .noticia-card:hover,
@@ -6817,6 +7017,38 @@ summary { cursor: pointer; }
 
 .admin-member-preview-copy .status {
   margin-top: 12px;
+}
+
+.admin-member-patron-preview {
+  margin: 18px -16px -16px;
+  padding: 18px 20px;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 12px 12px;
+  background: var(--surface-soft);
+}
+
+.admin-member-patron-preview > span {
+  color: var(--institutional-blue);
+  font: 700 .52rem/1 var(--font-mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.admin-member-patron-preview h4 {
+  margin: 9px 0 6px;
+  color: var(--heading-dark);
+  font: 600 1.25rem/1.05 var(--font-serif);
+}
+
+.admin-member-patron-preview p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--muted);
+  font-size: .68rem;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .admin-content-preview {

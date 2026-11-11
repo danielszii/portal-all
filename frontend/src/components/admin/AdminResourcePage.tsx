@@ -19,6 +19,7 @@ export type AdminField = {
   options?: (string | { value: string; label: string })[]; required?: boolean; placeholder?: string; accept?: string
   publishedRequired?: boolean; urlField?: string; readOnlyOnEdit?: boolean; onlyEnd?: boolean
   allowCustom?: boolean
+  help?: string
   requiredWhen?: (values: FormValues) => boolean
   min?: number; max?: number; maxLength?: number
 }
@@ -300,6 +301,7 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
                     }} />
                     {stored && <small>Arquivo atual preservado se nenhum novo for escolhido.</small>}
                   </> : <input name={field.name} type={field.type || 'text'} disabled={disabled} required={required} min={field.min} max={field.max} maxLength={field.maxLength} step={field.type === 'datetime-local' ? '0.001' : undefined} placeholder={field.placeholder} value={values[field.name] ?? ''} onChange={event => update(field.name, event.target.value)} />}
+              {field.help && <small>{field.help}</small>}
               {field.name === 'posse' && editing && !values.posse && values.inicioAno && <small>Registro histórico informa somente o ano {values.inicioAno}; nenhuma data foi inventada.</small>}
             </FieldContainer>
           })}

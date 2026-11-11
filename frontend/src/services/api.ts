@@ -1,4 +1,4 @@
-import type { Cadeira, Evento, GaleriaFoto, Noticia, AcervoItem, ContatoForm, SearchPage } from '../types/index.js'
+import type { Cadeira, Evento, GaleriaFoto, Noticia, AcervoItem, LivroBiblioteca, ContatoForm, SearchPage } from '../types/index.js'
 
 class ApiError extends Error {
   constructor(message: string, public status: number) { super(message) }
@@ -66,6 +66,11 @@ export const emptyPage = <T>(): Page<T> => ({ items: [], total: 0, page: 1, page
 export const fetchNoticiasPage = (page: number, categoria?: string, q?: string, signal?: AbortSignal) => request<Page<Noticia>>(`/noticias?${query({ page: String(page), pageSize: '10', categoria, q, resumo: 'true' })}`, { signal })
 export const fetchAcervoPage = (page: number, tipo?: string, q?: string, signal?: AbortSignal) => request<Page<AcervoItem>>(`/acervo?${query({ page: String(page), pageSize: '8', tipo, q })}`, { signal })
 export const fetchAcervoById = (id: string, signal?: AbortSignal) => request<AcervoItem>(`/acervo/${encodeURIComponent(id)}`, { signal })
+export const fetchBibliotecaPage = (page: number, q: string, signal?: AbortSignal) => {
+  const query = new URLSearchParams({ page: String(page), pageSize: '20' })
+  if (q.trim()) query.set('q', q.trim())
+  return request<Page<LivroBiblioteca>>(`/acervo/biblioteca?${query}`, { signal })
+}
 export const postContato = (dados: ContatoForm) => request<{ sucesso: boolean; mensagem: string; id: string }>('/contato', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) })
 
 export type InstituicaoResponse = {

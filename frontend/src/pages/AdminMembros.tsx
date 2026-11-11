@@ -1,6 +1,7 @@
 import AdminResourcePage from '@/components/admin/AdminResourcePage'
 import { imageAccept } from '@/components/admin/fields'
 import MemberPhotoFrame from '@/components/MemberPhotoFrame'
+import FormattedText from '@/components/FormattedText'
 
 export default function AdminMembros() {
   return <AdminResourcePage
@@ -13,8 +14,9 @@ export default function AdminMembros() {
       { name: 'nome', label: 'Nome completo', requiredWhen: values => values.categoria !== 'Vaga' },
       { name: 'cadeira', label: 'Número da cadeira', type: 'number', required: true, min: 1, max: 3999 },
       { name: 'categoria', label: 'Categoria da cadeira', type: 'select', required: true, options: ['Titular', 'Honorário', 'In Memoriam', 'Vaga'] },
-      { name: 'patrono', label: 'Patrono', required: true },
-      { name: 'patronoBio', label: 'Texto do patrono', type: 'textarea' },
+      { name: 'patrono', label: 'Nome do patrono', required: true },
+      { name: 'patronoBio', label: 'Biografia do patrono', type: 'textarea', maxLength: 20000, help: 'Este texto aparece no card “Patrono da cadeira” do perfil público do membro.' },
+      { name: 'patronoFotoArquivo', label: 'Foto do patrono (até 10 MB)', type: 'file', accept: imageAccept, urlField: 'patronoFoto', help: 'Opcional. A foto permanece vinculada ao cadastro do patrono.' },
       { name: 'fundador', label: 'Fundador (se diferente do primeiro titular)' },
       { name: 'posse', label: 'Data de posse', type: 'date', requiredWhen: values => values.categoria !== 'Vaga' },
       { name: 'biografia', label: 'Biografia', type: 'textarea' },
@@ -39,6 +41,11 @@ export default function AdminMembros() {
             <h3>{values.nome || 'Nome do membro'}</h3>
             <p>{values.patrono || 'Patrono da cadeira'}</p>
             <small className={status === 'In memoriam' || status === 'Vaga' ? 'status memorial' : 'status'}>{status}</small>
+          </div>
+          <div className="admin-member-patron-preview">
+            <span>Patrono da cadeira</span>
+            <h4>{values.patrono || 'Nome do patrono'}</h4>
+            <p className="formatted-text"><FormattedText text={values.patronoBio || 'A biografia do patrono aparecerá aqui no perfil público.'} /></p>
           </div>
         </article>
       )

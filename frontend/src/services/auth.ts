@@ -65,5 +65,5 @@ export async function logoutAdmin(csrfToken: string) {
 
 export function adminDestination(value: unknown): string {
   // Apenas destinos administrativos conhecidos; não aceita redirecionamentos externos.
-  return typeof value === 'string' && /^\/admin(?:\/(?:acervo|noticias|agenda|membros|galeria|auditoria|pessoas|instituicao|contas))?$/.test(value) ? value : '/admin'
+  return typeof value === 'string' && /^\/admin(?:\/(?:acervo|biblioteca|noticias|agenda|membros|galeria|auditoria|pessoas|instituicao|contas|portal))?$/.test(value) ? value : '/admin'
 }

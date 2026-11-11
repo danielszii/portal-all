@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { createApp } from '../src/app.js'
 import { serve } from './serve.js'
 import { hashPassword, verifyPassword } from '../src/services/admin-auth.service.js'
-import { noticiaInput, acervoInput, eventoInput } from '../src/services/admin-content.service.js'
+import { noticiaInput, acervoInput, bibliotecaInput, eventoInput } from '../src/services/admin-content.service.js'
 import { prisma } from '../src/db/prisma.js'
 import { mockMethod } from './mock-method.js'
 import { envConfig } from '../src/config/env.config.js'
@@ -100,4 +100,15 @@ test('acervo aceita link externo opcional para compra e recusa protocolos insegu
   assert.equal(acervoInput({ ...book, compraUrl: '' }).compraUrl, null)
   assert.throws(() => acervoInput({ ...book, compraUrl: 'javascript:alert(1)' }))
   assert.throws(() => acervoInput({ ...book, compraUrl: '/produto/livro' }))
+})
+
+test('catálogo físico valida os campos sem exigir dados inexistentes', () => {
+  const book = bibliotecaInput({ titulo: 'Livro da biblioteca', autor: 'Autora', quantidade: 2, status: 'PUBLICADO' })
+  assert.equal(book.titulo, 'Livro da biblioteca')
+  assert.equal(book.autor, 'Autora')
+  assert.equal(book.quantidade, 2)
+  assert.equal(book.editora, null)
+  assert.throws(() => bibliotecaInput({ titulo: 'Livro', quantidade: 0 }))
+  assert.throws(() => bibliotecaInput({ titulo: 'Livro', ano: 10000 }))
+  assert.throws(() => bibliotecaInput({ titulo: 'Livro', emprestado: true }))
 })

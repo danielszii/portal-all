@@ -1,14 +1,14 @@
-import { fetchAcervoPage, fetchAcervoById, emptyPage } from '@/services/api'
+import { fetchAcervoPage, fetchAcervoById, fetchBibliotecaPage, emptyPage } from '@/services/api'
 import Pagination, { pageFromUrl } from '@/components/Pagination'
-import type { AcervoItem } from '@/types'
+import type { AcervoItem, LivroBiblioteca } from '@/types'
 import { useSearchParams } from 'react-router'
 import { useDialog } from '@/hooks/useDialog'
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import PortalText from '@/components/PortalText'
 import FormattedText from '@/components/FormattedText'
-import { useState, useCallback, useEffect } from 'react'
-import { ArrowUpRight, Search, X, Download, ShoppingBag } from 'lucide-react'
+import { useState, useCallback, useEffect, type FormEvent } from 'react'
+import { ArrowUpRight, Search, X, Download, ShoppingBag, LibraryBig } from 'lucide-react'
 import { pdfViewerUrl, publicationImageUrl } from '@/utils/pdf'
 
 type Pub = AcervoItem
@@ -52,6 +52,67 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
       </div>
     </div>
   )
+}
+
+function BibliotecaFisica() {
+  const [page, setPage] = useState(1)
+  const [query, setQuery] = useState('')
+  const [search, setSearch] = useState('')
+  const load = useCallback((signal: AbortSignal) => fetchBibliotecaPage(page, search, signal), [page, search])
+  const state = useResource(load, emptyPage<LivroBiblioteca>())
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    setPage(1)
+    setSearch(query.trim())
+  }
+
+  return <section className="library-section" data-pagination-start aria-labelledby="library-title">
+    <div className="wrap">
+      <div className="section-heading library-heading">
+        <div>
+          <p className="eyebrow">Consulta presencial</p>
+          <h2 id="library-title">Biblioteca <em>física</em></h2>
+          <p>Consulte a relação de livros que integram a biblioteca da Academia.</p>
+        </div>
+        <LibraryBig size={36} strokeWidth={1.3} aria-hidden="true" />
+      </div>
+
+      <form className="library-search" role="search" onSubmit={submit}>
+        <label className="search-control">
+          <Search size={16} aria-hidden="true" />
+          <span className="visually-hidden">Buscar no catálogo físico</span>
+          <input value={query} maxLength={200} placeholder="Buscar por título, autor, editora ou tombo" onChange={event => setQuery(event.target.value)} />
+          <button type="submit"><span>Buscar</span></button>
+        </label>
+        {search && <button type="button" className="library-clear" onClick={() => { setQuery(''); setSearch(''); setPage(1) }}>Limpar busca</button>}
+      </form>
+
+      <LoadState {...state} />
+      {!state.loading && !state.error && state.data.items.length === 0 && <div className="library-empty" role="status">
+        <LibraryBig size={28} aria-hidden="true" />
+        <p>{search ? 'Nenhum livro encontrado para esta busca.' : 'O catálogo físico ainda não possui livros publicados.'}</p>
+      </div>}
+      {!state.loading && !state.error && state.data.items.length > 0 && <div className="library-list">
+        {state.data.items.map(book => <article className="library-book" key={book.id}>
+          <div className="library-book-main">
+            <span className="library-book-mark" aria-hidden="true"><LibraryBig size={18} /></span>
+            <div>
+              <h3>{book.titulo}</h3>
+              <p>{book.autor || 'Autoria não informada'}</p>
+            </div>
+          </div>
+          <dl>
+            {(book.editora || book.ano) && <div><dt>Edição</dt><dd>{[book.editora, book.ano].filter(Boolean).join(' · ')}</dd></div>}
+            {book.tombo && <div><dt>Tombo</dt><dd>{book.tombo}</dd></div>}
+            {book.localizacao && <div><dt>Localização</dt><dd>{book.localizacao}</dd></div>}
+            <div><dt>Exemplares</dt><dd>{book.quantidade}</dd></div>
+          </dl>
+          {book.observacoes && <p className="library-book-note"><FormattedText text={book.observacoes} /></p>}
+        </article>)}
+      </div>}
+      {!state.loading && !state.error && <Pagination page={state.data.page} totalPages={state.data.totalPages} onChange={setPage} />}
+    </div>
+  </section>
 }
 
 export default function Acervo() {
@@ -147,6 +208,7 @@ function AcervoConteudo() {
         )}
         <Pagination page={state.data.page} totalPages={state.data.totalPages} onChange={value => update('page', String(value))} />
       </section>
+      <BibliotecaFisica />
     </main>
   )
 }

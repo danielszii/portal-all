@@ -1,7 +1,7 @@
 import { situacaoCadeira } from '../../../backend/src/domain/ocupacoes.js'
 import { maxUploadBytes, mediaMimeTypes, type MediaKind } from '../../../backend/src/domain/media.js'
 
-export type AdminResource = 'noticias' | 'acervo' | 'agenda' | 'cadeiras'
+export type AdminResource = 'noticias' | 'acervo' | 'biblioteca' | 'agenda' | 'cadeiras'
 export type AdminPage<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number }
 export type GalleryRecord = {
   id: string; eventoId: string | null; src: string; legenda: string
@@ -26,6 +26,7 @@ export type EditorialRecord = {
   autoriaTexto?: string | null; edicao?: string | null; ano?: number | null; paginas?: number | null; cor?: string; descricao?: string; pdfUrl?: string; capaUrl?: string | null; compraUrl?: string | null
   autorias?: { academicoId: string }[]
   tipo?: string; inicioEm?: string; fimEm?: string | null; local?: string; foto?: string | null
+  autor?: string | null; editora?: string | null; tombo?: string | null; localizacao?: string | null; quantidade?: number | null; observacoes?: string | null
 }
 export type AdminRecord = EditorialRecord | CadeiraAdmin
 type ChairConfirmation = { code: 'CONFIRMACAO_CADEIRA'; cadeira: CadeiraAdmin; ocupacaoAtualId: string | null }
@@ -135,8 +136,12 @@ export function adminItem(resource: AdminResource, record: AdminRecord): AdminLi
     publicadoEm: localDateTime(row.publicadoEm), autoriaTexto: row.autoriaTexto ?? '', autorId: row.autorias?.[0]?.academicoId ?? '', autorCount: str(row.autorias?.length ?? 0), edicao: row.edicao ?? '', ano: str(row.ano),
     paginas: str(row.paginas), cor: row.cor ?? 'navy', descricao: row.descricao ?? '', pdfUrl: row.pdfUrl ?? '', capaUrl: row.capaUrl ?? '', compraUrl: row.compraUrl ?? '',
     tipo: row.tipo ?? '', inicioEm: localDateTime(row.inicioEm), fimEm: localDateTime(row.fimEm), local: row.local ?? '', foto: row.foto ?? '',
+    autor: row.autor ?? '', editora: row.editora ?? '', tombo: row.tombo ?? '', localizacao: row.localizacao ?? '', quantidade: str(row.quantidade ?? 1), observacoes: row.observacoes ?? '',
   }
-  return { id: String(row.id), title: row.titulo, meta: resource === 'agenda' ? `${row.tipo} · ${values.inicioEm.replace('T', ' ').slice(0, 16)}` : `${row.categoria} ${row.autoriaTexto ? '· ' + row.autoriaTexto : ''}`, status: editorialLabel(row.status), values }
+  const meta = resource === 'agenda' ? `${row.tipo} · ${values.inicioEm.replace('T', ' ').slice(0, 16)}`
+    : resource === 'biblioteca' ? `${row.autor || 'Autoria não informada'}${row.tombo ? ' · Tombo ' + row.tombo : ''}`
+    : `${row.categoria} ${row.autoriaTexto ? '· ' + row.autoriaTexto : ''}`
+  return { id: String(row.id), title: row.titulo, meta, status: editorialLabel(row.status), values }
 }
 
 export function adminPayload(resource: AdminResource, v: FormValues, editing: boolean): Record<string, unknown> {
@@ -144,6 +149,9 @@ export function adminPayload(resource: AdminResource, v: FormValues, editing: bo
   if (resource === 'noticias') return { titulo: v.titulo, categoria: v.categoria, lede: v.lede, conteudo: v.conteudo, img: v.img || '', status, publicadoEm: isoDateTime(v.publicadoEm) }
   if (resource === 'acervo') return { titulo: v.titulo, categoria: v.categoria, autoriaTexto: v.autoriaTexto || null, edicao: v.edicao || null,
     ano: v.ano ? Number(v.ano) : null, paginas: v.paginas ? Number(v.paginas) : null, cor: v.cor || 'navy', descricao: v.descricao || '', pdfUrl: v.pdfUrl || '', compraUrl: v.compraUrl || null, ...(v.capaUrl === undefined ? {} : { capaUrl: v.capaUrl || null }), ...(v.autorAlterado === 'true' && v.autorId ? { autorId: v.autorId } : {}), status }
+  if (resource === 'biblioteca') return { titulo: v.titulo, autor: v.autor || null, editora: v.editora || null,
+    ano: v.ano ? Number(v.ano) : null, tombo: v.tombo || null, localizacao: v.localizacao || null,
+    quantidade: v.quantidade ? Number(v.quantidade) : 1, observacoes: v.observacoes || null, status }
   if (resource === 'agenda') return { titulo: v.titulo, tipo: v.tipo, inicioEm: isoDateTime(v.inicioEm), fimEm: isoDateTime(v.fimEm), local: v.local, descricao: v.descricao || '', foto: v.foto || null, status }
   const isVaga = v.categoria === 'Vaga'
   const academico = { nome: v.nome, biografia: v.biografia || null, bioExtra: v.bioExtra || null, fotoUrl: v.fotoUrl || null }

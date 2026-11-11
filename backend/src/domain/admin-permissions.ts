@@ -38,7 +38,7 @@ export function permissionForRequest(method: string, path: string, contentType =
     if (method !== 'POST') return null
     return contentType.split(';')[0].trim().toLowerCase() === 'application/pdf' ? 'arquivos:pdf' : 'arquivos:imagem'
   }
-  const area = ['noticias', 'acervo', 'agenda', 'galeria'].includes(resource) ? 'conteudo'
+  const area = ['noticias', 'acervo', 'biblioteca', 'agenda', 'galeria'].includes(resource) ? 'conteudo'
     : ['cadeiras', 'academicos', 'patronos', 'instituicao', 'gestoes', 'portal', 'obras', 'producoes'].includes(resource) ? 'instituicao' : null
   if (!area) return null
   if (read) return `${area}:ler`

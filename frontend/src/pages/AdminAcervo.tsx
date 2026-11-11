@@ -29,6 +29,7 @@ export default function AdminAcervo() {
     title="Gerenciar" emphasis="acervo"
     description="Organize livros, edições e arquivos digitais publicados no portal."
     singular="Publicação"
+    relatedActions={[{ label: 'Catálogo da biblioteca', to: '/admin/biblioteca' }]}
     fields={[
       { name: 'titulo', label: 'Título', required: true },
       { name: 'autorId', label: 'Autor cadastrado', type: 'select', options: authors.data.map(author => ({ value: author.id, label: author.nome })) },
