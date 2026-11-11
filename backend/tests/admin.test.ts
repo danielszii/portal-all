@@ -92,3 +92,12 @@ test('capa do acervo aceita imagem e não modifica capa quando o campo é omitid
   assert.equal('capaUrl' in acervoInput(book), false)
   assert.throws(() => acervoInput({ ...book, capaUrl: '/uploads/livro.pdf' }))
 })
+
+test('acervo aceita link externo opcional para compra e recusa protocolos inseguros', () => {
+  const book = { titulo: 'Livro', categoria: 'Livro' }
+  assert.equal(acervoInput({ ...book, compraUrl: 'https://loja.example/livro' }).compraUrl, 'https://loja.example/livro')
+  assert.equal(acervoInput(book).compraUrl, null)
+  assert.equal(acervoInput({ ...book, compraUrl: '' }).compraUrl, null)
+  assert.throws(() => acervoInput({ ...book, compraUrl: 'javascript:alert(1)' }))
+  assert.throws(() => acervoInput({ ...book, compraUrl: '/produto/livro' }))
+})

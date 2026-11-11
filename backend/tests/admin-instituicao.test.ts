@@ -15,10 +15,12 @@ test('informações institucionais validam campos, limites e dados opcionais', (
   assert.equal(result.nome, 'Academia')
   assert.equal(result.email, 'contato@example.test')
   assert.equal(result.telefone, null)
-  const hymn = institutionInput({ ...institution, hinoTitulo: 'Hino da Academia', hinoLetra: 'Primeira estrofe\n\nSegunda estrofe', hinoAutoria: 'Autoria institucional' })
+  const hymn = institutionInput({ ...institution, hinoTitulo: 'Hino da Academia', hinoLetra: 'Primeira estrofe\n\nSegunda estrofe', hinoAutoria: 'Autoria institucional', hinoApresentacao: 'Apresentação', hinoCreditos: 'Coral da Academia', hinoVideoUrl: 'https://youtu.be/dQw4w9WgXcQ' })
   assert.equal(hymn.hinoLetra, 'Primeira estrofe\n\nSegunda estrofe')
+  assert.equal(hymn.hinoVideoUrl, 'https://youtu.be/dQw4w9WgXcQ')
   for (const fields of [{ nome: '' }, { historia: ' ' }, { missao: 4 }, { email: 'invalido' }, { telefone: 'x'.repeat(51) },
-    { fundacaoAno: 0 }, { fundacaoAno: 9999 }, { id: 'outra-instituicao' }, { historia: 'x'.repeat(100001) }, { hinoLetra: 'x'.repeat(20001) }]) {
+    { fundacaoAno: 0 }, { fundacaoAno: 9999 }, { id: 'outra-instituicao' }, { historia: 'x'.repeat(100001) }, { hinoLetra: 'x'.repeat(20001) },
+    { hinoVideoUrl: 'https://example.com/video' }, { hinoApresentacao: 'x'.repeat(5001) }, { hinoCreditos: 'x'.repeat(5001) }]) {
     assert.throws(() => institutionInput({ ...institution, ...fields }))
   }
 })

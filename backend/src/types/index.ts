@@ -73,6 +73,7 @@ export type AcervoItem = {
   desc: string
   pdf: string
   cover?: string | null
+  purchaseUrl?: string | null
 }
 
 export type ContatoMensagem = {

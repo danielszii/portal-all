@@ -19,7 +19,7 @@ export function noticiaInput(input: unknown) {
 }
 export function acervoInput(input: unknown) {
   const b = v.object(input)
-  v.keys(b, ['titulo', 'categoria', 'edicao', 'ano', 'cor', 'autoriaTexto', 'paginas', 'descricao', 'pdfUrl', 'capaUrl', 'autorId', 'status'])
+  v.keys(b, ['titulo', 'categoria', 'edicao', 'ano', 'cor', 'autoriaTexto', 'paginas', 'descricao', 'pdfUrl', 'capaUrl', 'compraUrl', 'autorId', 'status'])
   const status = v.status(b.status)
   const cor = b.cor === undefined ? 'navy' : v.text(b.cor, 'cor', 20)
   if (!acervoColors.includes(cor)) throw new ValidationError('Cor inválida.')
@@ -27,7 +27,8 @@ export function acervoInput(input: unknown) {
     edicao: v.optionalText(b.edicao, 'edicao', 200), ano: b.ano == null ? null : v.integer(b.ano, 'ano', 1, 9999), cor,
     autoriaTexto: v.optionalText(b.autoriaTexto, 'autoriaTexto', 1000), paginas: b.paginas == null ? null : v.integer(b.paginas, 'paginas', 1, 100000),
     descricao: v.optionalFormattedText(b.descricao, 'descricao') ?? '', pdfUrl: v.mediaUrl(b.pdfUrl, 'pdfUrl', 'publication', status === 'PUBLICADO'),
-    ...(b.capaUrl === undefined ? {} : { capaUrl: v.mediaUrl(b.capaUrl, 'capaUrl', 'image') || null }), status }
+    ...(b.capaUrl === undefined ? {} : { capaUrl: v.mediaUrl(b.capaUrl, 'capaUrl', 'image') || null }),
+    compraUrl: b.compraUrl === undefined || b.compraUrl === null || b.compraUrl === '' ? null : v.webUrl(b.compraUrl, 'compraUrl'), status }
 }
 
 function acervoAuthorInput(input: unknown) {

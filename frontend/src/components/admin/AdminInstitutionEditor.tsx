@@ -7,7 +7,7 @@ import { AdminApiError } from '@/services/admin'
 import { institutionValues, loadAdminInstitution, saveAdminInstitution, type AdminInstitution, type InstitutionValues } from '@/services/admin-instituicao'
 import FormattedTextarea from '@/components/admin/FormattedTextarea'
 
-type Field = { name: Exclude<keyof InstitutionValues, 'redesSociais'>; label: string; type?: 'text' | 'email' | 'tel' | 'number' | 'textarea'; required?: boolean; maxLength?: number }
+type Field = { name: Exclude<keyof InstitutionValues, 'redesSociais'>; label: string; type?: 'text' | 'email' | 'tel' | 'url' | 'number' | 'textarea'; required?: boolean; maxLength?: number; placeholder?: string }
 const fields: Field[] = [
   { name: 'nome', label: 'Nome oficial', required: true, maxLength: 300 },
   { name: 'fundacaoAno', label: 'Ano de fundação', type: 'number' },
@@ -23,7 +23,10 @@ const fields: Field[] = [
   { name: 'trajetoriaTexto', label: 'Trajetória', type: 'textarea', maxLength: 20000 },
   { name: 'hinoTitulo', label: 'Título do hino', maxLength: 300 },
   { name: 'hinoAutoria', label: 'Autoria do hino', maxLength: 500 },
+  { name: 'hinoApresentacao', label: 'Apresentação do hino', type: 'textarea', maxLength: 5000 },
+  { name: 'hinoVideoUrl', label: 'Link do vídeo no YouTube', type: 'url', maxLength: 2048, placeholder: 'https://www.youtube.com/watch?v=...' },
   { name: 'hinoLetra', label: 'Letra do hino', type: 'textarea', maxLength: 20000 },
+  { name: 'hinoCreditos', label: 'Créditos da gravação', type: 'textarea', maxLength: 5000 },
 ]
 
 export default function AdminInstitutionEditor({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
@@ -77,7 +80,7 @@ function InstitutionForm({ info, onClose, onSaved, onSaving }: {
       <span>{field.label}{field.required ? ' *' : ''}</span>
       {field.type === 'textarea'
         ? <FormattedTextarea aria-label={field.label} name={field.name} rows={5} required={field.required} maxLength={field.maxLength} disabled={saving || !allowed} value={values[field.name]} onChange={text => setValues(current => ({ ...current, [field.name]: text }))} />
-        : <input name={field.name} type={field.type ?? 'text'} required={field.required} maxLength={field.maxLength} min={field.type === 'number' ? 1 : undefined} max={field.type === 'number' ? year : undefined} step={field.type === 'number' ? 1 : undefined} disabled={saving || !allowed} value={values[field.name]} onChange={event => setValues(current => ({ ...current, [field.name]: event.target.value }))} />}
+        : <input name={field.name} type={field.type ?? 'text'} required={field.required} maxLength={field.maxLength} placeholder={field.placeholder} min={field.type === 'number' ? 1 : undefined} max={field.type === 'number' ? year : undefined} step={field.type === 'number' ? 1 : undefined} disabled={saving || !allowed} value={values[field.name]} onChange={event => setValues(current => ({ ...current, [field.name]: event.target.value }))} />}
     </FieldContainer> })}
     <fieldset className="admin-institution-socials admin-field-wide" disabled={saving || !allowed}>
       <legend>Redes sociais</legend>

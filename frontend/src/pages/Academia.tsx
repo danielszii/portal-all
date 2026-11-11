@@ -1,15 +1,14 @@
 import { useInstituicao } from '@/hooks/useInstituicao'
 import LoadState from '@/components/LoadState'
 import { NavLink } from 'react-router'
-import { useState } from 'react'
-import { ArrowUpRight, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowUpRight, Play } from 'lucide-react'
 import PortalText from '@/components/PortalText'
 import FormattedText from '@/components/FormattedText'
+import { youtubeThumbnail, youtubeVideoId } from '@/utils/youtube'
 
 
 export default function Academia() {
   const state = useInstituicao()
-  const [hinoExpandido, setHinoExpandido] = useState(false)
   if (state.loading || state.error) return <main><LoadState {...state} /></main>
   const info = state.data.info
   const gestao = state.data.gestao
@@ -17,9 +16,10 @@ export default function Academia() {
   const paragraphs = (value: string | null | undefined) => value ? value.split('\n\n').map((text, i) => <p className="formatted-text" key={i}><FormattedText text={text} /></p>) : <p>Informação ainda não disponibilizada.</p>
   const hino = info?.hinoLetra?.trim() ?? ''
   const hinoLinhas = hino.split('\n')
-  const hinoPrecisaExpandir = hino.length > 420 || hinoLinhas.length > 8
-  const limitePrevia = hinoLinhas.slice(0, 8).join('\n').slice(0, 420)
-  const hinoPrevia = hinoPrecisaExpandir ? limitePrevia.replace(/\s+\S*$/u, '').trimEnd() : hino
+  const limitePrevia = hinoLinhas.slice(0, 3).join('\n').slice(0, 220)
+  const hinoPrevia = limitePrevia.replace(/\s+\S*$/u, '').trimEnd() || limitePrevia
+  const hinoVideoId = youtubeVideoId(info?.hinoVideoUrl)
+  const hasHymn = Boolean(hino || info?.hinoApresentacao?.trim() || hinoVideoId)
 
   return (
     <main>
@@ -95,7 +95,7 @@ export default function Academia() {
         </div>
       </section>
 
-      {hino && <>
+      {hasHymn && <>
         <div className="academia-divider wrap" />
         <section className="academia-section academia-hino wrap">
           <div className="academia-grid">
@@ -103,21 +103,22 @@ export default function Academia() {
               <span className="eyebrow">Símbolos e tradições</span>
             </div>
             <div className="academia-grid-body">
-              <h2 className="academia-h2">{info?.hinoTitulo?.trim() || 'Hino da Academia'}</h2>
-              {info?.hinoAutoria && <p className="academia-hino-autoria">Autoria: {info.hinoAutoria}</p>}
-              <div id="letra-hino" className={`academia-hino-letra${!hinoExpandido && hinoPrecisaExpandir ? ' is-preview' : ''}`}>
-                {paragraphs(hinoExpandido ? hino : hinoPrevia)}
+              <div className={`academia-hino-card${hinoVideoId ? ' has-video' : ''}`}>
+                {hinoVideoId && <div className="academia-hino-thumb" aria-hidden="true">
+                  <img src={youtubeThumbnail(hinoVideoId)} alt="" loading="lazy" />
+                  <span><Play size={20} fill="currentColor" /></span>
+                </div>}
+                <div className="academia-hino-summary">
+                  <h2 className="academia-h2">{info?.hinoTitulo?.trim() || 'Hino da Academia'}</h2>
+                  {info?.hinoAutoria && <p className="academia-hino-autoria">Autoria: {info.hinoAutoria}</p>}
+                  {info?.hinoApresentacao
+                    ? <p className="academia-hino-intro formatted-text"><FormattedText text={info.hinoApresentacao} /></p>
+                    : hinoPrevia && <div className="academia-hino-preview">{paragraphs(hinoPrevia)}</div>}
+                  <NavLink className="action-pill academia-hino-toggle" to="/academia/hino">
+                    Conhecer o hino <ArrowUpRight size={15} aria-hidden="true" />
+                  </NavLink>
+                </div>
               </div>
-              {hinoPrecisaExpandir && <button
-                className="action-pill academia-hino-toggle"
-                type="button"
-                aria-expanded={hinoExpandido}
-                aria-controls="letra-hino"
-                onClick={() => setHinoExpandido(value => !value)}
-              >
-                {hinoExpandido ? 'Recolher hino' : 'Ver hino completo'}
-                {hinoExpandido ? <ChevronUp size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
-              </button>}
             </div>
           </div>
         </section>

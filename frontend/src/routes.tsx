@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import Academia from './pages/Academia'
+import Hino from './pages/Hino'
 import Cadeiras from './pages/Cadeiras'
 import Membro from './pages/Membro'
 import Acervo from './pages/Acervo'
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Home },
       { path: 'academia', Component: Academia },
+      { path: 'academia/hino', Component: Hino },
       { path: 'cadeiras', Component: Cadeiras },
       { path: 'cadeiras/:numero', Component: Membro },
       { path: 'acervo', Component: Acervo },

@@ -19,6 +19,7 @@ test('respostas incluem proteção do navegador sem bloquear fontes e PDF usados
     assert.ok(policy.includes("script-src 'self'"))
     assert.ok(policy.includes("frame-ancestors 'none'"))
     assert.ok(policy.includes("frame-src 'self' https://docs.google.com"))
+    assert.ok(policy.includes('https://www.youtube-nocookie.com'))
     assert.ok(policy.includes('https://fonts.googleapis.com'))
   }
 })

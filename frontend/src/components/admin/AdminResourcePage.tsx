@@ -15,7 +15,7 @@ import { adminItem, deleteAdminRecord, loadAdminPage, loadAdminRecord, saveAdmin
   type AdminResource, type FormValues, type AdminListItem, type AdminPage, type AdminRecord } from '@/services/admin'
 
 export type AdminField = {
-  name: string; label: string; type?: 'text' | 'date' | 'datetime-local' | 'number' | 'textarea' | 'select' | 'file' | 'publication'
+  name: string; label: string; type?: 'text' | 'url' | 'date' | 'datetime-local' | 'number' | 'textarea' | 'select' | 'file' | 'publication'
   options?: (string | { value: string; label: string })[]; required?: boolean; placeholder?: string; accept?: string
   publishedRequired?: boolean; urlField?: string; readOnlyOnEdit?: boolean; onlyEnd?: boolean
   allowCustom?: boolean

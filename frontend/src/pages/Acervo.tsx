@@ -8,7 +8,7 @@ import LoadState from '@/components/LoadState'
 import PortalText from '@/components/PortalText'
 import FormattedText from '@/components/FormattedText'
 import { useState, useCallback, useEffect } from 'react'
-import { ArrowUpRight, Search, X, Download } from 'lucide-react'
+import { ArrowUpRight, Search, X, Download, ShoppingBag } from 'lucide-react'
 import { pdfViewerUrl, publicationImageUrl } from '@/utils/pdf'
 
 type Pub = AcervoItem
@@ -26,6 +26,9 @@ function PdfModal({ pub, onClose }: { pub: Pub; onClose: () => void }) {
             <h2 className="pdf-modal-title" id="pdf-modal-title">{pub.title} <em>{pub.tomo}</em></h2>
           </div>
           <div className="pdf-modal-actions">
+            {pub.purchaseUrl && <a className="pdf-purchase-btn" href={pub.purchaseUrl} target="_blank" rel="noopener noreferrer">
+              <ShoppingBag size={13} aria-hidden="true" /> Comprar exemplar <span className="visually-hidden">(abre o site de venda em nova aba)</span>
+            </a>}
             <a className="pdf-download-btn" href={pub.pdf} download target="_blank" rel="noopener noreferrer">
               <Download size={13} aria-hidden="true" /> Baixar {imageUrl ? 'imagem' : 'PDF'} <span className="visually-hidden">(abre em nova aba)</span>
             </a>
@@ -112,25 +115,28 @@ function AcervoConteudo() {
           <div className="archive-grid">
             {lista.map(book => (
               <article className="archive-book" key={book.id}>
-                <div className={`archive-cover ${book.color} ${book.cover ? 'has-image' : ''}`}>
-                  {book.cover ? <img src={book.cover} alt={`Capa de ${book.title}`} /> : <>
-                  <span>A.L.L.</span>
-                  <strong>{book.title}</strong>
-                  <small>{book.tomo}</small>
-                  <i>❧</i></>}
-                </div>
+                <button type="button" className="archive-cover-button" onClick={() => setPdfAberto(book)} aria-label={`Ver detalhes de ${book.title}`}>
+                  <span className={`archive-cover ${book.color} ${book.cover ? 'has-image' : ''}`}>
+                    {book.cover ? <img src={book.cover} alt={`Capa de ${book.title}`} /> : <>
+                    <span>A.L.L.</span>
+                    <strong>{book.title}</strong>
+                    <small>{book.tomo}</small>
+                    <i>❧</i></>}
+                  </span>
+                </button>
                 <div className="archive-book-info">
                   <div className="archive-book-top">
                     <span className="book-type">{book.type}</span>
                     <span>{book.year}</span>
                   </div>
-                  <h3>{book.title}</h3>
+                  <h3><button type="button" className="archive-title-button" onClick={() => setPdfAberto(book)}>{book.title}</button></h3>
                   <p className="formatted-text"><FormattedText text={book.desc} /></p>
                   <p className="archive-book-pages">{book.pages} páginas · {book.author}</p>
+                  {book.purchaseUrl && <span className="archive-purchase-badge"><ShoppingBag size={13} aria-hidden="true" /> Disponível para compra</span>}
                   <div className="archive-book-actions">
                     <button type="button" className="archive-book-link archive-book-link-primary" onClick={() => setPdfAberto(book)}>
-                      <span className="archive-action-long">Ler / visualizar</span>
-                      <span className="archive-action-short">Visualizar</span>
+                      <span className="archive-action-long">{book.purchaseUrl ? 'Ver detalhes' : 'Ler / visualizar'}</span>
+                      <span className="archive-action-short">{book.purchaseUrl ? 'Detalhes' : 'Visualizar'}</span>
                       <ArrowUpRight size={14} aria-hidden="true" />
                     </button>
                   </div>

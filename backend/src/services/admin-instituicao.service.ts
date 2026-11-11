@@ -6,7 +6,7 @@ import { dataInstitucional } from '../repositories/instituicao.repository.js'
 import { changedFields, recordAudit, type AuditActor } from './admin-audit.service.js'
 import * as v from './admin-validation.js'
 
-const institutionFields = ['nome', 'historia', 'missao', 'endereco', 'email', 'telefone', 'fundacaoAno', 'sedeTexto', 'trajetoriaTexto', 'hinoTitulo', 'hinoLetra', 'hinoAutoria', 'horarioAtendimento', 'emailImprensa', 'mapaUrl', 'redesSociais']
+const institutionFields = ['nome', 'historia', 'missao', 'endereco', 'email', 'telefone', 'fundacaoAno', 'sedeTexto', 'trajetoriaTexto', 'hinoTitulo', 'hinoLetra', 'hinoAutoria', 'hinoApresentacao', 'hinoCreditos', 'hinoVideoUrl', 'horarioAtendimento', 'emailImprensa', 'mapaUrl', 'redesSociais']
 const mandateFields = ['academicoId', 'cargo', 'inicioEm', 'fimEm']
 const boardInclude = {
   mandatos: { orderBy: [{ cargo: 'asc' }, { inicioEm: 'asc' }, { id: 'asc' }],
@@ -24,6 +24,13 @@ export function institutionInput(input: unknown) {
       return { nome: v.text(link.nome, `redesSociais[${index}].nome`, 50), url: v.webUrl(link.url, `redesSociais[${index}].url`) }
     })
   })()
+  const hinoVideoUrl = b.hinoVideoUrl ? v.webUrl(b.hinoVideoUrl, 'hinoVideoUrl') : null
+  if (hinoVideoUrl) {
+    const host = new URL(hinoVideoUrl).hostname.toLowerCase()
+    if (!['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com', 'www.youtube-nocookie.com'].includes(host)) {
+      throw new ValidationError('hinoVideoUrl: informe um link oficial do YouTube.')
+    }
+  }
   return {
     nome: v.text(b.nome, 'nome'), historia: v.formattedText(b.historia, 'historia', 100000), missao: v.formattedText(b.missao, 'missao', 20000),
     endereco: v.optionalText(b.endereco, 'endereco', 1000), email: email ? v.email(email) : null,
@@ -33,6 +40,9 @@ export function institutionInput(input: unknown) {
     hinoTitulo: v.optionalText(b.hinoTitulo, 'hinoTitulo', 300),
     hinoLetra: v.optionalFormattedText(b.hinoLetra, 'hinoLetra', 20000),
     hinoAutoria: v.optionalText(b.hinoAutoria, 'hinoAutoria', 500),
+    hinoApresentacao: v.optionalFormattedText(b.hinoApresentacao, 'hinoApresentacao', 5000),
+    hinoCreditos: v.optionalFormattedText(b.hinoCreditos, 'hinoCreditos', 5000),
+    hinoVideoUrl,
     horarioAtendimento: v.optionalText(b.horarioAtendimento, 'horarioAtendimento', 500),
     emailImprensa: b.emailImprensa ? v.email(b.emailImprensa) : null,
     mapaUrl: b.mapaUrl ? v.webUrl(b.mapaUrl, 'mapaUrl') : null,

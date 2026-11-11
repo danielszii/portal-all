@@ -52,7 +52,7 @@ test('cadeira conserva autor das obras e a ordem da sucessão', () => {
 test('perfil inclui publicação vinculada ao titular e evita repetir obra de mesmo título', () => {
   const now = new Date()
   const book = { id: 'livro', titulo: 'Livro da Academia', categoria: 'Livro', ano: 2026, status: 'PUBLICADO' as const,
-    edicao: null, cor: 'navy', autoriaTexto: 'Autora', paginas: null, descricao: '', pdfUrl: '/livro.pdf', capaUrl: null, criadoEm: now, atualizadoEm: now }
+    edicao: null, cor: 'navy', autoriaTexto: 'Autora', paginas: null, descricao: '', pdfUrl: '/livro.pdf', capaUrl: null, compraUrl: null, criadoEm: now, atualizadoEm: now }
   const member = { id: 'a', nome: 'Autora', biografia: null, bioExtra: null, fotoUrl: null, inMemoriam: false, criadoEm: now, atualizadoEm: now,
     obras: [{ id: 'o', academicoId: 'a', titulo: book.titulo, ano: '2026', tipo: 'Livro', criadoEm: now, atualizadoEm: now }], producoes: [],
     autorias: [{ acervoId: book.id, academicoId: 'a', papel: 'Autor', ordem: 0, acervo: book }] }

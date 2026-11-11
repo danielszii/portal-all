@@ -8,7 +8,7 @@ const policy = [
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https: http:",
   "connect-src 'self'",
-  "frame-src 'self' https://docs.google.com",
+  "frame-src 'self' https://docs.google.com https://www.youtube-nocookie.com",
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'self'",

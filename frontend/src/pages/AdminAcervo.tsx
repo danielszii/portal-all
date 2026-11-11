@@ -39,6 +39,7 @@ export default function AdminAcervo() {
       { name: 'cor', label: 'Cor da capa', type: 'select', options: [{ value: 'navy', label: 'Azul' }, { value: 'ochre', label: 'Ocre' }, { value: 'ink', label: 'Preto' }] },
       editorialStatus,
       { name: 'descricao', label: 'Descrição', type: 'textarea' },
+      { name: 'compraUrl', label: 'Link para comprar (opcional)', type: 'url', placeholder: 'https://marketplace.com/livro' },
       { name: 'arquivo', label: 'Arquivo da publicação: PDF ou imagem (até 10 MB)', type: 'file', accept: 'application/pdf,image/*', urlField: 'pdfUrl', publishedRequired: true },
     ]}
     renderPreview={values => <article className="admin-content-preview admin-book-preview">
@@ -54,6 +55,7 @@ export default function AdminAcervo() {
         <h3>{values.titulo || 'Título da publicação'}</h3>
         <p className="formatted-text"><FormattedText text={values.descricao || 'A descrição da publicação aparecerá aqui.'} /></p>
         <small>{values.paginas || '—'} páginas · {values.autoriaTexto || 'Autoria'}</small>
+        {values.compraUrl && <span className="admin-preview-purchase">Disponível para compra</span>}
         <span className="admin-preview-link">
           <span className="admin-preview-action-long">Ler / visualizar</span>
           <span className="admin-preview-action-short">Visualizar</span>

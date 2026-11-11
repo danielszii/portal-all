@@ -54,7 +54,8 @@ export function mapNoticia(row: Pick<Prisma.NoticiaGetPayload<object>, 'id' | 't
 }
 export function mapAcervo(row: Prisma.AcervoItemGetPayload<object>): AcervoItem {
   return { id: row.id, title: row.titulo, tomo: row.edicao ?? '', year: row.ano?.toString() ?? '', color: row.cor,
-    author: row.autoriaTexto ?? '', type: row.categoria, pages: row.paginas?.toString() ?? '', desc: row.descricao, pdf: row.pdfUrl, cover: row.capaUrl }
+    author: row.autoriaTexto ?? '', type: row.categoria, pages: row.paginas?.toString() ?? '', desc: row.descricao,
+    pdf: row.pdfUrl, cover: row.capaUrl, purchaseUrl: row.compraUrl }
 }
 export function mapFoto(row: Prisma.GaleriaFotoGetPayload<object>): GaleriaFoto {
   return { src: row.src, legenda: row.legenda }

@@ -69,7 +69,7 @@ export const fetchAcervoById = (id: string, signal?: AbortSignal) => request<Ace
 export const postContato = (dados: ContatoForm) => request<{ sucesso: boolean; mensagem: string; id: string }>('/contato', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) })
 
 export type InstituicaoResponse = {
-  info: { nome: string; historia: string; missao: string; endereco: string | null; email: string | null; telefone: string | null; fundacaoAno: number | null; sedeTexto: string | null; trajetoriaTexto: string | null; hinoTitulo?: string | null; hinoLetra?: string | null; hinoAutoria?: string | null; horarioAtendimento: string | null; emailImprensa?: string | null; mapaUrl?: string | null; redesSociais?: { nome: string; url: string }[] } | null
+  info: { nome: string; historia: string; missao: string; endereco: string | null; email: string | null; telefone: string | null; fundacaoAno: number | null; sedeTexto: string | null; trajetoriaTexto: string | null; hinoTitulo?: string | null; hinoLetra?: string | null; hinoAutoria?: string | null; hinoApresentacao?: string | null; hinoCreditos?: string | null; hinoVideoUrl?: string | null; horarioAtendimento: string | null; emailImprensa?: string | null; mapaUrl?: string | null; redesSociais?: { nome: string; url: string }[] } | null
   gestao: { inicioAno: number; fimAno: number | null; diretoria: { cargo: string; nome: string; posse: string }[] } | null
 }
 export const fetchInstituicao = (signal?: AbortSignal) => request<InstituicaoResponse>('/instituicao', { signal })
@@ -91,7 +91,7 @@ export function subscribeInstituicao(listener: () => void) {
 }
 
 type InicioCadeira = Pick<Cadeira, 'number' | 'patron' | 'holder' | 'image' | 'status'>
-type InicioAcervo = Pick<AcervoItem, 'id' | 'title' | 'tomo' | 'year' | 'color' | 'author' | 'cover'>
+type InicioAcervo = Pick<AcervoItem, 'id' | 'title' | 'tomo' | 'year' | 'color' | 'author' | 'cover' | 'purchaseUrl'>
 type InicioEvento = Pick<Evento, 'id' | 'titulo' | 'tipo' | 'data' | 'hora' | 'local' | 'foto'>
 export const fetchInicioCadeiras = (signal: AbortSignal) => request<{ total: number; items: InicioCadeira[] }>('/inicio/cadeiras', { signal })
 export const fetchInicioAcervo = (signal: AbortSignal) => request<{ total: number; items: InicioAcervo[] }>('/inicio/acervo', { signal })

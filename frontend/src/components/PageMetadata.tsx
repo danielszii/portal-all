@@ -3,6 +3,7 @@ import { useLocation } from 'react-router'
 
 const siteName = 'Academia Limoeirense de Letras'
 const descriptions: Record<string, [string, string]> = {
+  '/academia/hino': ['Hino da Academia | A.L.L.', 'Assista ao hino e conheça a letra, a autoria e os créditos da Academia Limoeirense de Letras.'],
   '/': ['Academia Limoeirense de Letras | A.L.L.', 'Portal oficial da Academia Limoeirense de Letras: memória, literatura e cultura do Vale do Jaguaribe.'],
   '/academia': ['A Academia | A.L.L.', 'Conheça a história, a missão e a diretoria da Academia Limoeirense de Letras.'],
   '/cadeiras': ['Cadeiras e acadêmicos | A.L.L.', 'Conheça as cadeiras, os patronos e os acadêmicos da Academia Limoeirense de Letras.'],

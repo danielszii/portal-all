@@ -18,6 +18,7 @@ export function institutionValues(info: AdminInstitution | null): InstitutionVal
     fundacaoAno: info?.fundacaoAno == null ? '' : String(info.fundacaoAno),
     sedeTexto: info?.sedeTexto ?? '', trajetoriaTexto: info?.trajetoriaTexto ?? '',
     hinoTitulo: info?.hinoTitulo ?? '', hinoLetra: info?.hinoLetra ?? '', hinoAutoria: info?.hinoAutoria ?? '',
+    hinoApresentacao: info?.hinoApresentacao ?? '', hinoCreditos: info?.hinoCreditos ?? '', hinoVideoUrl: info?.hinoVideoUrl ?? '',
     horarioAtendimento: info?.horarioAtendimento ?? '',
     emailImprensa: info?.emailImprensa ?? '', mapaUrl: info?.mapaUrl ?? '', redesSociais: info?.redesSociais ?? [],
   }

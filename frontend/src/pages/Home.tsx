@@ -2,7 +2,7 @@ import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import { useEffect, useState } from 'react'
 import { fetchInicioCadeiras, fetchInicioAcervo, fetchInicioEventos, fetchInicioNoticias, fetchInstituicao, fetchPortalContent } from '@/services/api'
-import { ArrowUpRight, Clock3, MapPin } from 'lucide-react'
+import { ArrowUpRight, Clock3, MapPin, ShoppingBag } from 'lucide-react'
 import { NavLink } from 'react-router'
 import FormattedText from '@/components/FormattedText'
 import heroImg from '@/imports/academialetters.jpg'
@@ -172,6 +172,7 @@ export default function Home() {
                   <p className="meta">Publicação · {book.year}</p>
                   <h3><NavLink className="book-title-link" to={`/acervo?ler=${encodeURIComponent(String(book.id))}`}>{book.title}</NavLink></h3>
                   <p>{book.author}<br />Edição da Academia Limoeirense de Letras</p>
+                  {book.purchaseUrl && <span className="book-purchase-badge"><ShoppingBag size={12} aria-hidden="true" /> Disponível para compra</span>}
                 </div>
               </article>
             ))}

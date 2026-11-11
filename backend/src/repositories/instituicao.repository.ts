@@ -23,7 +23,8 @@ export async function findInstituicao(now = new Date()) {
   // Metadados de edição administrativa não fazem parte do contrato público.
   const info = await prisma.instituicao.findUnique({ where: { id: 'all' }, select: {
     id: true, nome: true, historia: true, missao: true, endereco: true, email: true, telefone: true,
-    fundacaoAno: true, sedeTexto: true, trajetoriaTexto: true, hinoTitulo: true, hinoLetra: true, hinoAutoria: true, horarioAtendimento: true,
+    fundacaoAno: true, sedeTexto: true, trajetoriaTexto: true, hinoTitulo: true, hinoLetra: true, hinoAutoria: true,
+    hinoApresentacao: true, hinoCreditos: true, hinoVideoUrl: true, horarioAtendimento: true,
     emailImprensa: true, mapaUrl: true, redesSociais: true,
   } })
   const gestao = await prisma.gestao.findFirst({
