@@ -111,7 +111,7 @@ test('administração institucional persiste dados, diretoria, versões e audito
     await request('/gestoes', 'POST', { inicioAno: year + 1, fimAno: year + 2,
       mandatos: [{ academicoId: people[2].id, cargo: 'Presidente' }] }, 201)
     const published = (await publicInfo()).gestao
-    assert.deepEqual(published, { inicioAno: year, fimAno: year, diretoria: [{ cargo: 'Presidente', nome: people[0].nome, posse: String(year) }] })
+    assert.deepEqual(published, { inicioAno: year, fimAno: year, diretoria: [{ cargo: 'Presidente', conselho: 'DIRETOR', nome: people[0].nome, posse: String(year) }] })
     const detail = await request('/gestoes/' + board.id)
     assert.equal(detail.mandatos[0].academico.id, people[0].id)
     assert.equal(detail.atualizadoEm, board.atualizadoEm)
@@ -148,7 +148,7 @@ test('administração institucional persiste dados, diretoria, versões e audito
     }, 201)
     assert.equal(board.mandatos.length, 2)
     const current = dataInstitucional() < new Date(`${year}-07-01T00:00:00Z`) ? people[0] : people[1]
-    assert.deepEqual((await publicInfo()).gestao.diretoria, [{ cargo: 'Presidente', nome: current.nome, posse: String(year) }])
+    assert.deepEqual((await publicInfo()).gestao.diretoria, [{ cargo: 'Presidente', conselho: 'DIRETOR', nome: current.nome, posse: String(year) }])
     await request('/gestoes/' + board.id, 'PUT', { inicioAno: year - 1, fimAno: year - 1, atualizadoEm: board.atualizadoEm }, 409)
     const detached = await request('/gestoes', 'POST', { inicioAno: 1700, fimAno: 1702,
       mandatos: [{ academicoId: people[0].id, cargo: 'Presidente', inicioEm: '1702-01-01' }] }, 201)

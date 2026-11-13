@@ -7,7 +7,8 @@ import { changedFields, recordAudit, type AuditActor } from './admin-audit.servi
 import * as v from './admin-validation.js'
 
 const institutionFields = ['nome', 'historia', 'missao', 'endereco', 'email', 'telefone', 'fundacaoAno', 'sedeTexto', 'trajetoriaTexto', 'hinoTitulo', 'hinoLetra', 'hinoAutoria', 'hinoApresentacao', 'hinoCreditos', 'hinoVideoUrl', 'horarioAtendimento', 'emailImprensa', 'mapaUrl', 'redesSociais']
-const mandateFields = ['academicoId', 'cargo', 'inicioEm', 'fimEm']
+const mandateFields = ['academicoId', 'cargo', 'conselho', 'inicioEm', 'fimEm']
+export const conselhoTipos = ['DIRETOR', 'CONSULTIVO', 'FISCAL'] as const
 const boardInclude = {
   mandatos: { orderBy: [{ cargo: 'asc' }, { inicioEm: 'asc' }, { id: 'asc' }],
     include: { academico: { select: { id: true, nome: true, inMemoriam: true } } } },
@@ -61,12 +62,15 @@ export function mandateInput(input: unknown) {
   const inicioEm = b.inicioEm == null ? null : v.day(b.inicioEm, 'inicioEm')
   const fimEm = b.fimEm == null ? null : v.day(b.fimEm, 'fimEm')
   if (inicioEm && fimEm && fimEm < inicioEm) throw new ValidationError('fimEm não pode preceder inicioEm.')
+  const conselho = b.conselho ?? 'DIRETOR'
+  if (!conselhoTipos.includes(conselho as typeof conselhoTipos[number])) throw new ValidationError('conselho: selecione Diretor, Consultivo ou Fiscal.')
   return { academicoId: v.text(b.academicoId, 'academicoId', 100),
-    cargo: v.text(b.cargo, 'cargo', 100).replace(/\s+/gu, ' '), inicioEm, fimEm }
+    cargo: v.text(b.cargo, 'cargo', 100).replace(/\s+/gu, ' '),
+    conselho: conselho as typeof conselhoTipos[number], inicioEm, fimEm }
 }
 
 type Term = ReturnType<typeof termInput>
-type Mandate = ReturnType<typeof mandateInput>
+type Mandate = { academicoId: string; cargo: string; conselho: string; inicioEm: Date | null; fimEm: Date | null }
 function bounds(term: Term, mandate: Pick<Mandate, 'inicioEm' | 'fimEm'>) {
   const first = v.day(`${String(term.inicioAno).padStart(4, '0')}-01-01`, 'inicioAno')
   const last = v.day(`${String(term.fimAno ?? 9999).padStart(4, '0')}-12-31`, 'fimAno')
@@ -76,7 +80,7 @@ function bounds(term: Term, mandate: Pick<Mandate, 'inicioEm' | 'fimEm'>) {
 }
 
 export function validateBoard(term: Term, mandates: Mandate[]) {
-  const periods = mandates.map(m => ({ ...bounds(term, m), cargo: foldSearch(m.cargo.trim().replace(/\s+/gu, ' ')) }))
+  const periods = mandates.map(m => ({ ...bounds(term, m), cargo: `${m.conselho}:${foldSearch(m.cargo.trim().replace(/\s+/gu, ' '))}` }))
     .sort((a, b) => a.start.getTime() - b.start.getTime())
   const occupied = new Map<string, Date>()
   for (const period of periods) {
@@ -156,7 +160,7 @@ async function checkMembers(tx: Prisma.TransactionClient, term: Term, mandates: 
 }
 async function auditMandate(tx: Prisma.TransactionClient, actor: AuditActor, action: 'CRIAR' | 'EDITAR' | 'EXCLUIR', after: MandatoDiretoria, before?: MandatoDiretoria) {
   await recordAudit(tx, actor, { acao: action, recurso: 'MANDATO', registroId: after.id, resumo: `${action}: mandato de ${after.cargo}`,
-    detalhes: { gestaoId: after.gestaoId, academicoId: after.academicoId, cargo: after.cargo,
+    detalhes: { gestaoId: after.gestaoId, academicoId: after.academicoId, cargo: after.cargo, conselho: after.conselho,
       inicioEm: after.inicioEm?.toISOString().slice(0, 10) ?? null, fimEm: after.fimEm?.toISOString().slice(0, 10) ?? null,
       academicoAnteriorId: before?.academicoId ?? null, camposAlterados: changedFields(before ?? {}, after, mandateFields) } })
 }

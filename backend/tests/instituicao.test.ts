@@ -22,5 +22,5 @@ test('consulta da diretoria exige início e fim compatíveis com o dia civil', a
     { OR: [{ inicioEm: null }, { inicioEm: { lte: hoje } }] },
     { OR: [{ fimEm: null }, { fimEm: { gte: hoje } }] },
   ] })
-  assert.deepEqual(result.gestao?.diretoria, [{ cargo: 'Presidente', nome: 'Maria', posse: '2026' }])
+  assert.deepEqual(result.gestao?.diretoria, [{ cargo: 'Presidente', conselho: 'DIRETOR', nome: 'Maria', posse: '2026' }])
 })

@@ -35,18 +35,13 @@ export default function Hino() {
     </section>}
 
     {hasContent && <>
-      <section className="academia-section wrap hino-feature-section" aria-label="Vídeo e informações do hino">
+      <section className="academia-section academia-editorial wrap hino-feature-section" aria-label="Vídeo e informações do hino">
         <NavLink className="back-link hino-back" to="/academia"><ArrowLeft size={15} aria-hidden="true" /> Voltar à Academia</NavLink>
-        <div className="academia-grid hino-feature">
-          <div className="academia-grid-label">
-            <span className="eyebrow">Hino institucional</span>
-          </div>
-          <div className="academia-grid-body hino-feature-main">
-            <div className="hino-feature-heading">
-              <h2 className="academia-h2">{title}</h2>
-              {info?.hinoAutoria && <p className="hino-author">Autoria: {info.hinoAutoria}</p>}
-            </div>
-            <div className="hino-video-shell">
+        <header className="academia-editorial-heading hino-feature-heading">
+          <div><p className="eyebrow">Hino institucional</p><h2 className="academia-h2">{title}</h2></div>
+          {info?.hinoAutoria && <p className="hino-author">Autoria<br /><strong>{info.hinoAutoria}</strong></p>}
+        </header>
+        <div className="hino-video-shell">
               {videoId ? playing
                 ? <iframe
                     src={youtubeEmbed(videoId)}
@@ -61,21 +56,17 @@ export default function Hino() {
                     <span>Assistir ao hino</span>
                   </button>
                 : <div className="hino-video-unavailable"><Play size={30} aria-hidden="true" /><p>Vídeo em preparação</p></div>}
-            </div>
-        </div>
         </div>
       </section>
 
       <div className="academia-divider wrap" />
 
-      <section className="academia-section wrap hino-body">
-        <div className="academia-grid hino-body-grid">
-          <div className="academia-grid-label">
-            <span className="eyebrow">Letra completa</span>
-          </div>
-          <div className="academia-grid-body hino-body-content">
+      <section className="academia-section academia-editorial wrap hino-body">
+        <header className="academia-editorial-heading">
+          <div><p className="eyebrow">Letra completa</p><h2 className="academia-h2" id="hino-lyrics-title">Palavras do <em>hino</em></h2></div>
+        </header>
+        <div className="hino-body-content">
             <article className="hino-lyrics" aria-labelledby="hino-lyrics-title">
-              <h2 className="academia-h2" id="hino-lyrics-title">Palavras do <em>hino</em></h2>
               {paragraphs(info?.hinoLetra) ?? <p>Letra ainda não disponibilizada.</p>}
             </article>
             <aside className="hino-credits" aria-labelledby="hino-credits-title">
@@ -83,7 +74,6 @@ export default function Hino() {
               <h2 id="hino-credits-title">Créditos</h2>
               {paragraphs(info?.hinoCreditos) ?? <p>Créditos ainda não informados.</p>}
             </aside>
-          </div>
         </div>
       </section>
     </>}

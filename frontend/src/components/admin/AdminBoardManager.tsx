@@ -6,10 +6,15 @@ import { useDialog } from '@/hooks/useDialog'
 import { useResource } from '@/hooks/useResource'
 import { AdminApiError, type AdminPage, type PersonRecord } from '@/services/admin'
 import { loadAcademicosForBoard, loadGestao, loadGestoes, removeGestao, removeMandato, saveGestao, saveMandato,
-  type AdminGestao, type AdminGestaoSummary, type AdminMandato } from '@/services/admin-diretoria'
+  type AdminGestao, type AdminGestaoSummary, type AdminMandato, type ConselhoTipo } from '@/services/admin-diretoria'
 
 const emptyBoards: AdminPage<AdminGestaoSummary> = { items: [], total: 0, page: 1, pageSize: 50, totalPages: 1 }
 const emptyPeople: AdminPage<PersonRecord> = { items: [], total: 0, page: 1, pageSize: 50, totalPages: 1 }
+const conselhos: { value: ConselhoTipo; label: string }[] = [
+  { value: 'DIRETOR', label: 'Conselho Diretor' },
+  { value: 'CONSULTIVO', label: 'Conselho Consultivo' },
+  { value: 'FISCAL', label: 'Conselho Fiscal' },
+]
 
 export default function AdminBoardManager({ onClose, onChanged }: { onClose: () => void; onChanged: (message: string) => void }) {
   const { csrfToken, refresh, can } = useAuth()
@@ -75,10 +80,17 @@ export default function AdminBoardManager({ onClose, onChanged }: { onClose: () 
           </div>
           {people.error && <div className="admin-state admin-state-error" role="alert"><p>Não foi possível carregar os acadêmicos disponíveis.</p><button className="filtro-btn" type="button" onClick={people.retry}>Tentar novamente</button></div>}
           {!selected.mandatos.length && <div className="admin-board-empty"><UserRound size={22} /><p>Esta gestão ainda não possui integrantes.</p>{can('registros:excluir') && <button className="admin-delete-action" type="button" onClick={() => void deleteBoard()}><Trash2 size={14} /> Excluir gestão vazia</button>}</div>}
-          <div className="admin-record-list">{selected.mandatos.map(mandate => <article className="admin-record" key={mandate.id}>
-            <div><h3>{mandate.academico.nome}</h3><p>{mandate.cargo} · {dateLabel(mandate.inicioEm) || selected.inicioAno} até {dateLabel(mandate.fimEm) || selected.fimAno || 'atual'}</p></div>
-            <div className="admin-record-actions"><button className="admin-edit-action" type="button" onClick={() => setMandateEditor(mandate)}><Pencil size={14} /> Editar</button>{can('registros:excluir') && <button className="admin-delete-action" type="button" onClick={() => void deleteMandate(mandate)}><Trash2 size={14} /> Remover</button>}</div>
-          </article>)}</div>
+          <div className="admin-board-councils">{conselhos.map(conselho => {
+            const members = selected.mandatos.filter(item => (item.conselho ?? 'DIRETOR') === conselho.value)
+            return <section className="admin-board-council" key={conselho.value} aria-labelledby={`admin-${conselho.value}`}>
+              <div className="admin-board-council-heading"><div><span>Divisão da gestão</span><h3 id={`admin-${conselho.value}`}>{conselho.label}</h3></div><strong>{members.length}</strong></div>
+              {!members.length && <p className="admin-board-council-empty">Nenhum integrante cadastrado neste conselho.</p>}
+              <div className="admin-record-list">{members.map(mandate => <article className="admin-record" key={mandate.id}>
+                <div><h3>{mandate.academico.nome}</h3><p>{mandate.cargo} · {dateLabel(mandate.inicioEm) || selected.inicioAno} até {dateLabel(mandate.fimEm) || selected.fimAno || 'atual'}</p></div>
+                <div className="admin-record-actions"><button className="admin-edit-action" type="button" onClick={() => setMandateEditor(mandate)}><Pencil size={14} /> Editar</button>{can('registros:excluir') && <button className="admin-delete-action" type="button" onClick={() => void deleteMandate(mandate)}><Trash2 size={14} /> Remover</button>}</div>
+              </article>)}</div>
+            </section>
+          })}</div>
         </>}
       </div>
     </div>
@@ -113,13 +125,14 @@ function TermEditor({ current, csrfToken, onClose, onError, onSaved }: { current
 function MandateEditor({ current, board, people, csrfToken, onClose, onError, onSaved }: { current: AdminMandato | null; board: AdminGestao; people: PersonRecord[]; csrfToken: string | null; onClose: () => void; onError: (error: unknown) => void; onSaved: (board: AdminGestao) => void }) {
   const [person, setPerson] = useState(current?.academicoId ?? '')
   const [role, setRole] = useState(current?.cargo ?? '')
+  const [council, setCouncil] = useState<ConselhoTipo>(current?.conselho ?? 'DIRETOR')
   const [start, setStart] = useState(current?.inicioEm?.slice(0, 10) ?? '')
   const [end, setEnd] = useState(current?.fimEm?.slice(0, 10) ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const options = current && !people.some(item => item.id === current.academico.id) ? [current.academico, ...people] : people
   const submit = async (event: FormEvent) => { event.preventDefault(); if (!csrfToken || saving) return; setSaving(true); setError('')
-    try { onSaved(await saveMandato(board, { academicoId: person, cargo: role, inicioEm: start || null, fimEm: end || null }, csrfToken, current?.id)) } catch (reason) {
+    try { onSaved(await saveMandato(board, { academicoId: person, cargo: role, conselho: council, inicioEm: start || null, fimEm: end || null }, csrfToken, current?.id)) } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Não foi possível salvar o mandato.')
       onError(reason)
     } finally { setSaving(false) }
@@ -127,6 +140,7 @@ function MandateEditor({ current, board, people, csrfToken, onClose, onError, on
   return <NestedForm title={current ? 'Editar integrante' : 'Adicionar integrante'} onClose={onClose} busy={saving}><form onSubmit={submit}>
     {error && <p className="admin-state admin-state-error" role="alert">{error}</p>}
     <label className="admin-field admin-field-wide"><span>Acadêmico</span><select required value={person} onChange={event => setPerson(event.target.value)}><option value="" disabled>Selecione</option>{options.map(item => <option key={item.id} value={item.id}>{item.nome}{item.inMemoriam ? ' — in memoriam' : ''}</option>)}</select><small>O acadêmico precisa estar cadastrado anteriormente no quadro de membros.</small></label>
+    <label className="admin-field admin-field-wide"><span>Conselho</span><select required value={council} onChange={event => setCouncil(event.target.value as ConselhoTipo)}>{conselhos.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select><small>Escolha em qual divisão da gestão este integrante atua.</small></label>
     <label className="admin-field admin-field-wide"><span>Cargo</span><input required maxLength={100} value={role} onChange={event => setRole(event.target.value)} placeholder="Ex.: Presidente" /></label>
     <label className="admin-field"><span>Início no cargo (opcional)</span><input type="date" value={start} onChange={event => setStart(event.target.value)} /></label>
     <label className="admin-field"><span>Fim no cargo (opcional)</span><input type="date" min={start || undefined} value={end} onChange={event => setEnd(event.target.value)} /></label>

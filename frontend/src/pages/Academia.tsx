@@ -13,6 +13,11 @@ export default function Academia() {
   const info = state.data.info
   const gestao = state.data.gestao
   const diretoria = gestao?.diretoria ?? []
+  const conselhos = [
+    { id: 'DIRETOR', nome: 'Conselho Diretor' },
+    { id: 'CONSULTIVO', nome: 'Conselho Consultivo' },
+    { id: 'FISCAL', nome: 'Conselho Fiscal' },
+  ] as const
   const paragraphs = (value: string | null | undefined) => value ? value.split('\n\n').map((text, i) => <p className="formatted-text" key={i}><FormattedText text={text} /></p>) : <p>Informação ainda não disponibilizada.</p>
   const hino = info?.hinoLetra?.trim() ?? ''
   const hinoLinhas = hino.split('\n')
@@ -31,78 +36,50 @@ export default function Academia() {
       </section>
 
       {/* ── Sobre ── */}
-      <section className="academia-section wrap">
-        <div className="academia-grid">
-          <div className="academia-grid-label">
-            <span className="eyebrow">Missão</span>
-          </div>
-          <div className="academia-grid-body">
-
-            {paragraphs(info?.missao)}
-
-          </div>
-        </div>
+      <section className="academia-section academia-editorial wrap">
+        <header className="academia-editorial-heading">
+          <p className="eyebrow">Missão</p>
+          <h2 className="academia-h2">Literatura, cultura<br /><em>e pertencimento</em></h2>
+        </header>
+        <div className="academia-editorial-text academia-editorial-lede">{paragraphs(info?.missao)}</div>
       </section>
 
       {/* ── Linha divisória ── */}
       <div className="academia-divider wrap" />
 
       {/* ── Fundação ── */}
-      <section className="academia-section wrap">
-        <div className="academia-grid">
-          <div className="academia-grid-label">
-            <span className="eyebrow">Fundação</span>
-            <strong className="academia-ano">{info?.fundacaoAno ?? '—'}</strong>
-          </div>
-          <div className="academia-grid-body">
-            <h2 className="academia-h2">Uma casa nascida<br /><em>da palavra</em></h2>
-            {paragraphs(info?.historia)}
-
-          </div>
-        </div>
+      <section className="academia-section academia-editorial wrap">
+        <header className="academia-editorial-heading">
+          <div><p className="eyebrow">Fundação</p><h2 className="academia-h2">Uma casa nascida<br /><em>da palavra</em></h2></div>
+          <strong className="academia-editorial-stat"><span>Desde</span>{info?.fundacaoAno ?? '—'}</strong>
+        </header>
+        <div className="academia-editorial-text">{paragraphs(info?.historia)}</div>
       </section>
 
       <div className="academia-divider wrap" />
 
       {/* ── Sede ── */}
-      <section className="academia-section wrap">
-        <div className="academia-grid">
-          <div className="academia-grid-label">
-            <span className="eyebrow">Sede</span>
-          </div>
-          <div className="academia-grid-body">
-            <h2 className="academia-h2">O lugar da<br /><em>memória</em></h2>
-            {paragraphs(info?.sedeTexto)}
-            <div className="academia-endereco"><p className="eyebrow">Endereço</p><p>{info?.endereco ?? 'Endereço ainda não informado.'}</p></div>
-          </div>
-        </div>
+      <section className="academia-section academia-editorial wrap">
+        <header className="academia-editorial-heading"><div><p className="eyebrow">Sede</p><h2 className="academia-h2">O lugar da<br /><em>memória</em></h2></div></header>
+        <div className="academia-editorial-text">{paragraphs(info?.sedeTexto)}</div>
+        <div className="academia-endereco"><p className="eyebrow">Onde estamos</p><p>{info?.endereco ?? 'Endereço ainda não informado.'}</p></div>
       </section>
 
       <div className="academia-divider wrap" />
 
       {/* ── Trajetória ── */}
-      <section className="academia-section wrap">
-        <div className="academia-grid">
-          <div className="academia-grid-label">
-            <span className="eyebrow">Trajetória</span>
-            <strong className="academia-ano">{info?.fundacaoAno ? new Date().getFullYear() - info.fundacaoAno : '—'}<br /><span>anos</span></strong>
-          </div>
-          <div className="academia-grid-body">
-            <h2 className="academia-h2">Um templo vivo<br /><em>da palavra</em></h2>
-            {paragraphs(info?.trajetoriaTexto)}
-
-          </div>
-        </div>
+      <section className="academia-section academia-editorial wrap">
+        <header className="academia-editorial-heading">
+          <div><p className="eyebrow">Trajetória</p><h2 className="academia-h2">Um templo vivo<br /><em>da palavra</em></h2></div>
+          <strong className="academia-editorial-stat"><span>História</span>{info?.fundacaoAno ? new Date().getFullYear() - info.fundacaoAno : '—'} <small>anos</small></strong>
+        </header>
+        <div className="academia-editorial-text">{paragraphs(info?.trajetoriaTexto)}</div>
       </section>
 
       {hasHymn && <>
         <div className="academia-divider wrap" />
-        <section className="academia-section academia-hino wrap">
-          <div className="academia-grid">
-            <div className="academia-grid-label">
-              <span className="eyebrow">Símbolos e tradições</span>
-            </div>
-            <div className="academia-grid-body">
+        <section className="academia-section academia-editorial academia-hino wrap">
+          <header className="academia-editorial-heading"><div><p className="eyebrow">Símbolos e tradições</p><h2 className="academia-h2">A voz da<br /><em>Academia</em></h2></div></header>
               <div className={`academia-hino-card${hinoVideoId ? ' has-video' : ''}`}>
                 {hinoVideoId && <div className="academia-hino-thumb" aria-hidden="true">
                   <img src={youtubeThumbnail(hinoVideoId)} alt="" loading="lazy" />
@@ -119,8 +96,6 @@ export default function Academia() {
                   </NavLink>
                 </div>
               </div>
-            </div>
-          </div>
         </section>
       </>}
 
@@ -133,16 +108,20 @@ export default function Academia() {
               <h2>Diretoria <em>atual</em></h2>
             </div>
           </div>
-          <div className="diretoria-grid">
-            {diretoria.length === 0 && <p>Diretoria ainda não cadastrada.</p>}
-            {diretoria.map(d => (
-              <div className="diretoria-card" key={d.cargo}>
-                <p className="meta">{d.cargo}</p>
-                <h3>{d.nome}</h3>
-                <p className="diretoria-posse">Posse em {d.posse}</p>
-              </div>
-            ))}
-          </div>
+          {diretoria.length === 0 && <p>Conselhos ainda não cadastrados.</p>}
+          <div className="diretoria-conselhos">{conselhos.map(conselho => {
+            const integrantes = diretoria.filter(item => (item.conselho ?? 'DIRETOR') === conselho.id)
+            return <section className="diretoria-conselho" key={conselho.id} aria-labelledby={`conselho-${conselho.id}`}>
+              <div className="diretoria-conselho-heading"><p className="eyebrow">Composição institucional</p><h3 id={`conselho-${conselho.id}`}>{conselho.nome}</h3></div>
+              {integrantes.length ? <div className="diretoria-grid">{integrantes.map(d => (
+                <div className="diretoria-card" key={`${d.cargo}-${d.nome}`}>
+                  <p className="meta">{d.cargo}</p>
+                  <h3>{d.nome}</h3>
+                  <p className="diretoria-posse">Posse em {d.posse}</p>
+                </div>
+              ))}</div> : <p className="diretoria-conselho-empty">Composição ainda não informada.</p>}
+            </section>
+          })}</div>
           <div className="section-actions">
             <NavLink className="action-pill" to="/contato">
               Fale com a Academia <ArrowUpRight size={15} aria-hidden="true" />

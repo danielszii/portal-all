@@ -16,6 +16,11 @@ export default function AdminInstituicao() {
   const canEdit = can('instituicao:editar')
   const info = state.data.info
   const gestao = state.data.gestao
+  const conselhos = [
+    { id: 'DIRETOR', nome: 'Conselho Diretor' },
+    { id: 'CONSULTIVO', nome: 'Conselho Consultivo' },
+    { id: 'FISCAL', nome: 'Conselho Fiscal' },
+  ] as const
   const fields = [info?.nome, info?.fundacaoAno, info?.email, info?.telefone, info?.endereco, info?.horarioAtendimento, info?.historia, info?.missao]
   const completed = fields.filter(Boolean).length
   const progress = Math.round(completed / fields.length * 100)
@@ -73,7 +78,10 @@ export default function AdminInstituicao() {
           <aside className="admin-institution-panel admin-institution-board-panel" aria-labelledby="institution-board-title">
             <header><div><span>Gestão vigente</span><h2 id="institution-board-title">Diretoria</h2></div><Users size={20} aria-hidden="true" /></header>
             {gestao && <div className="admin-board-term"><CalendarDays size={16} /><span>Mandato</span><strong>{gestao.inicioAno} — {gestao.fimAno ?? 'atual'}</strong></div>}
-            {gestao?.diretoria.length ? <ol className="admin-institution-board">{gestao.diretoria.map((member, index) => <li key={`${member.cargo}-${member.nome}`}><span>{String(index + 1).padStart(2, '0')}</span><div><small>{member.cargo}</small><strong>{member.nome}</strong><p>Posse em {member.posse}</p></div></li>)}</ol> : <div className="admin-institution-empty"><Users size={24} /><strong>Diretoria não cadastrada</strong><p>Não há integrantes publicados para a gestão vigente.</p></div>}
+            {gestao?.diretoria.length ? <div className="admin-institution-councils">{conselhos.map(conselho => {
+              const members = gestao.diretoria.filter(member => (member.conselho ?? 'DIRETOR') === conselho.id)
+              return <section key={conselho.id}><h3>{conselho.nome}</h3>{members.length ? <ol className="admin-institution-board">{members.map((member, index) => <li key={`${member.cargo}-${member.nome}`}><span>{String(index + 1).padStart(2, '0')}</span><div><small>{member.cargo}</small><strong>{member.nome}</strong><p>Posse em {member.posse}</p></div></li>)}</ol> : <p className="admin-institution-council-empty">Nenhum integrante informado.</p>}</section>
+            })}</div> : <div className="admin-institution-empty"><Users size={24} /><strong>Conselhos não cadastrados</strong><p>Não há integrantes publicados para a gestão vigente.</p></div>}
           </aside>
         </div>
       </>}

@@ -176,7 +176,7 @@ test('API com migrations e PostgreSQL real', async t => {
     assert.equal(result.info.nome, 'Academia de teste')
     assert.deepEqual(result.gestao, {
       inicioAno: ano, fimAno: ano,
-      diretoria: [{ cargo: 'Presidente', nome: titular.nome, posse: String(ano) }],
+      diretoria: [{ cargo: 'Presidente', conselho: 'DIRETOR', nome: titular.nome, posse: String(ano) }],
     })
   })
 

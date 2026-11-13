@@ -479,7 +479,12 @@ público é preservado e não expõe esse metadado. Uma versão antiga retorna 4
 e uma versão ausente/malformada retorna 400. Duas criações simultâneas também
 não podem sobrescrever uma à outra.
 
-### Gestões, cargos e sucessões da diretoria
+### Gestões, conselhos, cargos e sucessões da diretoria
+
+Cada mandato pertence a um dos três conselhos institucionais por meio do campo
+`conselho`: `DIRETOR`, `CONSULTIVO` ou `FISCAL`. Cadastros antigos são mantidos
+como `DIRETOR`. Um mesmo nome de cargo pode existir simultaneamente em conselhos
+diferentes, mas não pode ser ocupado por duas pessoas no mesmo conselho e período.
 
 ```json
 {

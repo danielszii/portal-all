@@ -336,11 +336,13 @@ model MandatoDiretoria {
   gestaoId    String
   academicoId String
   cargo       String
+  conselho    String @default("DIRETOR")
   inicioEm    DateTime? @db.Date
   fimEm       DateTime? @db.Date
   gestao      Gestao @relation(fields: [gestaoId], references: [id], onDelete: Restrict)
   academico   Academico @relation(fields: [academicoId], references: [id], onDelete: Restrict)
   @@index([gestaoId])
+  @@index([gestaoId, conselho])
 }
 
 model ContatoMensagem {

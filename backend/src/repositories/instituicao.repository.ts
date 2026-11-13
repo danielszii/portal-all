@@ -30,12 +30,12 @@ export async function findInstituicao(now = new Date()) {
   const gestao = await prisma.gestao.findFirst({
     where: { inicioAno: { lte: ano }, OR: [{ fimAno: null }, { fimAno: { gte: ano } }] },
     orderBy: [{ inicioAno: 'desc' }, { id: 'asc' }],
-    include: { mandatos: { where: filtroMandatosAtuais(hoje), orderBy: [{ cargo: 'asc' }, { id: 'asc' }], include: { academico: true } } },
+    include: { mandatos: { where: filtroMandatosAtuais(hoje), orderBy: [{ conselho: 'asc' }, { cargo: 'asc' }, { id: 'asc' }], include: { academico: true } } },
   })
   return { info, gestao: gestao ? {
     inicioAno: gestao.inicioAno, fimAno: gestao.fimAno,
     diretoria: gestao.mandatos.map(m => ({
-      cargo: m.cargo, nome: m.academico.nome,
+      cargo: m.cargo, conselho: m.conselho ?? 'DIRETOR', nome: m.academico.nome,
       posse: m.inicioEm?.getUTCFullYear().toString() ?? gestao.inicioAno.toString(),
     })),
   } : null }

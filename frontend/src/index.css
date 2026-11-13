@@ -2357,6 +2357,68 @@ h2 {
   margin-bottom: 28px;
 }
 
+/* Leitura editorial: título e texto compartilham o mesmo eixo. */
+.academia-editorial {
+  display: grid;
+  gap: clamp(28px, 4vw, 44px);
+  max-width: 1080px;
+}
+
+.academia-editorial-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: clamp(28px, 6vw, 80px);
+  padding-bottom: clamp(22px, 3vw, 32px);
+  border-bottom: 1px solid var(--line);
+}
+
+.academia-editorial-heading .eyebrow {
+  margin: 0 0 14px;
+}
+
+.academia-editorial-heading .academia-h2 {
+  max-width: 760px;
+  margin: 0;
+}
+
+.academia-editorial-text {
+  width: min(100%, 760px);
+  margin-left: clamp(0px, 8vw, 120px);
+}
+
+.academia-editorial-text p {
+  margin: 0 0 20px;
+  color: var(--graphite);
+  font-size: clamp(16px, 1.5vw, 19px);
+  line-height: 1.8;
+}
+
+.academia-editorial-text p:last-child { margin-bottom: 0; }
+.academia-editorial-lede { width: min(100%, 850px); }
+.academia-editorial-lede p { color: var(--navy); font: 500 clamp(23px, 3vw, 34px)/1.45 var(--font-serif); }
+
+.academia-editorial-stat {
+  display: grid;
+  flex: 0 0 auto;
+  min-width: 150px;
+  color: var(--blue);
+  font: 600 clamp(38px, 5vw, 64px)/.95 var(--font-serif);
+  text-align: right;
+}
+
+.academia-editorial-stat span {
+  margin-bottom: 9px;
+  color: var(--muted);
+  font: 700 9px/1 var(--font-mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.academia-editorial-stat small { font: 700 9px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+.academia-editorial .academia-endereco { width: min(100%, 520px); margin: 0 0 0 clamp(0px, 8vw, 120px); border-radius: 20px; }
+.academia-editorial .academia-hino-card { width: 100%; max-width: none; }
+
 .academia-grid-body p {
   color: var(--graphite);
   font-size: 15px;
@@ -2477,6 +2539,10 @@ h2 {
   justify-content: space-between;
   margin-bottom: 28px;
 }
+
+.hino-feature-section .hino-feature-heading { margin-bottom: 0; }
+.hino-feature-section .hino-author { padding-bottom: 4px; text-align: right; }
+.hino-feature-section .hino-author strong { color: var(--navy); font-family: var(--font-serif); font-size: 1rem; letter-spacing: 0; text-transform: none; }
 
 .hino-feature-heading .academia-h2 {
   margin-bottom: 0;
@@ -2648,6 +2714,13 @@ h2 {
   letter-spacing: .1em;
   text-transform: uppercase;
 }
+
+.diretoria-conselhos { display: grid; gap: clamp(32px, 5vw, 56px); }
+.diretoria-conselho { display: grid; gap: 20px; }
+.diretoria-conselho-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.diretoria-conselho-heading .eyebrow { margin: 0 0 5px; }
+.diretoria-conselho-heading h3 { margin: 0; color: var(--heading-dark); font: 500 clamp(1.55rem, 3vw, 2.25rem)/1 var(--font-serif); }
+.diretoria-conselho-empty { margin: 0; padding: 22px; border: 1px solid var(--line); border-radius: 18px; color: var(--muted); }
 
 /* Academia — diretoria */
 .diretoria-grid {
@@ -6812,6 +6885,10 @@ span {
 .admin-institution-board small { color: var(--bronze); font: 600 .56rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
 .admin-institution-board strong { color: var(--heading-dark); font-size: .82rem; }
 .admin-institution-board p { margin: 0; color: var(--muted); font-size: .65rem; }
+.admin-institution-councils { display: grid; gap: 8px; padding-bottom: 18px; }
+.admin-institution-councils>section>h3 { margin: 0 18px; padding: 14px 0 10px; border-bottom: 1px solid var(--line); color: var(--navy); font: 600 1rem var(--font-serif); }
+.admin-institution-councils .admin-institution-board { padding-bottom: 4px; }
+.admin-institution-council-empty { margin: 0; padding: 14px 18px; color: var(--muted); font-size: .68rem; }
 .admin-institution-empty { display: grid; justify-items: center; padding: 48px 24px; color: var(--muted); text-align: center; }
 .admin-institution-empty strong { margin-top: 12px; color: var(--navy); }
 .admin-institution-empty p { margin: 5px 0 0; font-size: .72rem; }
@@ -6824,6 +6901,14 @@ span {
 .admin-board-toolbar>div span { color: var(--muted); font: .58rem var(--font-mono); text-transform: uppercase; }
 .admin-board-manager .admin-record { padding-inline: 4px; }
 .admin-board-manager .admin-record h3 { margin: 0; color: var(--heading-dark); font: 600 1.25rem/1.15 var(--font-serif); }
+.admin-board-councils { display: grid; gap: 20px; }
+.admin-board-council { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; }
+.admin-board-council-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; background: var(--surface-soft); }
+.admin-board-council-heading span { color: var(--muted); font: 600 .55rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.admin-board-council-heading h3 { margin: 4px 0 0; color: var(--navy); font: 600 1.2rem var(--font-serif); }
+.admin-board-council-heading>strong { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid var(--line); border-radius: 50%; color: var(--blue); font: 700 .65rem var(--font-mono); background: white; }
+.admin-board-council>.admin-record-list { padding: 0 18px; }
+.admin-board-council-empty { margin: 0; padding: 18px; color: var(--muted); font-size: .7rem; }
 .admin-board-empty { display: grid; justify-items: center; gap: 10px; padding: 32px 20px; color: var(--muted); text-align: center; }
 .admin-board-empty p { margin: 0; font-size: .72rem; }
 .admin-board-empty .admin-delete-action { min-height: 38px; padding: 0 13px; font: 700 8px/1 var(--font-mono); text-transform: uppercase; }
@@ -9419,6 +9504,12 @@ summary { cursor: pointer; }
   .hino-author {
     margin-top: 12px !important;
   }
+
+  .academia-editorial-heading { align-items: start; flex-direction: column; }
+  .academia-editorial-stat { min-width: 0; text-align: left; }
+  .academia-editorial-text,
+  .academia-editorial .academia-endereco { margin-left: 0; }
+  .hino-feature-section .hino-author { text-align: left; }
 }
 
 @media (max-width: 480px) {

@@ -5,10 +5,13 @@ export type AdminMandato = {
   id: string
   academicoId: string
   cargo: string
+  conselho: ConselhoTipo
   inicioEm: string | null
   fimEm: string | null
   academico: Pick<PersonRecord, 'id' | 'nome' | 'inMemoriam'>
 }
+
+export type ConselhoTipo = 'DIRETOR' | 'CONSULTIVO' | 'FISCAL'
 
 export type AdminGestao = {
   id: string
@@ -45,7 +48,7 @@ export async function removeGestao(current: AdminGestao, csrfToken: string) {
   invalidateInstituicao()
 }
 
-type MandatoValues = { academicoId: string; cargo: string; inicioEm: string | null; fimEm: string | null }
+type MandatoValues = { academicoId: string; cargo: string; conselho: ConselhoTipo; inicioEm: string | null; fimEm: string | null }
 
 export async function saveMandato(gestao: AdminGestao, values: MandatoValues, csrfToken: string, mandatoId?: string) {
   const suffix = mandatoId ? `/${encodeURIComponent(mandatoId)}` : ''

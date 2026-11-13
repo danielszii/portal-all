@@ -32,8 +32,10 @@ test('períodos de gestão e mandato exigem anos e datas civis válidos', () => 
   }
   const person = { academicoId: 'id', cargo: '  Primeiro   secretário ' }
   assert.equal(mandateInput(person).cargo, 'Primeiro secretário')
+  assert.equal(mandateInput(person).conselho, 'DIRETOR')
+  assert.equal(mandateInput({ ...person, conselho: 'FISCAL' }).conselho, 'FISCAL')
   for (const fields of [{ cargo: '' }, { academicoId: null }, { inicioEm: '2026-02-30' }, { inicioEm: '2026-01-01T00:00:00Z' },
-    { inicioEm: '2026-02-01', fimEm: '2026-01-31' }, { gestaoId: 'outra' }]) {
+    { inicioEm: '2026-02-01', fimEm: '2026-01-31' }, { conselho: 'OUTRO' }, { gestaoId: 'outra' }]) {
     assert.throws(() => mandateInput({ ...person, ...fields }))
   }
 })
@@ -45,6 +47,10 @@ test('diretoria impede cargos simultâneos equivalentes e permite sucessões sem
   assert.throws(() => validateBoard(term, [member('Presidente', null, '2026-06-30'), member('Presidente', '2026-06-30', null)]), /cargo/)
   assert.doesNotThrow(() => validateBoard(term, [member('Presidente', null, '2026-06-30'), member('Presidente', '2026-07-01', null)]))
   assert.doesNotThrow(() => validateBoard(term, [member('Presidente', null, null), member('Secretário', null, null)]))
+  assert.doesNotThrow(() => validateBoard(term, [
+    mandateInput({ academicoId: 'id', cargo: 'Presidente', conselho: 'DIRETOR' }),
+    mandateInput({ academicoId: 'outro', cargo: 'Presidente', conselho: 'FISCAL' }),
+  ]))
   for (const period of [['2025-12-31', null], [null, '2028-01-01'], ['2028-01-01', null]] as const) {
     assert.throws(() => validateBoard(term, [member('Presidente', period[0], period[1])]), /dentro dos anos/)
   }
