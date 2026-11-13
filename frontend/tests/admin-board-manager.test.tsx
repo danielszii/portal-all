@@ -83,4 +83,11 @@ test('erro ao salvar o período aparece no formulário e preserva os anos inform
   assert.equal(container.querySelector('.admin-board-manager-body > [role="alert"]'), null)
   assert.equal(container.querySelector('#board-editor-title')?.textContent, 'Editar período')
   assert.deepEqual([...container.querySelectorAll<HTMLInputElement>('.admin-nested-overlay input')].map(input => input.value), ['2026', '2027'])
+
+  await act(async () => container.querySelector<HTMLButtonElement>('.admin-nested-overlay button[aria-label="Fechar formulário"]')!.click())
+  const addButtons = [...container.querySelectorAll<HTMLButtonElement>('.admin-board-council-actions button')]
+  assert.equal(addButtons.length, 3)
+  await act(async () => addButtons[1].click())
+  const councilSelect = container.querySelectorAll<HTMLSelectElement>('.admin-nested-overlay select')[1]
+  assert.equal(councilSelect.value, 'CONSULTIVO')
 })

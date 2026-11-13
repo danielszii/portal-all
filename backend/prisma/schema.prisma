@@ -335,7 +335,7 @@ model MandatoDiretoria {
   id          String @id @default(uuid())
   gestaoId    String
   academicoId String
-  cargo       String
+  cargo       String?
   conselho    String @default("DIRETOR")
   inicioEm    DateTime? @db.Date
   fimEm       DateTime? @db.Date

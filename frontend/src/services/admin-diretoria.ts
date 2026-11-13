@@ -4,7 +4,7 @@ import { invalidateInstituicao } from './api.js'
 export type AdminMandato = {
   id: string
   academicoId: string
-  cargo: string
+  cargo: string | null
   conselho: ConselhoTipo
   inicioEm: string | null
   fimEm: string | null
@@ -48,7 +48,7 @@ export async function removeGestao(current: AdminGestao, csrfToken: string) {
   invalidateInstituicao()
 }
 
-type MandatoValues = { academicoId: string; cargo: string; conselho: ConselhoTipo; inicioEm: string | null; fimEm: string | null }
+type MandatoValues = { academicoId: string; cargo: string | null; conselho: ConselhoTipo; inicioEm: string | null; fimEm: string | null }
 
 export async function saveMandato(gestao: AdminGestao, values: MandatoValues, csrfToken: string, mandatoId?: string) {
   const suffix = mandatoId ? `/${encodeURIComponent(mandatoId)}` : ''

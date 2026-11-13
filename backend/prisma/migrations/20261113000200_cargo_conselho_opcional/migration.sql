@@ -1,0 +1,2 @@
+ALTER TABLE "MandatoDiretoria"
+ALTER COLUMN "cargo" DROP NOT NULL;

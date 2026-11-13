@@ -18,6 +18,10 @@ export default function Academia() {
     { id: 'CONSULTIVO', nome: 'Conselho Consultivo' },
     { id: 'FISCAL', nome: 'Conselho Fiscal' },
   ] as const
+  const conselhosComIntegrantes = conselhos.map(conselho => ({
+    ...conselho,
+    integrantes: diretoria.filter(item => (item.conselho ?? 'DIRETOR') === conselho.id),
+  })).filter(conselho => conselho.integrantes.length)
   const paragraphs = (value: string | null | undefined) => value ? value.split('\n\n').map((text, i) => <p className="formatted-text" key={i}><FormattedText text={text} /></p>) : <p>Informação ainda não disponibilizada.</p>
   const hino = info?.hinoLetra?.trim() ?? ''
   const hinoLinhas = hino.split('\n')
@@ -104,22 +108,23 @@ export default function Academia() {
         <div className="wrap">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">{gestao ? `Gestão ${gestao.inicioAno}–${gestao.fimAno ?? 'atual'}` : 'Diretoria'}</p>
+              <p className="eyebrow">Composição institucional</p>
               <h2>Diretoria <em>atual</em></h2>
             </div>
+            {gestao && <p className="diretoria-gestao"><span>Gestão</span>{gestao.inicioAno} — {gestao.fimAno ?? 'atual'}</p>}
           </div>
           {diretoria.length === 0 && <p>Conselhos ainda não cadastrados.</p>}
-          <div className="diretoria-conselhos">{conselhos.map(conselho => {
-            const integrantes = diretoria.filter(item => (item.conselho ?? 'DIRETOR') === conselho.id)
+          <div className="diretoria-conselhos">{conselhosComIntegrantes.map(conselho => {
+            const integrantes = conselho.integrantes
             return <section className="diretoria-conselho" key={conselho.id} aria-labelledby={`conselho-${conselho.id}`}>
-              <div className="diretoria-conselho-heading"><p className="eyebrow">Composição institucional</p><h3 id={`conselho-${conselho.id}`}>{conselho.nome}</h3></div>
-              {integrantes.length ? <div className="diretoria-grid">{integrantes.map(d => (
-                <div className="diretoria-card" key={`${d.cargo}-${d.nome}`}>
-                  <p className="meta">{d.cargo}</p>
+              <div className="diretoria-conselho-heading"><h3 id={`conselho-${conselho.id}`}>{conselho.nome}</h3><span>{integrantes.length} integrante{integrantes.length !== 1 ? 's' : ''}</span></div>
+              <div className="diretoria-grid">{integrantes.map((d, index) => (
+                <article className="diretoria-card" key={`${d.cargo}-${d.nome}`}>
+                  <div className="diretoria-card-top">{d.cargo ? <p className="meta">{d.cargo}</p> : <span className="diretoria-sem-cargo">Integrante</span>}<span>{String(index + 1).padStart(2, '0')}</span></div>
                   <h3>{d.nome}</h3>
-                  <p className="diretoria-posse">Posse em {d.posse}</p>
-                </div>
-              ))}</div> : <p className="diretoria-conselho-empty">Composição ainda não informada.</p>}
+                  <p className="diretoria-posse">Desde {d.posse}</p>
+                </article>
+              ))}</div>
             </section>
           })}</div>
           <div className="section-actions">

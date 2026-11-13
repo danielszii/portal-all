@@ -75,7 +75,7 @@ export const postContato = (dados: ContatoForm) => request<{ sucesso: boolean; m
 
 export type InstituicaoResponse = {
   info: { nome: string; historia: string; missao: string; endereco: string | null; email: string | null; telefone: string | null; fundacaoAno: number | null; sedeTexto: string | null; trajetoriaTexto: string | null; hinoTitulo?: string | null; hinoLetra?: string | null; hinoAutoria?: string | null; hinoApresentacao?: string | null; hinoCreditos?: string | null; hinoVideoUrl?: string | null; horarioAtendimento: string | null; emailImprensa?: string | null; mapaUrl?: string | null; redesSociais?: { nome: string; url: string }[] } | null
-  gestao: { inicioAno: number; fimAno: number | null; diretoria: { cargo: string; conselho: 'DIRETOR' | 'CONSULTIVO' | 'FISCAL'; nome: string; posse: string }[] } | null
+  gestao: { inicioAno: number; fimAno: number | null; diretoria: { cargo: string | null; conselho: 'DIRETOR' | 'CONSULTIVO' | 'FISCAL'; nome: string; posse: string }[] } | null
 }
 export const fetchInstituicao = (signal?: AbortSignal) => request<InstituicaoResponse>('/instituicao', { signal })
 export type PortalContent = {

@@ -32,9 +32,10 @@ test('períodos de gestão e mandato exigem anos e datas civis válidos', () => 
   }
   const person = { academicoId: 'id', cargo: '  Primeiro   secretário ' }
   assert.equal(mandateInput(person).cargo, 'Primeiro secretário')
+  assert.equal(mandateInput({ academicoId: 'id', cargo: '' }).cargo, null)
   assert.equal(mandateInput(person).conselho, 'DIRETOR')
   assert.equal(mandateInput({ ...person, conselho: 'FISCAL' }).conselho, 'FISCAL')
-  for (const fields of [{ cargo: '' }, { academicoId: null }, { inicioEm: '2026-02-30' }, { inicioEm: '2026-01-01T00:00:00Z' },
+  for (const fields of [{ academicoId: null }, { inicioEm: '2026-02-30' }, { inicioEm: '2026-01-01T00:00:00Z' },
     { inicioEm: '2026-02-01', fimEm: '2026-01-31' }, { conselho: 'OUTRO' }, { gestaoId: 'outra' }]) {
     assert.throws(() => mandateInput({ ...person, ...fields }))
   }
