@@ -64,9 +64,11 @@ export default function Academia() {
 
       {/* ── Sede ── */}
       <section className="academia-section academia-editorial wrap">
-        <header className="academia-editorial-heading"><div><p className="eyebrow">Sede</p><h2 className="academia-h2">O lugar da<br /><em>memória</em></h2></div></header>
+        <header className="academia-editorial-heading">
+          <div><p className="eyebrow">Sede</p><h2 className="academia-h2">O lugar da<br /><em>memória</em></h2></div>
+          <div className="academia-editorial-note"><span>Onde estamos</span><p>{info?.endereco ?? 'Endereço ainda não informado.'}</p></div>
+        </header>
         <div className="academia-editorial-text">{paragraphs(info?.sedeTexto)}</div>
-        <div className="academia-endereco"><p className="eyebrow">Onde estamos</p><p>{info?.endereco ?? 'Endereço ainda não informado.'}</p></div>
       </section>
 
       <div className="academia-divider wrap" />

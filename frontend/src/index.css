@@ -2378,13 +2378,15 @@ h2 {
 }
 
 .academia-editorial-heading .academia-h2 {
-  max-width: 760px;
+  max-width: 820px;
   margin: 0;
+  font-size: clamp(46px, 5.2vw, 72px);
+  line-height: .96;
 }
 
 .academia-editorial-text {
-  width: min(100%, 760px);
-  margin-left: clamp(0px, 8vw, 120px);
+  width: min(100%, 850px);
+  margin-left: 0;
 }
 
 .academia-editorial-text p {
@@ -2416,7 +2418,9 @@ h2 {
 }
 
 .academia-editorial-stat small { font: 700 9px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
-.academia-editorial .academia-endereco { width: min(100%, 520px); margin: 0 0 0 clamp(0px, 8vw, 120px); border-radius: 20px; }
+.academia-editorial-note { display: grid; flex: 0 1 300px; gap: 10px; padding-bottom: 4px; }
+.academia-editorial-note span { color: var(--muted); font: 700 9px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+.academia-editorial-note p { margin: 0; color: var(--graphite); font-size: 14px; line-height: 1.6; }
 .academia-editorial .academia-hino-card { width: 100%; max-width: none; }
 
 .academia-grid-body p {
@@ -9575,8 +9579,8 @@ summary { cursor: pointer; }
 
   .academia-editorial-heading { align-items: start; flex-direction: column; }
   .academia-editorial-stat { min-width: 0; text-align: left; }
-  .academia-editorial-text,
-  .academia-editorial .academia-endereco { margin-left: 0; }
+  .academia-editorial-heading .academia-h2 { font-size: clamp(40px, 11vw, 58px); }
+  .academia-editorial-note { flex-basis: auto; width: min(100%, 420px); }
   .hino-feature-section .hino-author { text-align: left; }
 }
 
