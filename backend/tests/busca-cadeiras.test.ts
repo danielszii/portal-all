@@ -35,7 +35,7 @@ test('buscas públicas encontram o número exato em decimal e romano sem alterar
     assert.deepEqual(chairs.map(c => c.number), ['XII'], term)
     const result = await search.json() as SearchPage
     assert.deepEqual(result, {
-      cadeiras: [{ number: 'XII', patron: 'Álvaro da Academia', holder: 'João' }],
+      cadeiras: [{ number: 'XII', category: 'Titular', patron: 'Álvaro da Academia', holder: 'João' }],
       noticias: [], acervo: [], page: 1, totalPages: 1,
     })
   }

@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
 import { cadeirasService } from '../services/cadeiras.service.js'
+import type { Cadeira } from '../types/index.js'
+
+const categorias = ['Titular', 'Correspondente', 'Honorário', 'In Memoriam', 'Vaga'] as const satisfies readonly NonNullable<Cadeira['category']>[]
 
 export const getCadeiras = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -27,7 +30,14 @@ export const getCadeiraPorNumero = async (req: Request, res: Response, next: Nex
       return
     }
 
-    const cadeira = await cadeirasService.getByNumber(numero)
+    const category = typeof req.query.categoria === 'string' && categorias.includes(req.query.categoria as typeof categorias[number])
+      ? req.query.categoria as typeof categorias[number]
+      : undefined
+    if (typeof req.query.categoria === 'string' && !category) {
+      res.status(400).json({ error: 'Categoria de membro inválida.' })
+      return
+    }
+    const cadeira = await cadeirasService.getByNumber(numero, category)
     res.json(cadeira)
   } catch (error) {
     next(error)

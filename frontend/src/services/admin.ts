@@ -17,7 +17,7 @@ export type AuditRecord = {
 }
 type Pessoa = { id: string; nome: string; biografia: string | null; fotoUrl: string | null; bioExtra?: string | null; inMemoriam?: boolean }
 export type CadeiraAdmin = {
-  id: string; numero: number; categoria?: 'TITULAR' | 'HONORARIO' | 'IN_MEMORIAM' | 'VAGA'; patrono: Pessoa; versao: string
+  id: string; numero: number; categoria?: 'TITULAR' | 'CORRESPONDENTE' | 'HONORARIO' | 'IN_MEMORIAM' | 'VAGA'; patrono: Pessoa; versao: string
   ocupacoes: { id: string; academicoId: string; vigente: boolean; fundador: boolean; inicioEm: string | null; inicioAno: number | null; fimEm?: string | null; fimAno?: number | null; academico: Pessoa }[]
 }
 export type EditorialRecord = {
@@ -121,7 +121,7 @@ export function adminItem(resource: AdminResource, record: AdminRecord): AdminLi
     const founder = ocupacoes.find(o => o.fundador)
     const occupant = current ?? (person ? ocupacoes.find(o => o.academicoId === person.id) : undefined)
     return { id: `${row.numero}:${row.categoria}:${row.id}`, title: person?.nome ?? `Cadeira ${row.numero} sem titular`, meta: `Cadeira ${row.numero} · Patrono: ${row.patrono.nome}`, status,
-      values: { nome: person?.nome ?? '', cadeira: String(row.numero), categoria: row.categoria === 'HONORARIO' ? 'Honorário' : row.categoria === 'IN_MEMORIAM' ? 'In Memoriam' : row.categoria === 'VAGA' ? 'Vaga' : row.categoria === 'TITULAR' ? 'Titular' : '', patrono: row.patrono.nome,
+      values: { nome: person?.nome ?? '', cadeira: String(row.numero), categoria: row.categoria === 'CORRESPONDENTE' ? 'Correspondente' : row.categoria === 'HONORARIO' ? 'Honorário' : row.categoria === 'IN_MEMORIAM' ? 'In Memoriam' : row.categoria === 'VAGA' ? 'Vaga' : 'Titular', patrono: row.patrono.nome,
         fundador: founder?.academico.nome ?? '', posse: occupant?.inicioEm?.slice(0, 10) ?? '', inicioAno: str(occupant?.inicioAno),
         fimEm: occupant?.fimEm?.slice(0, 10) ?? '',
         biografia: person?.biografia ?? '', bioExtra: person?.bioExtra ?? '', fotoUrl: person?.fotoUrl ?? '',
@@ -158,7 +158,7 @@ export function adminPayload(resource: AdminResource, v: FormValues, editing: bo
   const patrono = { nome: v.patrono, biografia: v.patronoBio || null, fotoUrl: v.patronoFoto || null }
   if (editing) return {
     numero: Number(v.cadeira),
-    categoria: v.categoria === 'Titular' ? 'TITULAR' : v.categoria === 'Honorário' ? 'HONORARIO' : v.categoria === 'In Memoriam' ? 'IN_MEMORIAM' : 'VAGA',
+    categoria: v.categoria === 'Titular' ? 'TITULAR' : v.categoria === 'Correspondente' ? 'CORRESPONDENTE' : v.categoria === 'Honorário' ? 'HONORARIO' : v.categoria === 'In Memoriam' ? 'IN_MEMORIAM' : 'VAGA',
     versao: v.versao,
     patrono,
     ...(v.ocupacaoAtualId ? {
@@ -171,7 +171,7 @@ export function adminPayload(resource: AdminResource, v: FormValues, editing: bo
     ...(v.posse ? { inicioEm: v.posse } : {}),
     ...(v.fundador?.trim() ? { fundador: { nome: v.fundador.trim() } } : {}),
   }
-  const categoria = v.categoria === 'Titular' ? 'TITULAR' : v.categoria === 'Honorário' ? 'HONORARIO' : v.categoria === 'In Memoriam' ? 'IN_MEMORIAM' : 'VAGA'
+  const categoria = v.categoria === 'Titular' ? 'TITULAR' : v.categoria === 'Correspondente' ? 'CORRESPONDENTE' : v.categoria === 'Honorário' ? 'HONORARIO' : v.categoria === 'In Memoriam' ? 'IN_MEMORIAM' : 'VAGA'
   return { numero: Number(v.cadeira), categoria, patrono, ...(isVaga ? {} : { academico, inicioEm: v.posse }),
     ...(v.fundador?.trim() ? { fundador: { nome: v.fundador.trim() } } : {}) }
 }

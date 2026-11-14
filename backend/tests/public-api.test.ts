@@ -36,7 +36,7 @@ for (const [path, delegate] of lists) {
 }
 
 test('detalhes inexistentes retornam 404 e IDs de notícia inválidos retornam 400', async t => {
-  mockMethod(t, prisma.cadeira, 'findUnique', async () => null)
+  mockMethod(t, prisma.cadeira, 'findFirst', async () => null)
   mockMethod(t, prisma.evento, 'findFirst', async () => null)
   const noticias = mockMethod(t, prisma.noticia, 'findFirst', async () => null)
   const url = await serve(t, createApp())

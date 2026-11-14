@@ -12,7 +12,7 @@ export async function findInicioCadeiras() {
       } },
     } },
   })
-  const items = rows.filter(row => row.categoria === 'TITULAR').map(row => {
+  const items = rows.filter(row => !row.categoria || row.categoria === 'TITULAR').map(row => {
     const { membro, status } = situacaoCadeira(row.ocupacoes)
     return { number: romano(row.numero), patron: row.patrono.nome,
       holder: membro?.nome ?? 'Vaga', image: membro?.fotoUrl ?? '',

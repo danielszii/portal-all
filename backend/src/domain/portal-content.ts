@@ -8,7 +8,7 @@ export const defaultPortalContent = {
   inicioTitulo: 'Literatura que atravessa o tempo.',
   inicioTexto: 'Preservamos a memória literária de Limoeiro do Norte e criamos espaço para as próximas vozes.',
   academiaIntroducao: 'A Academia Limoeirense de Letras existe para valorizar a língua portuguesa, celebrar a literatura nacional e preservar a cultura — especialmente a do Vale do Jaguaribe.',
-  cadeirasIntroducao: 'Conheça as cadeiras acadêmicas, seus patronos, fundadores, titulares e a sucessão histórica da Academia.',
+  cadeirasIntroducao: 'Conheça titulares, correspondentes, honorários, membros in memoriam, patronos e a sucessão histórica da Academia.',
   acervoIntroducao: 'Publicações da Academia Limoeirense de Letras. Acesso gratuito e irrestrito — sem cadastro.',
   agendaIntroducao: 'Acompanhe solenidades, posses, palestras, lançamentos e encontros promovidos pela Academia.',
   agendaAviso: 'Todos os eventos da Academia são abertos ao público e de entrada franca. Para informações sobre datas e programação, entre em contato com nossa secretaria.',

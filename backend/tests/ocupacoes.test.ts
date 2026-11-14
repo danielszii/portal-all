@@ -38,3 +38,22 @@ test('datas desconhecidas têm desempate estável e o titular vigente permanece 
   const current = { ...a, vigente: true, academico: person('Atual') }
   assert.equal(situacaoCadeira([b, current]).membro?.nome, 'Atual')
 })
+
+test('mapeia membros correspondentes e honorários com categoria e situação próprias', () => {
+  for (const [categoria, esperado] of [['CORRESPONDENTE', 'Correspondente'], ['HONORARIO', 'Honorário']] as const) {
+    const atual = { ...occupation(`membro-${categoria}`, '2020-01-01', false, false), vigente: true }
+    const cadeira = mapCadeira({
+      id: `c-${categoria}`,
+      numero: 1,
+      categoria,
+      patronoId: 'p',
+      criadoEm: new Date(),
+      atualizadoEm: new Date(),
+      patrono: person('Patrono'),
+      ocupacoes: [atual],
+    })
+    assert.equal(cadeira.category, esperado)
+    assert.equal(cadeira.status, esperado)
+    assert.equal(cadeira.sucessao?.[0]?.status, esperado)
+  }
+})

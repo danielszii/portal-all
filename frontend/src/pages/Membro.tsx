@@ -1,7 +1,7 @@
 import { useResource } from '@/hooks/useResource'
 import LoadState from '@/components/LoadState'
 import { useState, useCallback, useId } from 'react'
-import { useParams, NavLink } from 'react-router'
+import { useParams, NavLink, useSearchParams } from 'react-router'
 import { ArrowLeft, ArrowUpRight } from 'lucide-react'
 import type { Cadeira } from '@/types'
 import type { ProducaoLiteraria } from '@/types'
@@ -35,7 +35,9 @@ function TextoLiterario({ item }: { item: ProducaoLiteraria }) {
 
 export default function Membro() {
   const { numero } = useParams<{ numero: string }>()
-  const load = useCallback((signal: AbortSignal) => fetchCadeiraByNumber(numero ?? '', signal), [numero])
+  const [searchParams] = useSearchParams()
+  const categoria = searchParams.get('categoria') as Cadeira['category'] | null
+  const load = useCallback((signal: AbortSignal) => fetchCadeiraByNumber(numero ?? '', categoria ?? undefined, signal), [numero, categoria])
   const state = useResource<Cadeira | null>(load, null)
   if (state.loading || state.error) return <main><LoadState {...state} /></main>
   const chair = state.data
@@ -70,7 +72,7 @@ export default function Membro() {
           </div>
 
           <div className="membro-hero-meta">
-            <p className="eyebrow">Cadeira · {chairNumber}</p>
+            <p className="eyebrow">{chair.category ?? 'Cadeira'} · {chairNumber}</p>
             <h1 className="membro-name">{isVaga ? 'Cadeira Vaga' : chair.holder}</h1>
             <span className={isMemoriam || isVaga ? 'status memorial' : 'status'}>
               {chair.status}
@@ -166,7 +168,7 @@ export default function Membro() {
                   <div className="sucessao-row" key={i}>
                     <span className="sucessao-nome">{s.nome}</span>
                     <span className="sucessao-periodo">{s.periodo}</span>
-                    <span className={`status status-compact ${s.status !== 'Titular' ? 'memorial' : ''}`}>{s.status}</span>
+                    <span className={`status status-compact ${s.status === 'In memoriam' ? 'memorial' : ''}`}>{s.status}</span>
                   </div>
                 ))}
               </div>
@@ -187,6 +189,7 @@ export default function Membro() {
             <p className="eyebrow">Informações</p>
             <dl className="membro-aside-dl">
               <div><dt>Cadeira</dt><dd>{chairNumber}</dd></div>
+              <div><dt>Categoria</dt><dd>{chair.category ?? 'Titular'}</dd></div>
               <div><dt>Patrono</dt><dd>{chair.patron}</dd></div>
               <div><dt>Fundador</dt><dd>{chair.founder}</dd></div>
               <div><dt>Situação</dt><dd>{chair.status}</dd></div>

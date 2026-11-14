@@ -49,8 +49,8 @@ const query = (params: Record<string, string | undefined>) => {
   return result.toString()
 }
 export const fetchCadeiras = (status?: string, q?: string, signal?: AbortSignal) => request<Cadeira[]>(`/cadeiras?${query({ status, q })}`, { signal })
-export async function fetchCadeiraByNumber(numero: string, signal?: AbortSignal): Promise<Cadeira | null> {
-  try { return await request<Cadeira>(`/cadeiras/${encodeURIComponent(numero)}`, { signal }) }
+export async function fetchCadeiraByNumber(numero: string, categoria?: Cadeira['category'], signal?: AbortSignal): Promise<Cadeira | null> {
+  try { return await request<Cadeira>(`/cadeiras/${encodeURIComponent(numero)}?${query({ categoria })}`, { signal }) }
   catch (error) { if (error instanceof ApiError && error.status === 404) return null; throw error }
 }
 export const fetchEventos = (tipo?: string, signal?: AbortSignal) => request<Evento[]>(`/eventos?${query({ tipo })}`, { signal })

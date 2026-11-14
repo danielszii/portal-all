@@ -10,8 +10,8 @@ class CadeirasService {
     return this.repo.findAll(filters)
   }
 
-  async getByNumber(numero: string): Promise<Cadeira> {
-    const cadeira = await this.repo.findByNumber(numero)
+  async getByNumber(numero: string, category?: Cadeira['category']): Promise<Cadeira> {
+    const cadeira = await this.repo.findByNumber(numero, category)
     if (!cadeira) {
       throw new NotFoundError(`Cadeira ${numero} não encontrada.`)
     }

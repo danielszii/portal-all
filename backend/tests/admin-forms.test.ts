@@ -51,6 +51,13 @@ test('edição de cadeira não inventa data de posse e preserva campos ocultos',
   assert.equal(adminItem('cadeiras', exact).values.posse, '1998-06-17')
 })
 
+test('formulário administrativo envia as novas categorias de membros', () => {
+  const values = adminItem('cadeiras', { ...chair, categoria: 'CORRESPONDENTE' }).values
+  assert.equal(values.categoria, 'Correspondente')
+  assert.equal(adminPayload('cadeiras', values, true).categoria, 'CORRESPONDENTE')
+  assert.equal(adminPayload('cadeiras', { ...values, categoria: 'Honorário' }, true).categoria, 'HONORARIO')
+})
+
 test('salvamento envia cookie e CSRF e não oculta erro de sessão ou servidor', async t => {
   const calls: { path: string; init: RequestInit }[] = []
   const fetch = t.mock.method(globalThis, 'fetch', async (path: string, init: RequestInit) => {

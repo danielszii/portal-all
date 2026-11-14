@@ -8,7 +8,7 @@ export type Obra = {
 export type Sucessor = {
   nome: string
   periodo: string
-  status: 'Titular' | 'In memoriam' | 'Emérito'
+  status: 'Titular' | 'Correspondente' | 'Honorário' | 'In memoriam' | 'Emérito'
 }
 
 export type ProducaoLiteraria = {
@@ -19,7 +19,7 @@ export type ProducaoLiteraria = {
 
 export type Cadeira = {
   number: string
-  category?: 'Titular' | 'Honorário' | 'In Memoriam' | 'Vaga'
+  category?: 'Titular' | 'Correspondente' | 'Honorário' | 'In Memoriam' | 'Vaga'
   patron: string
   founder: string
   holder: string
@@ -98,7 +98,7 @@ export type ContatoMensagem = {
 }
 
 export type SearchPage = {
-  cadeiras: Pick<Cadeira, 'number' | 'patron' | 'holder'>[]
+  cadeiras: Pick<Cadeira, 'number' | 'category' | 'patron' | 'holder'>[]
   noticias: Pick<Noticia, 'id' | 'titulo'>[]
   acervo: Pick<AcervoItem, 'id' | 'title' | 'author'>[]
   page: number

@@ -20,18 +20,20 @@ export function mapCadeira(row: CadeiraRow): Cadeira {
   const titles = new Set(catalogo.map(obra => obra.titulo.trim().toLocaleLowerCase('pt-BR')))
   const obras = membro?.obras.filter(obra => !titles.has(obra.titulo.trim().toLocaleLowerCase('pt-BR')))
     .map(obra => ({ titulo: obra.titulo, ano: obra.ano ?? undefined, tipo: obra.tipo ?? undefined })) ?? []
+  const category = row.categoria === 'CORRESPONDENTE' ? 'Correspondente' : row.categoria === 'HONORARIO' ? 'Honorário' : row.categoria === 'IN_MEMORIAM' ? 'In Memoriam' : row.categoria === 'VAGA' ? 'Vaga' : 'Titular'
+  const displayStatus = category === 'Correspondente' || category === 'Honorário' ? category : status
   return {
     number: romano(row.numero),
-    category: row.categoria === 'HONORARIO' ? 'Honorário' : row.categoria === 'IN_MEMORIAM' ? 'In Memoriam' : row.categoria === 'VAGA' ? 'Vaga' : 'Titular',
+    category,
     patron: row.patrono.nome,
     founder: ocupacoes.find(o => o.fundador)?.academico.nome ?? '',
     holder: membro?.nome ?? 'Vaga', image: membro?.fotoUrl ?? '',
-    status,
+    status: displayStatus,
     bio: membro?.biografia ?? undefined, bioExtra: membro?.bioExtra ?? undefined,
     posse: atual?.inicioAno?.toString(), patronoBio: row.patrono.biografia ?? undefined,
     obras: [...catalogo, ...obras],
     producao: membro?.producoes.map(p => ({ titulo: p.titulo, tipo: p.tipo as ProducaoLiteraria['tipo'], texto: p.texto })) ?? [],
-    sucessao: ocupacoes.map(o => ({ nome: o.academico.nome, periodo: o.periodoTexto ?? `${o.inicioAno ?? '?'}–${o.vigente ? 'presente' : o.fimAno ?? '?'}`, status: o.academico.inMemoriam ? 'In memoriam' : 'Titular' })),
+    sucessao: ocupacoes.map(o => ({ nome: o.academico.nome, periodo: o.periodoTexto ?? `${o.inicioAno ?? '?'}–${o.vigente ? 'presente' : o.fimAno ?? '?'}`, status: o.academico.inMemoriam ? 'In memoriam' : category === 'Correspondente' || category === 'Honorário' ? category : 'Titular' })),
   }
 }
 const zone = 'America/Fortaleza'

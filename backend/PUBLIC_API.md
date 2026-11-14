@@ -15,6 +15,10 @@ persistência por conteúdo demonstrativo: retorna erro HTTP 500 sem detalhes in
 - O campo `number` da resposta mantém o contrato romano (`"XII"`); a formatação
   visual do número continua sob responsabilidade do consumidor.
 
+`GET /cadeiras/:numero?categoria=Correspondente` seleciona o perfil correto quando
+o mesmo número existe em categorias diferentes. Valores aceitos: `Titular`,
+`Correspondente`, `Honorário`, `In Memoriam` e `Vaga`.
+
 `GET /busca` retorna `{ cadeiras, noticias, acervo, page, totalPages }`, com itens
 resumidos. Aceita `page` e `pageSize` (máximo 50). Sem ambos, usa página 1 e tamanho
 30; ao informar paginação sem `pageSize`, usa o padrão 12. A paginação é aplicada
@@ -25,7 +29,7 @@ retornam `[]`; não repetem a última página. Termo vazio retorna os três grup
 
 | Rota | Parâmetros | Comportamento |
 | --- | --- | --- |
-| `/cadeiras` | `q` ou `search`, `status` | Número/nome e situação combinados. Situações: `Titular em exercício`, `In memoriam`, `Vaga`; `Todos` não restringe. |
+| `/cadeiras` | `q` ou `search`, `status` | Número/nome e situação combinados. Situações: `Titular em exercício`, `Correspondente`, `Honorário`, `In memoriam`, `Vaga`; `Todos` não restringe. |
 | `/eventos` | `tipo` | Tipo completo sem diferenciar caixa. `Todos` não restringe. Apenas publicados. |
 | `/noticias` | `q` ou `search`, `categoria`, `resumo`, `page`, `pageSize` | Busca em título, resumo, conteúdo e categoria, sem caixa/acentos. Apenas publicados cuja data de publicação já chegou. |
 | `/acervo` | `q` ou `search`, `tipo`, `page`, `pageSize` | Busca em título, autoria, descrição, edição, categoria e ano, sem caixa/acentos. Apenas publicados. |

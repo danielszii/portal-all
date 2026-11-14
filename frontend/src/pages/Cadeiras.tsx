@@ -9,20 +9,23 @@ import Pagination from '@/components/Pagination'
 import { formatNumeroCadeira } from '@/utils/formatters'
 import PortalText from '@/components/PortalText'
 
-type CadeiraFiltro = 'titulares' | 'honorarios' | 'memoriam'
+type CadeiraFiltro = 'titulares' | 'correspondentes' | 'honorarios' | 'memoriam'
 
 const filtros: { id: CadeiraFiltro; label: string }[] = [
   { id: 'titulares', label: 'Titulares' },
+  { id: 'correspondentes', label: 'Correspondentes' },
   { id: 'honorarios', label: 'Honorários' },
   { id: 'memoriam', label: 'In Memoriam' },
 ]
 
 function categoriaCadeira(chair: Cadeira): CadeiraFiltro | null {
+  if (chair.category === 'Correspondente') return 'correspondentes'
   if (chair.category === 'Honorário') return 'honorarios'
   if (chair.category === 'In Memoriam') return 'memoriam'
   if (chair.category === 'Titular' || chair.category === 'Vaga') return 'titulares'
   const status = chair.status.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
   if (status === 'in memoriam') return 'memoriam'
+  if (status.includes('correspondente')) return 'correspondentes'
   if (status.includes('honorari') || status.includes('emerit')) return 'honorarios'
   if (status.includes('titular')) return 'titulares'
   return null
@@ -68,17 +71,17 @@ export default function Cadeiras() {
                   className={filtro === id ? 'chair-filter active' : 'chair-filter'}
                   onClick={() => setFiltro(id)}
                 >
-                  {label} <span aria-label={`${quantidade} cadeiras`}>({quantidade})</span>
+                  {label} <span aria-label={`${quantidade} membros`}>({quantidade})</span>
                 </button>
               )
             })}
           </div>
           <div className="chair-grid chair-grid-catalog">
-            {cadeirasPorFiltro.length === 0 && <p role="status">Nenhuma cadeira encontrada para este filtro.</p>}
+            {cadeirasPorFiltro.length === 0 && <p role="status">Nenhum membro encontrado para esta categoria.</p>}
             {cadeirasVisiveis.map((chair) => (
               <NavLink
-                to={`/cadeiras/${chair.number.toLowerCase()}`}
-                key={chair.number}
+                to={`/cadeiras/${chair.number.toLowerCase()}?categoria=${encodeURIComponent(chair.category ?? 'Titular')}`}
+                key={`${chair.number}-${chair.category}`}
                 className="chair"
                 aria-label={`Cadeira ${formatNumeroCadeira(chair.number)} — ${chair.patron}`}
               >

@@ -127,7 +127,7 @@ export default function Home() {
           <div className="chair-grid">
             <LoadState {...cadeiras} />
             {chairs.map((chair) => (
-              <NavLink to={`/cadeiras/${chair.number.toLowerCase()}`} key={chair.number} className="chair" aria-label={`Cadeira ${formatNumeroCadeira(chair.number)} — ${chair.patron}`}>
+              <NavLink to={`/cadeiras/${chair.number.toLowerCase()}?categoria=Titular`} key={chair.number} className="chair" aria-label={`Cadeira ${formatNumeroCadeira(chair.number)} — ${chair.patron}`}>
                 <MemberPhotoFrame
                   src={chair.image}
                   alt={`Retrato de ${chair.holder}`}

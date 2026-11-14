@@ -46,7 +46,7 @@ function BuscaConteudo({ q }: { q: string }) {
     {results.page === 0 && <LoadState {...state} />}
     {results.page > 0 && q && <section className="page-section search-results wrap">
       {results.cadeiras.length + results.noticias.length + results.acervo.length === 0 && <div className="empty-search"><h3>Nenhum resultado</h3><p>Tente pesquisar por outro nome, título ou palavra-chave.</p></div>}
-      {results.cadeiras.map(c => <article className="search-result" key={c.number}><span className="meta">Cadeira</span><NavLink to={`/cadeiras/${c.number.toLowerCase()}`}>Cadeira {formatNumeroCadeira(c.number)} — {c.holder} · {c.patron}</NavLink></article>)}
+      {results.cadeiras.map(c => <article className="search-result" key={`${c.number}-${c.category}`}><span className="meta">{c.category ?? 'Cadeira'}</span><NavLink to={`/cadeiras/${c.number.toLowerCase()}?categoria=${encodeURIComponent(c.category ?? 'Titular')}`}>Cadeira {formatNumeroCadeira(c.number)} — {c.holder} · {c.patron}</NavLink></article>)}
       {results.noticias.map(n => <article className="search-result" key={n.id}><span className="meta">Notícia</span><NavLink to={`/noticias?id=${n.id}`}>{n.titulo}</NavLink></article>)}
       {results.acervo.map(a => <article className="search-result" key={a.id}><span className="meta">Acervo</span><NavLink to={`/acervo?q=${encodeURIComponent(a.title)}`}>{a.title} — {a.author}</NavLink></article>)}
       <LoadState loading={state.loading && page > 1} error={state.error} retry={state.retry} />

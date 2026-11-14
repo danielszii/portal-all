@@ -101,6 +101,7 @@ enum StatusEditorial {
 
 enum CategoriaCadeira {
   TITULAR
+  CORRESPONDENTE
   HONORARIO
   IN_MEMORIAM
   VAGA

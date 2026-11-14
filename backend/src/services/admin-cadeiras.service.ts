@@ -15,8 +15,8 @@ export const adminCadeiraInclude = {
 
 type AuditCadeira = Prisma.CadeiraGetPayload<{ include: typeof adminCadeiraInclude }>
 function chairCategory(value: unknown): CategoriaCadeira {
-  if (value === 'TITULAR' || value === 'HONORARIO' || value === 'IN_MEMORIAM' || value === 'VAGA') return value
-  throw new ValidationError('Selecione uma categoria válida para a cadeira: Titular, Honorário, In Memoriam ou Vaga.')
+  if (value === 'TITULAR' || value === 'CORRESPONDENTE' || value === 'HONORARIO' || value === 'IN_MEMORIAM' || value === 'VAGA') return value
+  throw new ValidationError('Selecione uma categoria válida para o membro: Titular, Correspondente, Honorário, In Memoriam ou Vaga.')
 }
 function chairWhere(numero: number, categoria?: CategoriaCadeira) {
   return categoria ? { numero, categoria } : { numero }

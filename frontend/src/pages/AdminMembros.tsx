@@ -7,13 +7,13 @@ export default function AdminMembros() {
   return <AdminResourcePage
     resource="cadeiras"
     title="Gerenciar" emphasis="membros"
-    description="Atualize titulares, patronos, biografias e a situação das cadeiras."
+    description="Atualize titulares, correspondentes, honorários, patronos e biografias."
     singular="Membro"
     relatedActions={[{ label: 'Cadastros sem vínculo', to: '/admin/pessoas' }]}
     fields={[
       { name: 'nome', label: 'Nome completo', requiredWhen: values => values.categoria !== 'Vaga' },
       { name: 'cadeira', label: 'Número da cadeira', type: 'number', required: true, min: 1, max: 3999 },
-      { name: 'categoria', label: 'Categoria da cadeira', type: 'select', required: true, options: ['Titular', 'Honorário', 'In Memoriam', 'Vaga'] },
+      { name: 'categoria', label: 'Categoria do membro', type: 'select', required: true, options: ['Titular', 'Correspondente', 'Honorário', 'In Memoriam', 'Vaga'] },
       { name: 'patrono', label: 'Nome do patrono', required: true },
       { name: 'patronoBio', label: 'Biografia do patrono', type: 'textarea', maxLength: 20000, help: 'Este texto aparece no card “Patrono da cadeira” do perfil público do membro.' },
       { name: 'patronoFotoArquivo', label: 'Foto do patrono (até 10 MB)', type: 'file', accept: imageAccept, urlField: 'patronoFoto', help: 'Opcional. A foto permanece vinculada ao cadastro do patrono.' },
@@ -24,7 +24,7 @@ export default function AdminMembros() {
       { name: 'foto', label: 'Foto institucional (até 10 MB)', type: 'file', accept: imageAccept, urlField: 'fotoUrl' },
     ]}
     renderPreview={values => {
-      const status = values.categoria === 'In Memoriam' ? 'In memoriam' : values.categoria === 'Vaga' ? 'Vaga' : 'Titular em exercício'
+      const status = values.categoria === 'Correspondente' || values.categoria === 'Honorário' ? values.categoria : values.categoria === 'In Memoriam' ? 'In memoriam' : values.categoria === 'Vaga' ? 'Vaga' : 'Titular em exercício'
       const photo = values.fotoPreview || values.fotoUrl
       return (
         <article className="admin-member-preview-card">

@@ -323,6 +323,10 @@ ao administrador antes de chamar essa rota.
 - POST `/cadeiras`: cria cadeira ou substitui titular após confirmação.
 - PUT `/cadeiras/:numero`: corrige dados, sem substituir titular.
 
+O campo obrigatório `categoria` aceita `TITULAR`, `CORRESPONDENTE`, `HONORARIO`,
+`IN_MEMORIAM` e `VAGA`. Número e categoria identificam conjuntamente o cadastro,
+permitindo que categorias diferentes reutilizem a mesma numeração.
+
 As consultas de acadêmicos e patronos retornam todas as pessoas por padrão,
 inclusive as vinculadas, para permitir reutilizar cadastros. O filtro opcional
 `semVinculos=true` retorna somente pessoas que podem ser excluídas: acadêmicos
@@ -343,6 +347,7 @@ Cadastro de cadeira nova:
 ```json
 {
   "numero": 12,
+  "categoria": "CORRESPONDENTE",
   "patrono": { "nome": "Nome do patrono", "biografia": "Biografia", "fotoUrl": "" },
   "academico": { "nome": "Nome do titular", "biografia": "Biografia", "bioExtra": "", "fotoUrl": "" },
   "inicioEm": "2026-09-23"
