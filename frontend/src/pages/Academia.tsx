@@ -42,8 +42,7 @@ export default function Academia() {
       {/* ── Sobre ── */}
       <section className="academia-section academia-editorial wrap">
         <header className="academia-editorial-heading">
-          <p className="eyebrow">Missão</p>
-          <h2 className="academia-h2">Literatura, cultura<br /><em>e pertencimento</em></h2>
+          <div><p className="eyebrow">Missão</p><h2 className="academia-h2">Literatura, cultura<br /><em>e pertencimento</em></h2></div>
         </header>
         <div className="academia-editorial-text academia-editorial-lede">{paragraphs(info?.missao)}</div>
       </section>
