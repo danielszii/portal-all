@@ -89,16 +89,19 @@ function dateInFortaleza() {
 
 export async function createOrReplaceCadeira(input: unknown, actor: AuditActor) {
   const b = v.object(input)
-  v.keys(b, ['numero', 'categoria', 'patronoId', 'patrono', 'academicoId', 'academico', 'inicioEm', 'fundadorId', 'fundador', 'confirmarSubstituicao', 'ocupacaoAtualId', 'confirmarHomonimos'])
+  v.keys(b, ['numero', 'categoria', 'patronoId', 'patrono', 'academicoId', 'academico', 'academicoFotoUrl', 'inicioEm', 'fundadorId', 'fundador', 'confirmarSubstituicao', 'ocupacaoAtualId', 'confirmarHomonimos'])
   const homonyms = confirmedHomonyms(b.confirmarHomonimos)
   const numero = v.integer(b.numero, 'numero', 1, 3999)
   const categoria = chairCategory(b.categoria)
-  const inicioEm = categoria === 'VAGA' ? undefined : v.day(b.inicioEm, 'inicioEm')
+  const inicioEm = categoria === 'VAGA' || b.inicioEm === undefined || b.inicioEm === null || b.inicioEm === ''
+    ? undefined : v.day(b.inicioEm, 'inicioEm')
   const confirmar = v.bool(b.confirmarSubstituicao)
   if (categoria !== 'VAGA' && (b.academicoId === undefined) === (b.academico === undefined)) throw new ValidationError('Informe academicoId ou academico, exclusivamente.')
   if (categoria === 'VAGA' && (b.academicoId !== undefined || b.academico !== undefined)) throw new ValidationError('Uma cadeira vaga não pode ter titular.')
   const novo = b.academico === undefined ? undefined : pessoa(b.academico)
   const academicoId = b.academicoId === undefined ? undefined : v.text(b.academicoId, 'academicoId', 100)
+  const academicoFotoUrl = b.academicoFotoUrl === undefined ? undefined : v.mediaUrl(b.academicoFotoUrl, 'academicoFotoUrl', 'image')
+  if (academicoFotoUrl && !academicoId) throw new ValidationError('A foto adicional exige a seleção de um acadêmico existente.')
   const novoPatrono = b.patrono === undefined ? undefined : patrono(b.patrono)
   const novoFundador = b.fundador === undefined ? undefined : pessoa(b.fundador)
   if (novoFundador && b.fundadorId !== undefined) throw new ValidationError('Informe fundador ou fundadorId, exclusivamente.')
@@ -136,6 +139,13 @@ export async function createOrReplaceCadeira(input: unknown, actor: AuditActor) 
       ? await tx.academico.findUnique({ where: { id: academicoId } })
       : await tx.academico.create({ data: categoria === 'IN_MEMORIAM' ? { ...novo!, inMemoriam: true } : novo! })
     if (categoria !== 'VAGA' && !membro) throw new AppError('Acadêmico não encontrado.', 404)
+    if (categoria === 'IN_MEMORIAM' && membro && await tx.ocupacaoCadeira.findFirst({ where: { academicoId: membro.id, vigente: true } })) {
+      throw new ValidationError('Um acadêmico que ocupa uma cadeira vigente não pode ser marcado in memoriam.')
+    }
+    if (membro && (academicoFotoUrl || categoria === 'IN_MEMORIAM')) await tx.academico.update({
+      where: { id: membro.id },
+      data: { ...(academicoFotoUrl ? { fotoUrl: academicoFotoUrl } : {}), ...(categoria === 'IN_MEMORIAM' ? { inMemoriam: true } : {}) },
+    })
     if (categoria !== 'VAGA' && categoria !== 'IN_MEMORIAM' && membro?.inMemoriam) throw new ValidationError('Um acadêmico in memoriam não pode assumir a titularidade.')
     if (categoria !== 'VAGA' && categoria !== 'IN_MEMORIAM' && await tx.ocupacaoCadeira.findFirst({ where: { academicoId: membro!.id, vigente: true } })) throw new AppError('Acadêmico já ocupa uma cadeira.', 409)
     const isNew = !cadeira
@@ -145,26 +155,30 @@ export async function createOrReplaceCadeira(input: unknown, actor: AuditActor) 
       if (!p) throw new AppError('Patrono não encontrado.', 404)
       cadeira = await tx.cadeira.create({ data: { numero, categoria, patronoId: p.id }, include: adminCadeiraInclude })
     }
-    if (atual && inicioEm) await tx.ocupacaoCadeira.update({ where: { id: atual.id }, data: { vigente: false, fimEm: inicioEm, fimAno: inicioEm.getUTCFullYear(), periodoTexto: null } })
+    if (atual) await tx.ocupacaoCadeira.update({ where: { id: atual.id }, data: {
+      vigente: false, fimEm: inicioEm ?? null, fimAno: inicioEm?.getUTCFullYear() ?? null, periodoTexto: null,
+    } })
     const fundadorId = isNew && novoFundador ? (await tx.academico.create({ data: novoFundador })).id
       : isNew && b.fundadorId !== undefined ? v.text(b.fundadorId, 'fundadorId', 100) : undefined
     if (isNew && membro && fundadorId && fundadorId !== membro.id) {
       if (!await tx.academico.findUnique({ where: { id: fundadorId } })) throw new AppError('Fundador não encontrado.', 404)
       await tx.ocupacaoCadeira.create({ data: { cadeiraId: cadeira.id, academicoId: fundadorId, fundador: true, vigente: false } })
     }
-    if (membro && inicioEm) await tx.ocupacaoCadeira.create({ data: { cadeiraId: cadeira.id, academicoId: membro.id,
-      vigente: categoria !== 'IN_MEMORIAM', fundador: isNew && (!fundadorId || fundadorId === membro.id), inicioEm, inicioAno: inicioEm.getUTCFullYear() } })
+    if (membro) await tx.ocupacaoCadeira.create({ data: { cadeiraId: cadeira.id, academicoId: membro.id,
+      vigente: categoria !== 'IN_MEMORIAM', fundador: isNew && (!fundadorId || fundadorId === membro.id),
+      inicioEm: inicioEm ?? null, inicioAno: inicioEm?.getUTCFullYear() ?? null } })
     const saved = await tx.cadeira.findFirstOrThrow({ where: chairWhere(numero, categoria), include: adminCadeiraInclude })
     await auditCadeira(tx, actor, isNew ? 'CRIAR' : 'TROCAR_TITULAR', saved, before)
     return { created: isNew, cadeira: saved }
   })
 }
 
-export async function editCadeira(numero: number, input: unknown, actor: AuditActor) {
+export async function editCadeira(numero: number, input: unknown, actor: AuditActor, sourceCategory?: unknown) {
   const b = v.object(input)
   v.keys(b, ['numero', 'categoria', 'patrono', 'academico', 'ocupacaoAtualId', 'academicoId', 'inicioEm', 'fundador', 'versao'])
   const novoNumero = b.numero === undefined ? numero : v.integer(b.numero, 'numero', 1, 3999)
   const categoria = chairCategory(b.categoria)
+  const categoriaOriginal = sourceCategory === undefined ? categoria : chairCategory(sourceCategory)
   if (typeof b.versao !== 'string' || !/^[a-f0-9]{64}$/.test(b.versao)) {
     throw new ValidationError('Informe a versão recebida ao abrir a cadeira. Reabra a edição antes de salvar.')
   }
@@ -182,7 +196,7 @@ export async function editCadeira(numero: number, input: unknown, actor: AuditAc
   return prisma.$transaction(async tx => {
     await lock(tx, numero)
     if (novoNumero !== numero) await lock(tx, novoNumero)
-    const cadeira = await tx.cadeira.findFirst({ where: { numero }, include: adminCadeiraInclude })
+    const cadeira = await tx.cadeira.findFirst({ where: { numero, categoria: categoriaOriginal }, include: adminCadeiraInclude })
     if (!cadeira) throw new AppError('Cadeira não encontrada.', 404)
     const duplicate = await tx.cadeira.findFirst({ where: { numero: novoNumero, categoria, NOT: { id: cadeira.id } }, include: adminCadeiraInclude })
     if (duplicate) throw new CadeiraConflict(duplicate, duplicate.ocupacoes.find(o => o.vigente)?.id ?? null)
@@ -190,7 +204,7 @@ export async function editCadeira(numero: number, input: unknown, actor: AuditAc
       throw new AppError('Esta cadeira ou uma pessoa vinculada foi alterada. Reabra a edição e confira os dados antes de salvar.', 409)
     }
     const atual = cadeira.ocupacoes.find(o => o.vigente)
-    const { membro } = situacaoCadeira(cadeira.ocupacoes)
+    const { membro } = situacaoCadeira(cadeira.ocupacoes, cadeira.categoria === 'IN_MEMORIAM')
     const targetOcupacao = atual
       ?? (academicoId ? cadeira.ocupacoes.find(o => o.academicoId === academicoId) : undefined)
       ?? (membro ? cadeira.ocupacoes.find(o => o.academicoId === membro.id) : undefined)
@@ -205,8 +219,22 @@ export async function editCadeira(numero: number, input: unknown, actor: AuditAc
     if (p) await tx.patrono.update({ where: { id: cadeira.patronoId }, data: p })
 
     const targetAcademicoId = atual?.academicoId ?? targetOcupacao?.academicoId
-    if (a && targetAcademicoId) {
-      await tx.academico.update({ where: { id: targetAcademicoId }, data: a })
+    if (categoria === 'IN_MEMORIAM' && !targetOcupacao) {
+      throw new ValidationError('Uma cadeira In Memoriam precisa manter o registro do acadêmico homenageado.')
+    }
+    if (categoria === 'IN_MEMORIAM' && targetOcupacao) {
+      const outraOcupacaoVigente = await tx.ocupacaoCadeira.findFirst({
+        where: { academicoId: targetOcupacao.academicoId, vigente: true, NOT: { id: targetOcupacao.id } },
+      })
+      if (outraOcupacaoVigente) throw new ValidationError('Um acadêmico que ocupa outra cadeira vigente não pode ser marcado in memoriam.')
+    }
+    if (categoria !== 'VAGA' && categoria !== 'IN_MEMORIAM' && targetOcupacao?.academico.inMemoriam) {
+      throw new ValidationError('Um acadêmico in memoriam não pode assumir a titularidade.')
+    }
+    if ((a || categoria === 'IN_MEMORIAM') && targetAcademicoId) {
+      await tx.academico.update({ where: { id: targetAcademicoId }, data: {
+        ...a, ...(categoria === 'IN_MEMORIAM' ? { inMemoriam: true } : {}),
+      } })
     }
 
     if (inicioEm !== undefined && targetOcupacao) {
@@ -256,7 +284,7 @@ export async function editCadeira(numero: number, input: unknown, actor: AuditAc
       }
     }
 
-    const encerraOcupacao = categoria === 'VAGA' && atual
+    const encerraOcupacao = (categoria === 'VAGA' || categoria === 'IN_MEMORIAM') && atual
     if (encerraOcupacao) {
       const fimEm = new Date(`${dateInFortaleza()}T00:00:00.000Z`)
       await tx.ocupacaoCadeira.update({

@@ -74,6 +74,26 @@ test('busca global pagina depois de filtrar e não repete cadeiras após a últi
   assert.deepEqual(numeric.cadeiras, [])
 })
 
+test('busca global mantém cadeiras de categorias diferentes com o mesmo número', async t => {
+  const rows = ['TITULAR', 'HONORARIO'].map(categoria => ({
+    numero: 1, categoria, patrono: { nome: 'Patrono da Academia' }, ocupacoes: [],
+  }))
+  const chairs = mockMethod(t, prisma.cadeira, 'findMany', async ({ orderBy }: { orderBy: unknown }) => {
+    assert.deepEqual(orderBy, [{ numero: 'asc' }, { categoria: 'asc' }])
+    return rows
+  })
+  mockMethod(t, prisma, '$transaction', async callback => callback({
+    $queryRaw: async (query: { sql: string }) => query.sql.startsWith('SELECT count') ? [{ total: 0 }] : [],
+  }))
+  const url = await serve(t, createApp())
+  const first = await (await fetch(url + '/api/busca?q=academia&pageSize=1&page=1')).json() as SearchPage
+  const second = await (await fetch(url + '/api/busca?q=academia&pageSize=1&page=2')).json() as SearchPage
+
+  assert.equal(chairs.mock.callCount(), 2)
+  assert.equal(first.cadeiras[0].category, 'Titular')
+  assert.equal(second.cadeiras[0].category, 'Honorário')
+})
+
 test('termo vazio preserva a listagem de cadeiras e os resultados vazios da busca global', async t => {
   const url = await searchApp(t)
   const chairs = await (await fetch(url + '/api/cadeiras?q=%20')).json() as Cadeira[]

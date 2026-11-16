@@ -59,7 +59,7 @@ export default function AdminAcervo() {
         {values.compraUrl && <span className="admin-preview-purchase">Disponível para compra</span>}
         <span className="admin-preview-link">
           <span className="admin-preview-action-long">Ler / visualizar</span>
-          <span className="admin-preview-action-short">Visualizar</span>
+          <span className="admin-preview-action-short">Ler / visualizar</span>
           <ArrowUpRight size={13} />
         </span>
       </div>

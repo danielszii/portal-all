@@ -169,7 +169,7 @@ router.post('/cadeiras', handle(async (req, res) => {
   const result = await createOrReplaceCadeira(req.body, actor(res))
   res.status(result.created ? 201 : 200).json(withCadeiraVersion(result.cadeira))
 }))
-router.put('/cadeiras/:numero', handle(async (req, res) => { const ref = chairReference(req.params.numero, req.body); res.json(withCadeiraVersion(await editCadeira(ref.numero, req.body, actor(res)))) }))
+router.put('/cadeiras/:numero', handle(async (req, res) => { const ref = chairReference(req.params.numero, req.body); res.json(withCadeiraVersion(await editCadeira(ref.numero, req.body, actor(res), ref.categoria))) }))
 // Lookup de pessoas existentes evita duplicações durante cadastro de cadeiras.
 for (const name of ['academicos', 'patronos'] as const) {
   router.delete(`/${name}/:id`, handle(async (req, res) => {

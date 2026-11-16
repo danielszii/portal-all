@@ -4,6 +4,7 @@ import type { FiltroCadeirasDTO } from '../dtos/cadeira.dto.js'
 import { cadeiraInclude, mapCadeira, numeroCadeira } from './mappers.js'
 import { matchesCadeiraSearch } from './cadeira-search.js'
 import type { CategoriaCadeira } from '@prisma/client'
+import { AppError } from '../errors/app.error.js'
 export interface ICadeirasRepository {
   findAll(filters?: FiltroCadeirasDTO): Promise<Cadeira[]>
   findByNumber(number: string, category?: Cadeira['category']): Promise<Cadeira | null>
@@ -24,8 +25,16 @@ class PrismaCadeirasRepository implements ICadeirasRepository {
     const numero = numeroCadeira(number)
     if (!numero) return null
     const categoria = categoryValue(category)
-    const row = await prisma.cadeira.findFirst({ where: { numero, ...(categoria ? { categoria } : {}) }, orderBy: { categoria: 'asc' }, include: cadeiraInclude })
-    return row ? mapCadeira(row) : null
+    const rows = await prisma.cadeira.findMany({
+      where: { numero, ...(categoria ? { categoria } : {}) },
+      orderBy: { categoria: 'asc' },
+      take: 2,
+      include: cadeiraInclude,
+    })
+    if (!categoria && rows.length > 1) {
+      throw new AppError('Há mais de uma cadeira com este número. Acesse o quadro de cadeiras e selecione a categoria correta.', 409)
+    }
+    return rows[0] ? mapCadeira(rows[0]) : null
   }
 }
 export const cadeirasRepository = new PrismaCadeirasRepository()

@@ -1,5 +1,6 @@
 import { situacaoCadeira } from '../../../backend/src/domain/ocupacoes.js'
 import { maxUploadBytes, mediaMimeTypes, type MediaKind } from '../../../backend/src/domain/media.js'
+import { invalidateCadeiras } from './api.js'
 
 export type AdminResource = 'noticias' | 'acervo' | 'biblioteca' | 'agenda' | 'cadeiras'
 export type AdminPage<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number }
@@ -117,7 +118,7 @@ const editorialLabel = (value: string) => ({ PUBLICADO: 'Visível no site', RASC
 export function adminItem(resource: AdminResource, record: AdminRecord): AdminListItem {
   if (resource === 'cadeiras') {
     const row = record as CadeiraAdmin
-    const { atual: current, membro: person, ocupacoes, status } = situacaoCadeira(row.ocupacoes)
+    const { atual: current, membro: person, ocupacoes, status } = situacaoCadeira(row.ocupacoes, row.categoria === 'IN_MEMORIAM')
     const founder = ocupacoes.find(o => o.fundador)
     const occupant = current ?? (person ? ocupacoes.find(o => o.academicoId === person.id) : undefined)
     return { id: `${row.numero}:${row.categoria}:${row.id}`, title: person?.nome ?? `Cadeira ${row.numero} sem titular`, meta: `Cadeira ${row.numero} · Patrono: ${row.patrono.nome}`, status,
@@ -172,7 +173,7 @@ export function adminPayload(resource: AdminResource, v: FormValues, editing: bo
     ...(v.fundador?.trim() ? { fundador: { nome: v.fundador.trim() } } : {}),
   }
   const categoria = v.categoria === 'Titular' ? 'TITULAR' : v.categoria === 'Correspondente' ? 'CORRESPONDENTE' : v.categoria === 'Honorário' ? 'HONORARIO' : v.categoria === 'In Memoriam' ? 'IN_MEMORIAM' : 'VAGA'
-  return { numero: Number(v.cadeira), categoria, patrono, ...(isVaga ? {} : { academico, inicioEm: v.posse }),
+  return { numero: Number(v.cadeira), categoria, patrono, ...(isVaga ? {} : { academico, ...(v.posse ? { inicioEm: v.posse } : {}) }),
     ...(v.fundador?.trim() ? { fundador: { nome: v.fundador.trim() } } : {}) }
 }
 
@@ -184,6 +185,7 @@ export async function saveAdminForm(resource: AdminResource, values: FormValues,
   for (;;) {
     try {
       await adminRequest(`/${resource}${id ? '/' + encodeURIComponent(id) : ''}`, { method: id ? 'PUT' : 'POST', body, csrfToken })
+      if (resource === 'cadeiras') invalidateCadeiras()
       return true
     } catch (error) {
       if (!(error instanceof AdminApiError) || resource !== 'cadeiras' || id !== null) throw error
@@ -201,6 +203,8 @@ export async function saveAdminForm(resource: AdminResource, values: FormValues,
         let selected = false
         for (const person of candidates) {
           if (await confirm(`Já existe um cadastro de ${person.nome}${person.descricao ? `: ${person.descricao}` : ''}. Usar esta pessoa como ${role === 'academico' ? 'titular' : role}, preservando seus dados? OK reutiliza o cadastro; Cancelar permite conferir as outras opções.`)) {
+            const academic = role === 'academico' ? body.academico as { fotoUrl?: unknown } | undefined : undefined
+            if (typeof academic?.fotoUrl === 'string' && academic.fotoUrl) body.academicoFotoUrl = academic.fotoUrl
             delete body[role]
             body[`${role}Id`] = person.id
             selected = true

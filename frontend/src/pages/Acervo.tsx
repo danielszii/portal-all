@@ -176,7 +176,7 @@ function AcervoConteudo() {
           <div className="archive-grid">
             {lista.map(book => (
               <article className="archive-book" key={book.id}>
-                <button type="button" className="archive-cover-button" onClick={() => setPdfAberto(book)} aria-label={`Ver detalhes de ${book.title}`}>
+                <button type="button" className="archive-cover-button" onClick={() => setPdfAberto(book)} aria-label={`Ler / visualizar ${book.title}`}>
                   <span className={`archive-cover ${book.color} ${book.cover ? 'has-image' : ''}`}>
                     {book.cover ? <img src={book.cover} alt={`Capa de ${book.title}`} /> : <>
                     <span>A.L.L.</span>
@@ -196,8 +196,8 @@ function AcervoConteudo() {
                   {book.purchaseUrl && <span className="archive-purchase-badge"><ShoppingBag size={13} aria-hidden="true" /> Disponível para compra</span>}
                   <div className="archive-book-actions">
                     <button type="button" className="archive-book-link archive-book-link-primary" onClick={() => setPdfAberto(book)}>
-                      <span className="archive-action-long">{book.purchaseUrl ? 'Ver detalhes' : 'Ler / visualizar'}</span>
-                      <span className="archive-action-short">{book.purchaseUrl ? 'Detalhes' : 'Visualizar'}</span>
+                      <span className="archive-action-long">Ler / visualizar</span>
+                      <span className="archive-action-short">Ler / visualizar</span>
                       <ArrowUpRight size={14} aria-hidden="true" />
                     </button>
                   </div>

@@ -90,6 +90,14 @@ export function invalidateInstituicao() {
   publicRequests.delete('/instituicao')
   institutionListeners.forEach(listener => listener())
 }
+export function invalidateCadeiras() {
+  for (const path of [...publicCache.keys(), ...publicRequests.keys()]) {
+    if (path.startsWith('/cadeiras') || path === '/inicio/cadeiras') {
+      publicCache.delete(path)
+      publicRequests.delete(path)
+    }
+  }
+}
 export function subscribeInstituicao(listener: () => void) {
   institutionListeners.add(listener)
   return () => { institutionListeners.delete(listener) }

@@ -326,6 +326,14 @@ ao administrador antes de chamar essa rota.
 O campo obrigatório `categoria` aceita `TITULAR`, `CORRESPONDENTE`, `HONORARIO`,
 `IN_MEMORIAM` e `VAGA`. Número e categoria identificam conjuntamente o cadastro,
 permitindo que categorias diferentes reutilizem a mesma numeração.
+`inicioEm` é opcional ao criar ou substituir uma ocupação. Sem data, a ocupação é
+mantida normalmente com início desconhecido; numa sucessão sem data, a ocupação
+anterior é encerrada sem inventar uma data de término. Datas informadas continuam
+sujeitas às validações cronológicas.
+Ao confirmar o uso de um acadêmico já cadastrado, uma foto enviada no mesmo
+formulário atualiza somente a foto do cadastro, preservando a biografia existente.
+Ao criar uma cadeira `IN_MEMORIAM`, o acadêmico vinculado também é marcado como
+in memoriam, inclusive quando seu cadastro já existia.
 
 As consultas de acadêmicos e patronos retornam todas as pessoas por padrão,
 inclusive as vinculadas, para permitir reutilizar cadastros. O filtro opcional

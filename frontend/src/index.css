@@ -7273,6 +7273,21 @@ summary { cursor: pointer; }
   gap: 9px;
 }
 
+.admin-file-image-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-file-image-preview img {
+  width: 72px;
+  height: 88px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--linen);
+  object-fit: cover;
+}
+
 .admin-account-option {
   display: flex;
   align-items: center;

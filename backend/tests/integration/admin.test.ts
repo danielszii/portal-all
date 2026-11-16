@@ -126,6 +126,51 @@ test('administração com sessão e PostgreSQL real', async t => {
     assert.equal(replaced.vigente, true)
     assert.equal(replaced.fimEm, null)
   })
+  await t.test('data de posse é opcional sem omitir ou datar a ocupação', async () => {
+    const body = { numero: 3004, categoria: 'TITULAR', patrono: { nome: 'Patrono sem data' }, academico: { nome: 'Primeiro sem data' } }
+    const { data: created } = await request('/cadeiras', 'POST', body, 201)
+    const first = created.ocupacoes.find((occupation: { vigente: boolean }) => occupation.vigente)
+    assert.ok(first)
+    assert.equal(first.inicioEm, null)
+    assert.equal(first.inicioAno, null)
+
+    const replacement = { numero: 3004, categoria: 'TITULAR', academico: { nome: 'Sucessor sem data' } }
+    const { data: conflict } = await request('/cadeiras', 'POST', replacement, 409)
+    const { data: updated } = await request('/cadeiras', 'POST', {
+      ...replacement, confirmarSubstituicao: true, ocupacaoAtualId: conflict.ocupacaoAtualId,
+    })
+    const historical = updated.ocupacoes.find((occupation: { id: string }) => occupation.id === first.id)
+    const current = updated.ocupacoes.find((occupation: { vigente: boolean }) => occupation.vigente)
+    assert.equal(historical.vigente, false)
+    assert.equal(historical.fimEm, null)
+    assert.equal(historical.fimAno, null)
+    assert.ok(current)
+    assert.equal(current.inicioEm, null)
+    assert.equal(current.inicioAno, null)
+  })
+  await t.test('cadeira in memoriam reutiliza o acadêmico existente e publica a foto enviada', async () => {
+    const person = await prisma.academico.create({ data: { nome: 'Memorial com foto existente' } })
+    const photo = '/uploads/memorial-existing.webp'
+    const { data: created } = await request('/cadeiras', 'POST', {
+      numero: 3005, categoria: 'IN_MEMORIAM', patrono: { nome: 'Patrono memorial' },
+      academicoId: person.id, academicoFotoUrl: photo,
+    }, 201)
+    assert.equal(created.ocupacoes[0].academico.inMemoriam, true)
+    assert.equal(created.ocupacoes[0].academico.fotoUrl, photo)
+    await request('/cadeiras', 'POST', {
+      numero: 3005, categoria: 'TITULAR', patrono: { nome: 'Patrono titular mesmo número' },
+      academico: { nome: 'Titular mesmo número' },
+    }, 201)
+    const edited = await request('/cadeiras/3005:IN_MEMORIAM', 'PUT', {
+      categoria: 'IN_MEMORIAM', versao: created.versao, academicoId: person.id,
+      academico: { nome: person.nome, biografia: 'Biografia atualizada', fotoUrl: photo },
+    })
+    assert.equal(edited.data.ocupacoes[0].academico.biografia, 'Biografia atualizada')
+    const publicChair = await (await fetch(base + '/api/cadeiras/3005?categoria=In%20Memoriam')).json() as { holder: string; image: string; status: string }
+    assert.equal(publicChair.holder, person.nome)
+    assert.equal(publicChair.image, photo)
+    assert.equal(publicChair.status, 'In memoriam')
+  })
   await t.test('formulários do frontend gravam conteúdo e preservam arquivos, datas e histórico no PostgreSQL', async forms => {
     const realFetch = globalThis.fetch.bind(globalThis)
     forms.mock.method(globalThis, 'fetch', async (path: string | URL | Request, init?: RequestInit) => {
@@ -198,16 +243,21 @@ test('administração com sessão e PostgreSQL real', async t => {
       const record = await loadAdminRecord('cadeiras', '3010') as CadeiraAdmin
       assert.equal(record.ocupacoes.length, 2)
       assert.equal(record.ocupacoes.find(o => o.fundador)?.academico.nome, values.nome)
-      const editable = adminItem('cadeiras', record).values
+      const editableItem = adminItem('cadeiras', record)
+      const editable = editableItem.values
       assert.equal(editable.posse, '2021-01-01')
-      const invalid = { ...editable, nome: 'Não deve persistir', patrono: 'Também não deve persistir', status: 'In memoriam', fimEm: '2019-01-01' }
-      await assert.rejects(saveAdminForm('cadeiras', invalid, '3010', csrf, confirm), /preceder/)
+      const invalid = { ...editable, nome: 'Não deve persistir', patrono: 'Também não deve persistir', categoria: 'In Memoriam', posse: '2019-01-01' }
+      await assert.rejects(saveAdminForm('cadeiras', invalid, editableItem.id, csrf, confirm), /preceder/)
       const unchanged = await loadAdminRecord('cadeiras', '3010') as CadeiraAdmin
       assert.equal(unchanged.patrono.nome, values.patrono)
       assert.equal(unchanged.ocupacoes.find(o => o.vigente)?.academico.nome, replacement.nome)
-      await saveAdminForm('cadeiras', { ...editable, status: 'In memoriam', fimEm: '2022-01-01' }, '3010', csrf, confirm)
+      await saveAdminForm('cadeiras', { ...editable, categoria: 'In Memoriam' }, editableItem.id, csrf, confirm)
       const ended = await loadAdminRecord('cadeiras', '3010') as CadeiraAdmin
       assert.equal(ended.ocupacoes.some(o => o.vigente), false)
+      const endedOccupation = ended.ocupacoes.find(o => o.academico.nome === replacement.nome)
+      assert.ok(endedOccupation)
+      assert.ok(endedOccupation.fimEm)
+      assert.equal(endedOccupation.academico.inMemoriam, true)
       assert.equal(adminItem('cadeiras', ended).status, 'In memoriam')
       const publicChair = await (await realFetch(base + '/api/cadeiras/3010')).json() as { image: string; status: string; sucessao: unknown[] }
       assert.equal(publicChair.status, 'In memoriam')

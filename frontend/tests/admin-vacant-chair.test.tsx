@@ -20,6 +20,7 @@ test('cadeira vaga permite adicionar titular preservando número e patrono', asy
   const chair = {
     id: 'chair-12',
     numero: 12,
+    categoria: 'VAGA',
     versao: 'b'.repeat(64),
     patrono: { id: 'patron-12', nome: 'Patrono da cadeira', biografia: null, fotoUrl: null },
     ocupacoes: [{
@@ -47,7 +48,7 @@ test('cadeira vaga permite adicionar titular preservando número e patrono', asy
     if (path === '/api/admin/cadeiras?page=1&pageSize=20&q=') {
       return Response.json({ items: [chair], total: 1, page: 1, pageSize: 20, totalPages: 1 })
     }
-    if (path === '/api/admin/cadeiras/12' && init.method === 'GET') return Response.json(chair)
+    if (path === '/api/admin/cadeiras/12%3AVAGA%3Achair-12' && init.method === 'GET') return Response.json(chair)
     if (path === '/api/admin/cadeiras' && init.method === 'POST') {
       const body = JSON.parse(String(init.body)) as Record<string, unknown>
       writes.push({ path, body })
@@ -95,7 +96,7 @@ test('cadeira vaga permite adicionar titular preservando número e patrono', asy
   const chairNumber = form.querySelector<HTMLInputElement>('[name="cadeira"]')!
   assert.equal(chairNumber.value, '12')
   assert.equal(chairNumber.disabled, true)
-  assert.equal(form.querySelector<HTMLSelectElement>('[name="status"]')!.value, 'Titular em exercício')
+  assert.equal(form.querySelector<HTMLSelectElement>('[name="categoria"]')!.value, 'Titular')
   assert.equal(form.querySelector<HTMLInputElement>('[name="nome"]')!.disabled, false)
   assert.equal(form.querySelector<HTMLInputElement>('[name="posse"]')!.disabled, false)
   assert.equal(form.querySelector<HTMLInputElement>('[name="patrono"]')!.value, 'Patrono da cadeira')

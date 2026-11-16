@@ -36,7 +36,7 @@ for (const [path, delegate] of lists) {
 }
 
 test('detalhes inexistentes retornam 404 e IDs de notícia inválidos retornam 400', async t => {
-  mockMethod(t, prisma.cadeira, 'findFirst', async () => null)
+  mockMethod(t, prisma.cadeira, 'findMany', async () => [])
   mockMethod(t, prisma.evento, 'findFirst', async () => null)
   const noticias = mockMethod(t, prisma.noticia, 'findFirst', async () => null)
   const url = await serve(t, createApp())
@@ -49,6 +49,28 @@ test('detalhes inexistentes retornam 404 e IDs de notícia inválidos retornam 4
     assert.equal((await fetch(url + '/api/noticias/' + id)).status, 400, id)
   }
   assert.equal(noticias.mock.callCount(), 1)
+})
+
+test('detalhe não escolhe cadeira arbitrária quando o número tem mais de uma categoria', async t => {
+  const rows = [
+    { numero: 1, categoria: 'TITULAR', patrono: { nome: 'Patrono titular' }, ocupacoes: [] },
+    { numero: 1, categoria: 'HONORARIO', patrono: { nome: 'Patrono honorário' }, ocupacoes: [] },
+  ]
+  mockMethod(t, prisma.cadeira, 'findMany', async ({ where }: { where: { categoria?: string } }) =>
+    rows.filter(row => row.categoria === where.categoria || where.categoria === undefined))
+  const url = await serve(t, createApp())
+
+  const ambiguous = await fetch(url + '/api/cadeiras/I')
+  assert.equal(ambiguous.status, 409)
+  assert.match((await ambiguous.json() as { error: string }).error, /categoria correta/)
+
+  const titular = await fetch(url + '/api/cadeiras/I?categoria=Titular')
+  assert.equal(titular.status, 200)
+  assert.equal((await titular.json() as { category: string }).category, 'Titular')
+
+  const honorario = await fetch(url + '/api/cadeiras/I?categoria=Honorário')
+  assert.equal(honorario.status, 200)
+  assert.equal((await honorario.json() as { category: string }).category, 'Honorário')
 })
 
 test('instituição sem cadastro não inventa conteúdo nem diretoria', async t => {
