@@ -16,9 +16,9 @@ export function text(value: unknown, name: string, max = 300): string {
 export function optionalText(value: unknown, name: string, max = 20000) {
   return value === null || value === undefined || value === '' ? null : text(value, name, max)
 }
-export function formattedText(value: unknown, name: string, max = 20000): string {
-  if (typeof value !== 'string' || !value.trim() || value.length > max || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)) {
-    throw new ValidationError(`${name}: texto obrigatório, até ${max} caracteres.`)
+export function formattedText(value: unknown, name: string, max: number | null = 20000): string {
+  if (typeof value !== 'string' || !value.trim() || (max !== null && value.length > max) || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)) {
+    throw new ValidationError(max === null ? `${name}: texto obrigatório.` : `${name}: texto obrigatório, até ${max} caracteres.`)
   }
   return value.replace(/\r\n?/g, '\n')
 }

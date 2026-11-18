@@ -8,11 +8,24 @@ import { prisma } from '../src/db/prisma.js'
 import { mockMethod } from './mock-method.js'
 import { envConfig } from '../src/config/env.config.js'
 import { formattedText } from '../src/services/admin-validation.js'
+import { portalInput } from '../src/services/admin-portal.service.js'
 
 test('textos formatados preservam tabulações e parágrafos sem aceitar controles inválidos', () => {
   assert.equal(formattedText('\tPrimeiro\r\n\r\n\t**Segundo**', 'texto'), '\tPrimeiro\n\n\t**Segundo**')
   assert.throws(() => formattedText('   ', 'texto'))
   assert.throws(() => formattedText('texto\u0000', 'texto'))
+})
+
+test('introdução da Academia não tem limite de caracteres', () => {
+  const academiaIntroducao = 'Apresentação institucional. '.repeat(1000)
+  const data = portalInput({
+    heroSlides: [{ title: 'Título', emphasis: 'Ênfase', description: 'Descrição' }],
+    inicioTitulo: 'Título', inicioTexto: 'Texto', academiaIntroducao,
+    cadeirasIntroducao: 'Cadeiras', acervoIntroducao: 'Acervo', agendaIntroducao: 'Agenda',
+    agendaAviso: 'Aviso', noticiasIntroducao: 'Notícias', contatoIntroducao: 'Contato',
+    contatoAssuntos: ['Informações'],
+  })
+  assert.equal(data.academiaIntroducao, academiaIntroducao)
 })
 
 test('senhas usam salt individual e não aceitam uma senha incorreta', async () => {
