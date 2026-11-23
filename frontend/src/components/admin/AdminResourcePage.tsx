@@ -63,7 +63,7 @@ export default function AdminResourcePage(props: Props) {
       const values = adminItem(resource, await loadAdminRecord(resource, item.id)).values
       if (resource === 'cadeiras' && item.status === 'Vaga') {
         setEditor({ id: null, fixedChairNumber: true, values: {
-          ...values, nome: '', posse: '', fimEm: '',
+          ...values, categoria: 'Titular', nome: '', posse: '', fimEm: '',
           biografia: '', bioExtra: '', fotoUrl: '',
         } })
       } else setEditor({ id: item.id, values })
@@ -240,12 +240,14 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
           {fields.filter(field => !(field.onlyEnd && (!editing || !values.ocupacaoAtualId))).map(field => {
             const hasMember = Boolean(values.ocupacaoAtualId || values.academicoId || values.nome?.trim())
             const isCadeiraSemMembro = resource === 'cadeiras' && editing && !hasMember
-            const disabled = readOnly || saving || (editing && field.readOnlyOnEdit)
+            const disabled = readOnly || saving || (fixedChairNumber && field.name === 'cadeira') || (editing && field.readOnlyOnEdit)
               || (isCadeiraSemMembro && ['nome', 'biografia', 'bioExtra', 'foto', 'status', 'posse', 'fimEm'].includes(field.name))
 
             const required = (field.requiredWhen ? field.requiredWhen(values) : field.required) || (field.publishedRequired && values.status === 'PUBLICADO')
             const options = field.options?.map(option => typeof option === 'string' ? { value: option, label: option } : option)
             const stored = field.urlField ? values[field.urlField] : ''
+            const imageOnly = field.accept?.split(',').every(type => type.trim().startsWith('image/')) ?? false
+            const filePreview = imageOnly ? values[`${field.name}Preview`] || stored : ''
             if (field.type === 'publication') return <fieldset className='admin-publication-choice admin-field-wide' key={field.name}>
               <legend>{field.label}</legend>
               <p>Escolha o que deve acontecer com este conteúdo ao salvar.</p>
@@ -300,6 +302,10 @@ function AdminEditor({ resource, fields, singular, renderPreview, editor, fixedC
                       update(`${field.name}Preview`, preview)
                     }} />
                     {stored && <small>Arquivo atual preservado se nenhum novo for escolhido.</small>}
+                    {filePreview && <span className="admin-file-image-preview">
+                      <img src={filePreview} alt={`${field.label} — ${values[`${field.name}Preview`] ? 'prévia do arquivo escolhido' : 'imagem atual'}`} />
+                      <small>{values[`${field.name}Preview`] ? 'Prévia do arquivo escolhido' : 'Imagem atualmente salva'}</small>
+                    </span>}
                   </> : <input name={field.name} type={field.type || 'text'} disabled={disabled} required={required} min={field.min} max={field.max} maxLength={field.maxLength} step={field.type === 'datetime-local' ? '0.001' : undefined} placeholder={field.placeholder} value={values[field.name] ?? ''} onChange={event => update(field.name, event.target.value)} />}
               {field.help && <small>{field.help}</small>}
               {field.name === 'posse' && editing && !values.posse && values.inicioAno && <small>Registro histórico informa somente o ano {values.inicioAno}; nenhuma data foi inventada.</small>}

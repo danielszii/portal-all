@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useInstituicao } from '@/hooks/useInstituicao'
 import LoadState from '@/components/LoadState'
 import { NavLink } from 'react-router'
@@ -8,6 +9,7 @@ import { youtubeThumbnail, youtubeVideoId } from '@/utils/youtube'
 
 
 export default function Academia() {
+  const [introExpanded, setIntroExpanded] = useState(false)
   const state = useInstituicao()
   if (state.loading || state.error) return <main><LoadState {...state} /></main>
   const info = state.data.info
@@ -36,7 +38,18 @@ export default function Academia() {
       {/* ── Hero da página ── */}
       <section className="page-hero wrap">
         <h1 className="page-title">Academia</h1>
-        <PortalText className="page-lede" field="academiaIntroducao" />
+        <div id="academia-intro-copy" className={`academia-intro-copy${introExpanded ? '' : ' is-collapsed'}`}>
+          <PortalText className="page-lede academia-intro-text" field="academiaIntroducao" />
+          <button
+            type="button"
+            className="academia-intro-toggle"
+            aria-expanded={introExpanded}
+            aria-controls="academia-intro-copy"
+            onClick={() => setIntroExpanded(expanded => !expanded)}
+          >
+            {introExpanded ? 'Ler menos' : 'Ler mais'}
+          </button>
+        </div>
       </section>
 
       {/* ── Sobre ── */}

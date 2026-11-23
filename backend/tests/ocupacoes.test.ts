@@ -22,6 +22,25 @@ test('fundador sem ano não substitui o último titular no painel nem no portal'
   assert.deepEqual(publicChair.sucessao?.map(o => o.nome), ['fundador', 'ultimo'])
 })
 
+test('cadeira In Memoriam reconhece titular legado sem marcação e mantém sua foto', () => {
+  const memorial = {
+    ...occupation('memorial', null, false, false),
+    academico: { ...person('memorial', false), fotoUrl: '/uploads/memorial.webp' },
+  }
+  const row = {
+    id: 'c-memorial', numero: 22, categoria: 'IN_MEMORIAM' as const, patronoId: 'p',
+    versao: 'a'.repeat(64), criadoEm: new Date(), atualizadoEm: new Date(), patrono: person('Patrono'),
+    ocupacoes: [memorial, occupation('fundador-memorial', null, true, false)],
+  }
+  const publicChair = mapCadeira(row)
+  const adminChair = adminItem('cadeiras', row as CadeiraAdmin)
+  assert.equal(publicChair.status, 'In memoriam')
+  assert.equal(publicChair.holder, 'memorial')
+  assert.equal(publicChair.image, '/uploads/memorial.webp')
+  assert.equal(adminChair.status, 'In memoriam')
+  assert.equal(adminChair.values.academicoId, 'memorial')
+})
+
 test('trocas no mesmo ano respeitam a data completa e independem da ordem recebida', () => {
   const previous = occupation('z-anterior', '2020-02-01', false, true)
   const last = occupation('a-posterior', '2020-11-01', false, false)

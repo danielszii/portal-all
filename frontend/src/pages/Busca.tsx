@@ -23,7 +23,7 @@ function BuscaConteudo({ q }: { q: string }) {
       if (current.page >= page) return current
       const merge = <T,>(previous: T[], next: T[], key: (item: T) => string | number) => [...new Map([...previous, ...next].map(item => [key(item), item])).values()]
       return { ...state.data,
-        cadeiras: merge(current.cadeiras, state.data.cadeiras, c => c.number),
+        cadeiras: merge(current.cadeiras, state.data.cadeiras, c => `${c.number}-${c.category ?? ''}`),
         noticias: merge(current.noticias, state.data.noticias, n => n.id),
         acervo: merge(current.acervo, state.data.acervo, a => a.id),
       }

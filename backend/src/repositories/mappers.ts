@@ -15,12 +15,12 @@ type CadeiraRow = Omit<Prisma.CadeiraGetPayload<{ include: typeof cadeiraInclude
 }
 
 export function mapCadeira(row: CadeiraRow): Cadeira {
-  const { ocupacoes, atual, membro, status } = situacaoCadeira(row.ocupacoes)
+  const category = row.categoria === 'CORRESPONDENTE' ? 'Correspondente' : row.categoria === 'HONORARIO' ? 'Honorário' : row.categoria === 'IN_MEMORIAM' ? 'In Memoriam' : row.categoria === 'VAGA' ? 'Vaga' : 'Titular'
+  const { ocupacoes, atual, membro, status } = situacaoCadeira(row.ocupacoes, category === 'In Memoriam')
   const catalogo = membro?.autorias.map(({ acervo }) => ({ titulo: acervo.titulo, ano: acervo.ano?.toString(), tipo: acervo.categoria, acervoId: acervo.id })) ?? []
   const titles = new Set(catalogo.map(obra => obra.titulo.trim().toLocaleLowerCase('pt-BR')))
   const obras = membro?.obras.filter(obra => !titles.has(obra.titulo.trim().toLocaleLowerCase('pt-BR')))
     .map(obra => ({ titulo: obra.titulo, ano: obra.ano ?? undefined, tipo: obra.tipo ?? undefined })) ?? []
-  const category = row.categoria === 'CORRESPONDENTE' ? 'Correspondente' : row.categoria === 'HONORARIO' ? 'Honorário' : row.categoria === 'IN_MEMORIAM' ? 'In Memoriam' : row.categoria === 'VAGA' ? 'Vaga' : 'Titular'
   const displayStatus = category === 'Correspondente' || category === 'Honorário' ? category : status
   return {
     number: romano(row.numero),

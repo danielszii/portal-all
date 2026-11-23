@@ -23,7 +23,7 @@ export function portalInput(input: unknown) {
   return {
     heroSlides, heroImagem: v.mediaUrl(b.heroImagem, 'heroImagem', 'image') || null,
     inicioTitulo: v.formattedText(b.inicioTitulo, 'inicioTitulo', 200), inicioTexto: v.formattedText(b.inicioTexto, 'inicioTexto', 1000),
-    academiaIntroducao: v.formattedText(b.academiaIntroducao, 'academiaIntroducao', 2000), cadeirasIntroducao: v.formattedText(b.cadeirasIntroducao, 'cadeirasIntroducao', 2000),
+    academiaIntroducao: v.formattedText(b.academiaIntroducao, 'academiaIntroducao', null), cadeirasIntroducao: v.formattedText(b.cadeirasIntroducao, 'cadeirasIntroducao', 2000),
     acervoIntroducao: v.formattedText(b.acervoIntroducao, 'acervoIntroducao', 2000), agendaIntroducao: v.formattedText(b.agendaIntroducao, 'agendaIntroducao', 2000),
     agendaAviso: v.formattedText(b.agendaAviso, 'agendaAviso', 2000), noticiasIntroducao: v.formattedText(b.noticiasIntroducao, 'noticiasIntroducao', 2000),
     contatoIntroducao: v.formattedText(b.contatoIntroducao, 'contatoIntroducao', 2000), contatoAssuntos: stringList(b.contatoAssuntos, 'contatoAssuntos', 20, 100),

@@ -1,14 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { AdminApiError, adminItem, adminPayload, adminRequest, saveAdminForm, uploadAdminFile, type CadeiraAdmin } from '../../frontend/src/services/admin.js'
+import { fetchCadeiraByNumber } from '../../frontend/src/services/api.js'
 
 const chair: CadeiraAdmin = {
   versao: 'a'.repeat(64),
-  id: 'chair', numero: 12, patrono: { id: 'patron', nome: 'Patrono', biografia: 'Biografia preservada', fotoUrl: '/patrono.jpg' },
+  id: 'chair', numero: 12, categoria: 'TITULAR', patrono: { id: 'patron', nome: 'Patrono', biografia: 'Biografia preservada', fotoUrl: '/patrono.jpg' },
   ocupacoes: [{ id: 'occupation', academicoId: 'member', vigente: true, fundador: true, inicioEm: null, inicioAno: 1998,
     academico: { id: 'member', nome: 'Titular anterior', biografia: 'Biografia', bioExtra: 'Informações adicionais', fotoUrl: '/membro.jpg' } }],
 }
-const newMember = { cadeira: '12', nome: 'Novo titular', patrono: 'Patrono', posse: '2020-01-01', status: 'Titular em exercício' }
+const newMember = { cadeira: '12', categoria: 'Titular', nome: 'Novo titular', patrono: 'Patrono', posse: '2020-01-01' }
 const confirmation = { code: 'CONFIRMACAO_CADEIRA', cadeira: chair, ocupacaoAtualId: 'occupation', error: 'Confirme a troca' }
 
 test('formulário preserva instante, arquivo e campos opcionais ao editar', () => {
@@ -49,6 +50,12 @@ test('edição de cadeira não inventa data de posse e preserva campos ocultos',
   const exact = structuredClone(chair)
   exact.ocupacoes[0].inicioEm = '1998-06-17T00:00:00.000Z'
   assert.equal(adminItem('cadeiras', exact).values.posse, '1998-06-17')
+})
+
+test('cadastro de cadeira omite a data de posse quando não informada', () => {
+  const payload = adminPayload('cadeiras', { ...newMember, posse: '' }, false)
+  assert.equal(payload.inicioEm, undefined)
+  assert.deepEqual(payload.academico, { nome: 'Novo titular', biografia: null, bioExtra: null, fotoUrl: null })
 })
 
 test('formulário administrativo envia as novas categorias de membros', () => {
@@ -104,12 +111,19 @@ test('troca confirma a ocupação exibida e recusa repetir confirmação desatua
   await assert.rejects(saveAdminForm('cadeiras', newMember, null, 'csrf-test', () => true), /alterada por outra pessoa/)
 })
 
-test('cancelar encerramento de ocupação não envia alterações parciais', async t => {
-  const fetch = t.mock.method(globalThis, 'fetch', async () => { throw new Error('Não deve enviar') })
-  const values = { ...adminItem('cadeiras', chair).values, status: 'In memoriam', fimEm: '2020-01-01' }
-  assert.equal(await saveAdminForm('cadeiras', values, '12', 'csrf-test', () => false), false)
-  assert.equal(fetch.mock.callCount(), 0)
-  assert.deepEqual(adminPayload('cadeiras', values, true).encerramento, { fimEm: '2020-01-01', inMemoriam: true })
+test('edição envia a categoria In Memoriam para encerrar a ocupação vigente', async t => {
+  const values = { ...adminItem('cadeiras', chair).values, categoria: 'In Memoriam' }
+  const fetch = t.mock.method(globalThis, 'fetch', async (_path: string, init: RequestInit) => {
+    const body = JSON.parse(String(init.body))
+    assert.equal(body.categoria, 'IN_MEMORIAM')
+    assert.equal(body.ocupacaoAtualId, 'occupation')
+    assert.equal((body.academico as { nome: string }).nome, 'Titular anterior')
+    return Response.json(chair)
+  })
+  assert.equal(await saveAdminForm('cadeiras', values, '12', 'csrf-test', () => {
+    throw new Error('A edição não deve solicitar confirmação')
+  }), true)
+  assert.equal(fetch.mock.callCount(), 1)
 })
 
 test('upload envia arquivo binário autenticado e recusa tamanho/tipo inválidos', async t => {
@@ -137,11 +151,47 @@ test('seleção explícita reutiliza pessoa existente sem substituir biografia n
     const body = JSON.parse(String(init.body))
     assert.equal(body.academicoId, 'existing')
     assert.equal(body.academico, undefined)
+    assert.equal(body.academicoFotoUrl, undefined)
     assert.equal(body.confirmarHomonimos, undefined)
     return Response.json(chair)
   })
   assert.equal(await saveAdminForm('cadeiras', newMember, null, 'csrf', () => true), true)
   assert.equal(count, 2)
+})
+
+test('seleção de acadêmico existente preserva foto enviada sem substituir a biografia', async t => {
+  let count = 0
+  t.mock.method(globalThis, 'fetch', async (_path: string, init: RequestInit) => {
+    if (++count === 1) return Response.json({ code: 'CONFIRMACAO_PESSOA', role: 'academico', candidates: [{ id: 'existing', nome: 'Novo titular' }] }, { status: 409 })
+    const body = JSON.parse(String(init.body))
+    assert.equal(body.academicoId, 'existing')
+    assert.equal(body.academico, undefined)
+    assert.equal(body.academicoFotoUrl, '/uploads/portrait.webp')
+    return Response.json(chair)
+  })
+  assert.equal(await saveAdminForm('cadeiras', { ...newMember, fotoUrl: '/uploads/portrait.webp' }, null, 'csrf', () => true), true)
+  assert.equal(count, 2)
+})
+
+test('salvar cadeira invalida o detalhe público em cache', async t => {
+  let publicCalls = 0
+  t.mock.method(globalThis, 'fetch', async (path: string | URL | Request) => {
+    const url = typeof path === 'string' ? path : path instanceof URL ? path.href : path.url
+    if (url.startsWith('/api/admin/cadeiras/')) return Response.json({ id: 'chair' })
+    publicCalls++
+    return Response.json({
+      number: '3999', category: 'In Memoriam', patron: 'Patrono', founder: '', holder: 'Memorial',
+      image: publicCalls === 1 ? '' : '/uploads/new-photo.webp', status: 'In memoriam', sucessao: [], obras: [], producao: [],
+    })
+  })
+
+  assert.equal((await fetchCadeiraByNumber('3999', 'In Memoriam'))?.image, '')
+  assert.equal(await saveAdminForm('cadeiras', {
+    cadeira: '3999', categoria: 'In Memoriam', nome: 'Memorial', patrono: 'Patrono',
+    academicoId: 'memorial-id', fotoUrl: '/uploads/new-photo.webp', versao: 'a'.repeat(64),
+  }, '3999:IN_MEMORIAM:chair-id', 'csrf', () => true), true)
+  assert.equal((await fetchCadeiraByNumber('3999', 'In Memoriam'))?.image, '/uploads/new-photo.webp')
+  assert.equal(publicCalls, 2)
 })
 
 test('homônimos exigem confirmação separada e cancelar não grava', async t => {
@@ -185,6 +235,7 @@ test('edição de membros inclui posse, fundador e dados de membro in memoriam',
     versao: 'b'.repeat(64),
     id: 'chair-2',
     numero: 5,
+    categoria: 'IN_MEMORIAM',
     patrono: { id: 'patron-2', nome: 'Patrono 2', biografia: 'Bio Patrono', fotoUrl: null },
     ocupacoes: [{
       id: 'occ-1',
@@ -205,8 +256,10 @@ test('edição de membros inclui posse, fundador e dados de membro in memoriam',
       },
     }],
   }
-  const memValues = adminItem('cadeiras', inMemoriamChair).values
-  assert.equal(memValues.status, 'In memoriam')
+  const memItem = adminItem('cadeiras', inMemoriamChair)
+  const memValues = memItem.values
+  assert.equal(memItem.status, 'In memoriam')
+  assert.equal(memValues.categoria, 'In Memoriam')
   assert.equal(memValues.nome, 'Saudoso Acadêmico')
   assert.equal(memValues.posse, '1995-04-10')
   assert.equal(memValues.fimEm, '2020-08-15')

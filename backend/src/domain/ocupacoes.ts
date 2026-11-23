@@ -23,10 +23,12 @@ export function ordenarOcupacoes<T extends Ocupacao>(ocupacoes: readonly T[]): T
     || (a.id ?? '').localeCompare(b.id ?? ''))
 }
 
-export function situacaoCadeira<T extends Ocupacao & { academico: { inMemoriam?: boolean } }>(rows: readonly T[]) {
+export function situacaoCadeira<T extends Ocupacao & { academico: { inMemoriam?: boolean } }>(rows: readonly T[], inMemoriamCategory = false) {
   const ocupacoes = ordenarOcupacoes(rows)
   const atual = ocupacoes.find(o => o.vigente)
   const ultimo = ocupacoes.at(-1)
-  const membro: T['academico'] | undefined = atual?.academico ?? (ultimo?.academico.inMemoriam ? ultimo.academico : undefined)
-  return { ocupacoes, atual, membro, status: atual ? 'Titular em exercício' : membro?.inMemoriam ? 'In memoriam' : 'Vaga' }
+  const ultimoSemFundador = [...ocupacoes].reverse().find(o => !o.fundador)
+  const membro: T['academico'] | undefined = atual?.academico
+    ?? (inMemoriamCategory ? (ultimoSemFundador ?? ultimo)?.academico : ultimo?.academico.inMemoriam ? ultimo.academico : undefined)
+  return { ocupacoes, atual, membro, status: atual ? 'Titular em exercício' : membro?.inMemoriam || (inMemoriamCategory && membro) ? 'In memoriam' : 'Vaga' }
 }

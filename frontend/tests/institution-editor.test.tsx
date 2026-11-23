@@ -60,7 +60,7 @@ async function mount(t: TestContext, profile: AdminProfile = 'SECRETARIA', initi
   await act(async () => root.render(<AuthProvider><InstitutionObserver /><RouterProvider router={router} /></AuthProvider>))
   const button = (label: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(b => b.textContent?.trim() === label.trim())
   return { container, writes, fetch, controls, setInfo: (value: AdminInstitution) => { info = value }, button,
-    open: async () => { const edit = button('Editar dados'); assert.ok(edit, container.textContent ?? 'Página vazia'); await act(async () => edit.click()) },
+    open: async () => { const edit = button('Editar instituição'); assert.ok(edit, container.textContent ?? 'Página vazia'); await act(async () => edit.click()) },
     submit: async () => { await act(async () => container.querySelector('form')!.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }))) },
   }
 }
@@ -90,7 +90,7 @@ test('administrador e secretaria editam com dados atuais, versão, CSRF e atuali
     assert.equal(ui.container.querySelector('[role="dialog"]'), null)
     assert.match(ui.container.textContent!, /salvos e publicados com sucesso/)
     assert.equal(ui.container.querySelector('[data-testid="shared-contact"]')!.textContent, 'novo@example.test')
-    assert.match(ui.container.querySelector('.admin-institution-contact-grid')!.textContent!, /novo@example.test/)
+    assert.match(ui.container.querySelector('.admin-clean-contact-list')!.textContent!, /novo@example.test/)
   })
 })
 
@@ -173,7 +173,7 @@ test('campos obrigatórios e ano inválido não são enviados', async t => {
 test('consulta não recebe edição e editor não acessa a área institucional', async t => {
   for (const profile of ['CONSULTA', 'EDITOR'] as const) await t.test(profile, async child => {
     const ui = await mount(child, profile)
-    assert.equal(ui.button(' Editar dados'), undefined)
+    assert.equal(ui.button(' Editar instituição'), undefined)
     assert.equal(ui.container.querySelector('form'), null)
     assert.ok(ui.fetch.mock.calls.every(call => String(call.arguments[0]) !== '/api/admin/instituicao'))
     if (profile === 'EDITOR') assert.match(ui.container.textContent!, /não tem acesso/)

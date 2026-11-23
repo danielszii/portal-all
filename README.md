@@ -157,6 +157,12 @@ HTTP 200 (`database: "up"`) ou 503 (`database: "down"`), com limite de espera de
 3 segundos e sem expor erros internos. Use `/api/ready` para verificar disponibilidade
 antes de encaminhar tráfego; ela não verifica se todas as migrations foram aplicadas.
 
+`GET /api/cadeiras/:numero` aceita o parâmetro opcional `categoria` para identificar
+cadeiras com numeração compartilhada (por exemplo, `?categoria=Honorário`). Sem
+categoria, um número que corresponda a mais de uma cadeira retorna HTTP 409, em vez
+de selecionar um registro arbitrariamente. Use a categoria retornada pela listagem
+ou pela busca ao criar links de detalhe.
+
 A página de notícias filtra por categoria e termo na API. A listagem usa
 `GET /api/noticias?resumo=true`, que omite o texto completo, e o detalhe usa
 `GET /api/noticias/:id`. Sem `resumo=true`, a API preserva a resposta completa existente.
