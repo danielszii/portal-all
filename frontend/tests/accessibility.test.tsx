@@ -98,3 +98,15 @@ test('área administrativa compartilha cabeçalho, estados e buscas reversíveis
   assert.match(resource, /item\.status === 'Visível no site' \? 'is-published'/)
   assert.match(resource, /Preencha os campos marcados com \*/)
 })
+
+test('portal integra o VLibras oficial para acessibilidade em Língua Brasileira de Sinais', async () => {
+  const html = await readFile(path.join(frontend, 'index.html'), 'utf8')
+  const app = await source('App.tsx')
+  const vlibras = await source('components/VLibras.tsx')
+  assert.match(html, /vw="true" class="enabled"/)
+  assert.match(html, /https:\/\/vlibras\.gov\.br\/app\/vlibras-plugin\.js/)
+  assert.match(app, /<VLibras \/>/)
+  assert.match(vlibras, /https:\/\/vlibras\.gov\.br\/app/)
+})
+
+

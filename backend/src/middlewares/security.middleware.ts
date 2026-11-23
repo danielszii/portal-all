@@ -1,14 +1,14 @@
 import type { RequestHandler } from 'express'
 
-// Compatível com as fontes externas e o visualizador de PDF usados pelo portal.
+// Compatível com fontes externas, visualizador de PDF e VLibras (acessibilidade em Libras gov.br).
 const policy = [
   "default-src 'self'",
-  "script-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
+  "script-src 'self' https://vlibras.gov.br",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://vlibras.gov.br",
+  "font-src 'self' https://fonts.gstatic.com https://vlibras.gov.br",
   "img-src 'self' data: blob: https: http:",
-  "connect-src 'self'",
-  "frame-src 'self' https://docs.google.com https://www.youtube-nocookie.com",
+  "connect-src 'self' https://vlibras.gov.br",
+  "frame-src 'self' https://docs.google.com https://www.youtube-nocookie.com https://vlibras.gov.br",
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'self'",
